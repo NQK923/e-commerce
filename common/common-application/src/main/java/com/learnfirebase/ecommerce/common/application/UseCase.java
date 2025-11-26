@@ -1,5 +1,7 @@
 package com.learnfirebase.ecommerce.common.application;
 
-public interface UseCase<I, O> {
-    O execute(I input);
+/**
+ * Marker interface for application use cases.
+ */
+public interface UseCase {
 }

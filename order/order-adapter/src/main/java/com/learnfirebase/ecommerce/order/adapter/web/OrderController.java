@@ -18,7 +18,7 @@ import com.learnfirebase.ecommerce.order.application.port.in.PayOrderUseCase;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping(\"/api/orders\")
+@RequestMapping("/api/orders")
 @RequiredArgsConstructor
 public class OrderController {
     private final CreateOrderUseCase createOrderUseCase;
@@ -30,7 +30,7 @@ public class OrderController {
         return ResponseEntity.ok(createOrderUseCase.execute(command));
     }
 
-    @PostMapping(\"/{orderId}/pay\")
+    @PostMapping("/{orderId}/pay")
     public ResponseEntity<OrderDto> pay(@PathVariable String orderId, @RequestBody PayOrderCommand command) {
         PayOrderCommand enriched = PayOrderCommand.builder()
             .orderId(orderId)
@@ -39,7 +39,7 @@ public class OrderController {
         return ResponseEntity.ok(payOrderUseCase.execute(enriched));
     }
 
-    @PostMapping(\"/{orderId}/cancel\")
+    @PostMapping("/{orderId}/cancel")
     public ResponseEntity<OrderDto> cancel(@PathVariable String orderId, @RequestBody CancelOrderCommand command) {
         CancelOrderCommand enriched = CancelOrderCommand.builder()
             .orderId(orderId)

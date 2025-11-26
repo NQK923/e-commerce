@@ -9,7 +9,7 @@ import lombok.Value;
 @Value
 @Builder
 public class PageResponse<T> {
-    @Singular
+    @Singular("item")
     List<T> content;
     long totalElements;
     int totalPages;

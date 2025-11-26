@@ -67,7 +67,13 @@ public class ProductApplicationService implements ManageProductUseCase {
             .categoryId(product.getCategory() != null ? product.getCategory().getId() : null)
             .createdAt(product.getCreatedAt())
             .updatedAt(product.getUpdatedAt())
-            .variants(product.getVariants())
+            .variants(product.getVariants() != null ? product.getVariants().stream()
+                .map(v -> ProductDto.VariantDto.builder()
+                    .sku(v.getSku())
+                    .name(v.getName())
+                    .price(v.getPrice().getAmount().toPlainString())
+                    .build())
+                .toList() : java.util.Collections.emptyList())
             .build();
     }
 }

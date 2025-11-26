@@ -4,5 +4,6 @@ import com.learnfirebase.ecommerce.common.application.UseCase;
 import com.learnfirebase.ecommerce.inventory.application.command.AdjustInventoryCommand;
 import com.learnfirebase.ecommerce.inventory.application.dto.InventoryDto;
 
-public interface ManageInventoryUseCase extends UseCase<AdjustInventoryCommand, InventoryDto> {
+public interface ManageInventoryUseCase extends UseCase {
+    InventoryDto execute(AdjustInventoryCommand command);
 }
