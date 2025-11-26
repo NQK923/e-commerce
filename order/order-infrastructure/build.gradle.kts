@@ -13,6 +13,6 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
     implementation("org.springframework.kafka:spring-kafka")
     implementation("org.postgresql:postgresql")
-    implementation("org.elasticsearch.client:elasticsearch-rest-high-level-client:7.17.18")
+    implementation("org.elasticsearch.client:elasticsearch-rest-client:8.15.3")
     implementation("com.fasterxml.jackson.core:jackson-databind")
 }
