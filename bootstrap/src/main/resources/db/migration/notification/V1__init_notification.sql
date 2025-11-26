@@ -1,0 +1,1 @@
+-- No-op migration for notification bounded context

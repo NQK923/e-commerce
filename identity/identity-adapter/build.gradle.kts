@@ -9,5 +9,7 @@ dependencies {
     implementation(project(":common:common-application"))
 
     implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-security")
+    implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
     implementation("org.springframework.kafka:spring-kafka")
 }
