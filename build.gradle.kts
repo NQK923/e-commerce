@@ -33,6 +33,11 @@ subprojects {
         imports {
             mavenBom("org.springframework.boot:spring-boot-dependencies:3.5.8")
         }
+        dependencies {
+            dependency("org.apache.commons:commons-lang3:3.20.0")
+            dependency("org.flywaydb:flyway-core:11.17.2")
+            dependency("org.flywaydb:flyway-database-postgresql:11.17.2")
+        }
     }
 
     dependencies {

@@ -2,7 +2,7 @@ spring:
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/ecommerce}
     username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:postgres}
+    password: ${DB_PASSWORD:Khanh090203}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -13,6 +13,7 @@ spring:
     open-in-view: false
   flyway:
     enabled: true
+    fail-on-unsupported-database: false
     locations:
       - classpath:db/migration/common
       - classpath:db/migration/identity
