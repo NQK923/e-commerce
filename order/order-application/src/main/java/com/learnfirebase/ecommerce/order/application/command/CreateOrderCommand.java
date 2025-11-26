@@ -1,0 +1,22 @@
+package com.learnfirebase.ecommerce.order.application.command;
+
+import java.util.List;
+
+import lombok.Builder;
+import lombok.Value;
+
+@Value
+@Builder
+public class CreateOrderCommand {
+    String userId;
+    List<OrderItemCommand> items;
+    String currency;
+
+    @Value
+    @Builder
+    public static class OrderItemCommand {
+        String productId;
+        int quantity;
+        String price;
+    }
+}

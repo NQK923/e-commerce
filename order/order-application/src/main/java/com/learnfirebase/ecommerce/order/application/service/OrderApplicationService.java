@@ -1,0 +1,115 @@
+package com.learnfirebase.ecommerce.order.application.service;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import com.learnfirebase.ecommerce.common.domain.valueobject.Money;
+import com.learnfirebase.ecommerce.order.application.command.CancelOrderCommand;
+import com.learnfirebase.ecommerce.order.application.command.CreateOrderCommand;
+import com.learnfirebase.ecommerce.order.application.command.PayOrderCommand;
+import com.learnfirebase.ecommerce.order.application.dto.OrderDto;
+import com.learnfirebase.ecommerce.order.application.port.in.CancelOrderUseCase;
+import com.learnfirebase.ecommerce.order.application.port.in.CreateOrderUseCase;
+import com.learnfirebase.ecommerce.order.application.port.in.PayOrderUseCase;
+import com.learnfirebase.ecommerce.order.application.port.out.InventoryReservationPort;
+import com.learnfirebase.ecommerce.order.application.port.out.LoadProductPort;
+import com.learnfirebase.ecommerce.order.application.port.out.OrderEventPublisher;
+import com.learnfirebase.ecommerce.order.application.port.out.OrderOutboxPort;
+import com.learnfirebase.ecommerce.order.application.port.out.OrderRepository;
+import com.learnfirebase.ecommerce.order.domain.event.OrderCreated;
+import com.learnfirebase.ecommerce.order.domain.model.Order;
+import com.learnfirebase.ecommerce.order.domain.model.OrderId;
+import com.learnfirebase.ecommerce.order.domain.model.OrderItem;
+import com.learnfirebase.ecommerce.order.domain.model.UserId;
+import com.learnfirebase.ecommerce.order.domain.service.OrderDomainService;
+import com.learnfirebase.ecommerce.order.domain.exception.OrderDomainException;
+
+import lombok.RequiredArgsConstructor;
+
+@RequiredArgsConstructor
+public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseCase, CancelOrderUseCase {
+
+    private final OrderRepository orderRepository;
+    private final LoadProductPort loadProductPort;
+    private final InventoryReservationPort inventoryReservationPort;
+    private final OrderOutboxPort orderOutboxPort;
+    private final OrderEventPublisher eventPublisher;
+    private final OrderDomainService domainService = new OrderDomainService();
+
+    @Override
+    public OrderDto execute(CreateOrderCommand command) {
+        List<OrderItem> items = command.getItems().stream()
+            .map(item -> OrderItem.builder()
+                .productId(item.getProductId())
+                .quantity(item.getQuantity())
+                .price(Money.builder().amount(new BigDecimal(item.getPrice())).currency(command.getCurrency()).build())
+                .build())
+            .collect(Collectors.toList());
+
+        Map<String, String> prices = loadProductPort.loadProductPrices(command.getCurrency(),
+            items.stream().map(OrderItem::getProductId).collect(Collectors.toSet()));
+        if (!prices.isEmpty()) {
+            items = items.stream()
+                .map(item -> OrderItem.builder()
+                    .productId(item.getProductId())
+                    .quantity(item.getQuantity())
+                    .price(Money.builder().amount(new BigDecimal(prices.getOrDefault(item.getProductId(), item.getPrice().getAmount().toPlainString()))).currency(command.getCurrency()).build())
+                    .build())
+                .collect(Collectors.toList());
+        }
+
+        Order order = domainService.initiateOrder(new UserId(command.getUserId()), items, command.getCurrency());
+        Order saved = orderRepository.save(order);
+
+        inventoryReservationPort.reserve(saved.getId().getValue(),
+            saved.getItems().stream().collect(Collectors.toMap(OrderItem::getProductId, OrderItem::getQuantity)));
+
+        order.getDomainEvents().forEach(event -> {
+            orderOutboxPort.saveEvent(event);
+            eventPublisher.publish(event);
+        });
+
+        return toDto(saved);
+    }
+
+    @Override
+    public OrderDto execute(PayOrderCommand command) {
+        Order order = orderRepository.findById(new OrderId(command.getOrderId()))
+            .orElseThrow(() -> new OrderDomainException("Order not found"));
+        order.pay();
+        Order saved = orderRepository.save(order);
+        order.getDomainEvents().forEach(eventPublisher::publish);
+        return toDto(saved);
+    }
+
+    @Override
+    public OrderDto execute(CancelOrderCommand command) {
+        Order order = orderRepository.findById(new OrderId(command.getOrderId()))
+            .orElseThrow(() -> new OrderDomainException("Order not found"));
+        order.cancel(command.getReason());
+        Order saved = orderRepository.save(order);
+        order.getDomainEvents().forEach(eventPublisher::publish);
+        return toDto(saved);
+    }
+
+    private OrderDto toDto(Order order) {
+        return OrderDto.builder()
+            .id(order.getId().getValue())
+            .userId(order.getUserId().getValue())
+            .status(order.getStatus().name())
+            .currency(order.getTotalAmount().getCurrency())
+            .totalAmount(order.getTotalAmount().getAmount().toPlainString())
+            .createdAt(order.getCreatedAt())
+            .updatedAt(order.getUpdatedAt())
+            .items(order.getItems().stream()
+                .map(item -> OrderDto.OrderItemDto.builder()
+                    .productId(item.getProductId())
+                    .quantity(item.getQuantity())
+                    .price(item.getPrice().getAmount().toPlainString())
+                    .build())
+                .collect(Collectors.toList()))
+            .build();
+    }
+}
