@@ -5,15 +5,18 @@ import java.util.UUID;
 
 import com.learnfirebase.ecommerce.common.domain.valueobject.Email;
 import com.learnfirebase.ecommerce.identity.application.command.LoginCommand;
+import com.learnfirebase.ecommerce.identity.application.command.OAuth2LoginCommand;
 import com.learnfirebase.ecommerce.identity.application.command.RegisterUserCommand;
 import com.learnfirebase.ecommerce.identity.application.dto.AuthTokenDto;
 import com.learnfirebase.ecommerce.identity.application.dto.UserDto;
 import com.learnfirebase.ecommerce.identity.application.port.in.AuthenticateUserUseCase;
+import com.learnfirebase.ecommerce.identity.application.port.in.OAuth2LoginUseCase;
 import com.learnfirebase.ecommerce.identity.application.port.in.RegisterUserUseCase;
 import com.learnfirebase.ecommerce.identity.application.port.out.PasswordHasher;
 import com.learnfirebase.ecommerce.identity.application.port.out.TokenProvider;
 import com.learnfirebase.ecommerce.identity.application.port.out.UserRepository;
 import com.learnfirebase.ecommerce.identity.domain.exception.IdentityDomainException;
+import com.learnfirebase.ecommerce.identity.domain.model.AuthProvider;
 import com.learnfirebase.ecommerce.identity.domain.model.HashedPassword;
 import com.learnfirebase.ecommerce.identity.domain.model.User;
 import com.learnfirebase.ecommerce.identity.domain.model.UserId;
@@ -21,7 +24,7 @@ import com.learnfirebase.ecommerce.identity.domain.model.UserId;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class IdentityApplicationService implements RegisterUserUseCase, AuthenticateUserUseCase {
+public class IdentityApplicationService implements RegisterUserUseCase, AuthenticateUserUseCase, OAuth2LoginUseCase {
     private final UserRepository userRepository;
     private final PasswordHasher passwordHasher;
     private final TokenProvider tokenProvider;
@@ -36,6 +39,7 @@ public class IdentityApplicationService implements RegisterUserUseCase, Authenti
             .id(new UserId(UUID.randomUUID().toString()))
             .email(new Email(command.getEmail()))
             .password(new HashedPassword(passwordHasher.hash(command.getPassword())))
+            .authProvider(AuthProvider.LOCAL)
             .createdAt(Instant.now())
             .updatedAt(Instant.now())
             .build();
@@ -53,12 +57,44 @@ public class IdentityApplicationService implements RegisterUserUseCase, Authenti
     public AuthTokenDto execute(LoginCommand command) {
         User user = userRepository.findByEmail(command.getEmail())
             .orElseThrow(() -> new IdentityDomainException("User not found"));
+        if (user.getAuthProvider() != AuthProvider.LOCAL) {
+            throw new IdentityDomainException("User must login via " + user.getAuthProvider());
+        }
         if (!passwordHasher.matches(command.getPassword(), user.getPassword().getValue())) {
             throw new IdentityDomainException("Invalid credentials");
         }
         return AuthTokenDto.builder()
             .accessToken(tokenProvider.generateAccessToken(user.getId().getValue(), user.getEmail().getValue()))
             .refreshToken(tokenProvider.generateRefreshToken(user.getId().getValue(), user.getEmail().getValue(), command.getDeviceId()))
+            .build();
+    }
+
+    @Override
+    public AuthTokenDto execute(OAuth2LoginCommand command) {
+        AuthProvider provider = command.getProvider();
+        String providerUserId = command.getProviderUserId();
+        if (provider == null || providerUserId == null) {
+            throw new IdentityDomainException("Provider and provider user id are required for OAuth2 login");
+        }
+        User user = userRepository.findByProvider(provider, providerUserId)
+            .orElseGet(() -> {
+                String email = command.getEmail();
+                User newUser = User.builder()
+                    .id(new UserId(UUID.randomUUID().toString()))
+                    .email(email != null ? new Email(email) : null)
+                    .password(new HashedPassword(""))
+                    .authProvider(provider)
+                    .providerUserId(providerUserId)
+                    .createdAt(Instant.now())
+                    .updatedAt(Instant.now())
+                    .build();
+                return userRepository.save(newUser);
+            });
+
+        String emailForToken = user.getEmail() != null ? user.getEmail().getValue() : user.getProviderUserId();
+        return AuthTokenDto.builder()
+            .accessToken(tokenProvider.generateAccessToken(user.getId().getValue(), emailForToken))
+            .refreshToken(tokenProvider.generateRefreshToken(user.getId().getValue(), emailForToken, command.getProviderUserId()))
             .build();
     }
 }

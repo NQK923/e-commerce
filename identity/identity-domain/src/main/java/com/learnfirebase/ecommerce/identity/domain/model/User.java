@@ -23,6 +23,9 @@ public class User extends AggregateRoot<UserId> {
     private Email email;
     private HashedPassword password;
     @Builder.Default
+    private AuthProvider authProvider = AuthProvider.LOCAL;
+    private String providerUserId;
+    @Builder.Default
     private Set<Role> roles = EnumSet.of(Role.CUSTOMER);
     @Builder.Default
     private Set<Permission> permissions = EnumSet.noneOf(Permission.class);
