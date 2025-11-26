@@ -34,6 +34,7 @@ public class ProductController {
             .currency(command.getCurrency())
             .categoryId(command.getCategoryId())
             .variants(command.getVariants())
+            .images(command.getImages())
             .build();
         return ResponseEntity.ok(manageProductUseCase.execute(merged));
     }

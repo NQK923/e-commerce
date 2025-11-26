@@ -17,6 +17,8 @@ public class UpsertProductCommand {
     String categoryId;
     @Singular
     List<VariantCommand> variants;
+    @Singular
+    List<ImageCommand> images;
 
     @Value
     @Builder
@@ -24,5 +26,14 @@ public class UpsertProductCommand {
         String sku;
         String name;
         String price;
+    }
+
+    @Value
+    @Builder
+    public static class ImageCommand {
+        String id;
+        String url;
+        Integer sortOrder;
+        Boolean primaryImage;
     }
 }

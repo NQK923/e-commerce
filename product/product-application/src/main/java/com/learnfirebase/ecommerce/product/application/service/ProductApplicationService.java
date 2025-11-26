@@ -16,6 +16,8 @@ import com.learnfirebase.ecommerce.product.domain.exception.ProductDomainExcepti
 import com.learnfirebase.ecommerce.product.domain.model.Category;
 import com.learnfirebase.ecommerce.product.domain.model.Product;
 import com.learnfirebase.ecommerce.product.domain.model.ProductId;
+import com.learnfirebase.ecommerce.product.domain.model.ProductImage;
+import com.learnfirebase.ecommerce.product.domain.model.ProductImageId;
 import com.learnfirebase.ecommerce.product.domain.model.ProductVariant;
 
 import lombok.RequiredArgsConstructor;
@@ -36,14 +38,22 @@ public class ProductApplicationService implements ManageProductUseCase {
             .name(command.getName())
             .description(command.getDescription())
             .price(Money.builder().amount(new BigDecimal(command.getPrice())).currency(command.getCurrency()).build())
-            .category(Category.builder().id(command.getCategoryId()).name(command.getCategoryId()).build())
-            .variants(command.getVariants().stream()
+            .category(command.getCategoryId() != null ? Category.builder().id(command.getCategoryId()).name(command.getCategoryId()).build() : null)
+            .variants(command.getVariants() != null ? command.getVariants().stream()
                 .map(v -> ProductVariant.builder()
                     .sku(v.getSku())
                     .name(v.getName())
                     .price(Money.builder().amount(new BigDecimal(v.getPrice())).currency(command.getCurrency()).build())
                     .build())
-                .collect(Collectors.toList()))
+                .collect(Collectors.toList()) : java.util.Collections.emptyList())
+            .images(command.getImages() != null ? command.getImages().stream()
+                .map(img -> ProductImage.builder()
+                    .id(img.getId() != null ? new ProductImageId(img.getId()) : new ProductImageId(UUID.randomUUID().toString()))
+                    .url(img.getUrl())
+                    .sortOrder(img.getSortOrder())
+                    .primary(Boolean.TRUE.equals(img.getPrimaryImage()))
+                    .build())
+                .collect(Collectors.toList()) : java.util.Collections.emptyList())
             .createdAt(product.getCreatedAt() != null ? product.getCreatedAt() : Instant.now())
             .updatedAt(Instant.now())
             .build();
@@ -72,6 +82,14 @@ public class ProductApplicationService implements ManageProductUseCase {
                     .sku(v.getSku())
                     .name(v.getName())
                     .price(v.getPrice().getAmount().toPlainString())
+                    .build())
+                .toList() : java.util.Collections.emptyList())
+            .images(product.getImages() != null ? product.getImages().stream()
+                .map(img -> ProductDto.ImageDto.builder()
+                    .id(img.getId() != null ? img.getId().getValue() : null)
+                    .url(img.getUrl())
+                    .sortOrder(img.getSortOrder())
+                    .primaryImage(img.isPrimary())
                     .build())
                 .toList() : java.util.Collections.emptyList())
             .build();

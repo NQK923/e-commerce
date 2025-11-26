@@ -20,6 +20,8 @@ public class ProductDto {
     Instant updatedAt;
     @Singular
     List<VariantDto> variants;
+    @Singular
+    List<ImageDto> images;
 
     @Value
     @Builder
@@ -27,5 +29,14 @@ public class ProductDto {
         String sku;
         String name;
         String price;
+    }
+
+    @Value
+    @Builder
+    public static class ImageDto {
+        String id;
+        String url;
+        Integer sortOrder;
+        Boolean primaryImage;
     }
 }

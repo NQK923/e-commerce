@@ -24,6 +24,7 @@ public class Product extends AggregateRoot<ProductId> {
     private Money price;
     private Category category;
     private List<ProductVariant> variants;
+    private List<ProductImage> images;
     private Instant createdAt;
     private Instant updatedAt;
 }

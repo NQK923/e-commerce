@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ElasticsearchProductIndexAdapter implements ProductSearchIndexPort {
     @Override
     public void index(Product product) {
-        log.info("Indexing product {}", product.getId().getValue());
+        log.info("Indexing product {} with {} image(s)", product.getId().getValue(),
+            product.getImages() != null ? product.getImages().size() : 0);
     }
 }
