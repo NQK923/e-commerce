@@ -21,10 +21,17 @@ allprojects {
 
 subprojects {
     apply(plugin = "java")
+    apply(plugin = "io.spring.dependency-management")
 
     java {
         toolchain {
             languageVersion.set(JavaLanguageVersion.of(17))
+        }
+    }
+
+    dependencyManagement {
+        imports {
+            mavenBom("org.springframework.boot:spring-boot-dependencies:3.5.8")
         }
     }
 
@@ -42,5 +49,3 @@ subprojects {
         useJUnitPlatform()
     }
 }
-
-// Only bootstrap is executable Spring Boot application; other modules remain libraries.
