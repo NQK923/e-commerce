@@ -2,15 +2,24 @@
 
 import Link from "next/link";
 import React from "react";
+import { 
+  Truck, 
+  ShieldCheck, 
+  Clock, 
+  ArrowRight, 
+  Smartphone, 
+  Shirt, 
+  Watch, 
+  Home as HomeIcon, 
+  ChevronRight
+} from "lucide-react";
 import { productApi } from "@/src/api/productApi";
 import { ProductCard } from "@/src/components/product/product-card";
 import { Button } from "@/src/components/ui/button";
-import { Card } from "@/src/components/ui/card";
 import { Spinner } from "@/src/components/ui/spinner";
 import { useCart } from "@/src/store/cart-store";
 import { useToast } from "@/src/components/ui/toast-provider";
 import { Product } from "@/src/types/product";
-import { formatCurrency } from "@/src/utils/format";
 
 export default function HomePage() {
   const { addItem } = useCart();
@@ -40,74 +49,135 @@ export default function HomePage() {
   };
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-10 px-4 py-10">
-      <section className="grid gap-6 rounded-3xl bg-gradient-to-r from-black to-zinc-900 px-8 py-10 text-white md:grid-cols-2">
-        <div className="flex flex-col gap-4">
-          <p className="text-sm uppercase tracking-[0.2em] text-zinc-300">New Season</p>
-          <h1 className="text-4xl font-bold leading-tight md:text-5xl">Modern commerce without the friction.</h1>
-          <p className="text-base text-zinc-200">
-            Discover curated products, sync your cart across devices, and checkout securely with our production-ready
-            storefront.
+    <div className="flex flex-col gap-16 pb-20">
+      {/* Hero Section */}
+      <section className="relative overflow-hidden bg-black py-24 text-center text-white sm:py-32">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
+        <div className="relative mx-auto flex max-w-4xl flex-col items-center gap-6 px-4">
+          <div className="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1 text-sm font-medium backdrop-blur">
+            <span className="mr-2 inline-block h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
+            New Collection Available
+          </div>
+          <h1 className="text-5xl font-extrabold tracking-tight sm:text-7xl">
+            Elevate Your <span className="text-zinc-400">Lifestyle</span>
+          </h1>
+          <p className="max-w-2xl text-lg text-zinc-400 sm:text-xl">
+            Discover a curated selection of premium products designed for modern living. 
+            Quality meets aesthetics in every piece we offer.
           </p>
-          <div className="flex flex-wrap gap-3">
+          <div className="mt-4 flex flex-wrap justify-center gap-4">
             <Link href="/products">
-              <Button size="lg" variant="secondary">
-                Browse products
+              <Button size="lg" className="h-12 px-8 text-base bg-white text-black hover:bg-zinc-200 border-0">
+                Shop Now <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
-            <Link href="/login">
-              <Button size="lg" variant="ghost" className="border border-white/20 text-white hover:bg-white/10">
-                Sign in
+            <Link href="/register">
+              <Button size="lg" variant="outline" className="h-12 px-8 text-base text-white border-zinc-700 hover:bg-zinc-800 hover:text-white">
+                Create Account
               </Button>
             </Link>
-          </div>
-        </div>
-        <div className="flex flex-col justify-center gap-4 rounded-2xl bg-white/5 p-6 shadow-lg">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-zinc-300">Flash sale spotlight</span>
-            <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase text-white">
-              Limited
-            </span>
-          </div>
-          <div className="grid grid-cols-3 gap-3">
-            {products.slice(0, 3).map((product) => (
-              <Card key={product.id} className="overflow-hidden border-0 bg-white/5 p-3 text-white">
-                <div className="text-sm font-semibold line-clamp-2">{product.name}</div>
-                <div className="text-xs text-zinc-300 line-clamp-2">{product.shortDescription ?? product.description}</div>
-                <div className="mt-2 text-base font-bold">{formatCurrency(product.price, product.currency ?? "USD")}</div>
-              </Card>
-            ))}
-            {!products.length && (
-              <div className="col-span-3 text-sm text-zinc-300">Fresh arrivals will appear here.</div>
-            )}
           </div>
         </div>
       </section>
 
-      <section className="flex flex-col gap-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-black">Featured products</h2>
-          <Link href="/products" className="text-sm font-semibold text-black hover:underline">
-            View all
+      {/* Features / Trust Signals */}
+      <section className="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-4 sm:grid-cols-3">
+        {[
+          { icon: Truck, title: "Free Shipping", desc: "On all orders over $50" },
+          { icon: ShieldCheck, title: "Secure Payment", desc: "100% secure transaction" },
+          { icon: Clock, title: "24/7 Support", desc: "Dedicated support team" },
+        ].map((feature, i) => (
+          <div key={i} className="flex items-center gap-4 rounded-2xl border border-zinc-100 bg-white p-6 shadow-sm transition-shadow hover:shadow-md">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-black">
+              <feature.icon size={24} />
+            </div>
+            <div>
+              <h3 className="font-bold text-zinc-900">{feature.title}</h3>
+              <p className="text-sm text-zinc-500">{feature.desc}</p>
+            </div>
+          </div>
+        ))}
+      </section>
+
+      {/* Categories */}
+      <section className="mx-auto w-full max-w-7xl px-4">
+        <div className="mb-8 flex items-end justify-between">
+          <h2 className="text-3xl font-bold tracking-tight text-zinc-900">Shop by Category</h2>
+          <Link href="/products" className="hidden text-sm font-medium text-zinc-500 hover:text-black sm:block">
+            View all categories &rarr;
           </Link>
         </div>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          {[
+            { name: "Electronics", icon: Smartphone, color: "bg-blue-50 text-blue-600" },
+            { name: "Fashion", icon: Shirt, color: "bg-rose-50 text-rose-600" },
+            { name: "Accessories", icon: Watch, color: "bg-amber-50 text-amber-600" },
+            { name: "Home", icon: HomeIcon, color: "bg-emerald-50 text-emerald-600" },
+          ].map((cat) => (
+            <Link 
+              key={cat.name} 
+              href={`/products?category=${cat.name.toLowerCase()}`}
+              className="group flex flex-col items-center justify-center rounded-xl border border-zinc-100 bg-white py-10 transition-all hover:border-zinc-300 hover:shadow-sm"
+            >
+              <div className={`mb-4 flex h-16 w-16 items-center justify-center rounded-full ${cat.color} transition-transform group-hover:scale-110`}>
+                <cat.icon size={32} />
+              </div>
+              <span className="font-semibold text-zinc-900">{cat.name}</span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* Featured Products */}
+      <section className="mx-auto w-full max-w-7xl px-4">
+        <div className="mb-8 flex items-end justify-between">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight text-zinc-900">Featured Products</h2>
+            <p className="mt-2 text-zinc-500">Hand-picked daily essentials just for you.</p>
+          </div>
+          <Link href="/products">
+            <Button variant="ghost" className="gap-1">
+              View all <ChevronRight size={16} />
+            </Button>
+          </Link>
+        </div>
+
         {loading ? (
-          <div className="flex items-center gap-3 text-sm text-zinc-600">
+          <div className="flex h-64 flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-zinc-200 bg-zinc-50 text-zinc-500">
             <Spinner />
-            Loading products...
+            <p>Loading best sellers...</p>
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {products.map((product) => (
               <ProductCard key={product.id} product={product} onAddToCart={handleAdd} />
             ))}
             {!products.length && (
-              <div className="rounded-xl border border-dashed border-zinc-200 bg-white p-6 text-sm text-zinc-600">
-                No products found. Try refreshing or check back later.
+              <div className="col-span-full flex h-40 items-center justify-center rounded-xl border border-dashed border-zinc-200 bg-zinc-50 text-zinc-500">
+                No products found.
               </div>
             )}
           </div>
         )}
+      </section>
+
+      {/* Newsletter CTA */}
+      <section className="mx-4 rounded-3xl bg-zinc-900 px-6 py-16 text-center text-white sm:mx-auto sm:max-w-7xl sm:px-16">
+        <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Stay in the loop</h2>
+        <p className="mx-auto mt-4 max-w-xl text-lg text-zinc-400">
+          Subscribe to our newsletter for exclusive offers, new arrivals, and style tips directly to your inbox.
+        </p>
+        <form className="mx-auto mt-8 flex max-w-md flex-col gap-3 sm:flex-row" onSubmit={(e) => e.preventDefault()}>
+          <input 
+            type="email" 
+            placeholder="Enter your email" 
+            className="flex-1 rounded-lg border-0 bg-white/10 px-4 py-3 text-white placeholder:text-zinc-500 focus:ring-2 focus:ring-white/50"
+            required
+          />
+          <Button size="lg" className="bg-white text-black hover:bg-zinc-200">
+            Subscribe
+          </Button>
+        </form>
       </section>
     </div>
   );
