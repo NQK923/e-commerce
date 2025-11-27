@@ -9,6 +9,7 @@ import { formatCurrency } from "../../utils/format";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
+import { useTranslation } from "../../providers/language-provider";
 
 type Props = {
   product: Product;
@@ -16,6 +17,7 @@ type Props = {
 };
 
 export const ProductCard: React.FC<Props> = ({ product, onAddToCart }) => {
+  const { t } = useTranslation();
   const primaryImage = product.images.find((img) => img.primary) ?? product.images[0];
 
   return (
@@ -45,7 +47,7 @@ export const ProductCard: React.FC<Props> = ({ product, onAddToCart }) => {
           )}
           {product.flashSaleEndAt && (
             <Badge className="bg-amber-500 text-white border-amber-500 hover:bg-amber-600">
-              Flash Sale
+              {t.product.flash_sale}
             </Badge>
           )}
         </div>
@@ -61,12 +63,12 @@ export const ProductCard: React.FC<Props> = ({ product, onAddToCart }) => {
             }}
           >
             <ShoppingCart size={16} />
-            Add
+            {t.product.add_to_cart}
           </Button>
           <Link href={`/products/${product.id}`} className="w-full">
              <Button variant="secondary" size="sm" className="w-full gap-2">
               <Eye size={16} />
-              View
+              {t.product.view_details}
             </Button>
           </Link>
         </div>
@@ -86,9 +88,12 @@ export const ProductCard: React.FC<Props> = ({ product, onAddToCart }) => {
         <div className="mt-4 flex items-end justify-between border-t border-zinc-100 pt-3">
           <div className="flex flex-col">
             <span className="text-xs text-zinc-400 font-medium uppercase tracking-wider">Price</span>
-            <span className="text-lg font-bold text-zinc-900">
-              {formatCurrency(product.price, product.currency ?? "USD")}
+            <span className="text-lg font-bold text-red-600">
+              {formatCurrency(product.price, product.currency ?? "VND")}
             </span>
+          </div>
+          <div className="text-xs text-zinc-500">
+            {Math.floor(Math.random() * 1000)} {t.product.sold}
           </div>
         </div>
       </div>

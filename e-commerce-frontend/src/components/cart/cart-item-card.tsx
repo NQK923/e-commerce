@@ -8,6 +8,7 @@ import { formatCurrency } from "../../utils/format";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { QuantitySelector } from "./quantity-selector";
+import { useTranslation } from "../../providers/language-provider";
 
 type Props = {
   item: CartItem;
@@ -16,6 +17,7 @@ type Props = {
 };
 
 export const CartItemCard: React.FC<Props> = ({ item, onQuantityChange, onRemove }) => {
+  const { t } = useTranslation();
   const image = item.product.images.find((img) => img.primary) ?? item.product.images[0];
   return (
     <div className="flex gap-4 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
@@ -29,25 +31,25 @@ export const CartItemCard: React.FC<Props> = ({ item, onQuantityChange, onRemove
       <div className="flex flex-1 flex-col gap-2">
         <div className="flex items-start justify-between gap-3">
           <div className="flex flex-col gap-1">
-            <Link href={`/products/${item.product.id}`} className="text-base font-semibold text-black hover:underline">
+            <Link href={`/products/${item.product.id}`} className="text-base font-semibold text-zinc-900 hover:text-emerald-600 hover:underline">
               {item.product.name}
             </Link>
             <div className="flex items-center gap-2">
               <span className="text-sm font-semibold">
                 {formatCurrency(item.unitPrice, item.product.currency ?? "USD")}
               </span>
-              {item.product.flashSaleEndAt && <Badge tone="warning">Flash sale</Badge>}
+              {item.product.flashSaleEndAt && <Badge tone="warning">{t.product.flash_sale}</Badge>}
             </div>
           </div>
-          <Button variant="ghost" size="sm" onClick={onRemove} className="text-sm text-zinc-600 hover:text-black">
-            Remove
+          <Button variant="ghost" size="sm" onClick={onRemove} className="text-sm text-zinc-600 hover:text-red-600">
+            {t.cart.remove}
           </Button>
         </div>
         <div className="flex items-center justify-between">
           <QuantitySelector quantity={item.quantity} onChange={onQuantityChange} />
           <div className="text-right">
-            <div className="text-sm text-zinc-600">Subtotal</div>
-            <div className="text-lg font-bold text-black">
+            <div className="text-sm text-zinc-600">{t.cart.item_subtotal}</div>
+            <div className="text-lg font-bold text-emerald-700">
               {formatCurrency(item.subtotal, item.product.currency ?? "USD")}
             </div>
           </div>

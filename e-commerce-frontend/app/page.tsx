@@ -11,7 +11,8 @@ import {
   Shirt, 
   Watch, 
   Home as HomeIcon, 
-  ChevronRight
+  ChevronRight,
+  Store
 } from "lucide-react";
 import { productApi } from "@/src/api/productApi";
 import { ProductCard } from "@/src/components/product/product-card";
@@ -20,10 +21,12 @@ import { Spinner } from "@/src/components/ui/spinner";
 import { useCart } from "@/src/store/cart-store";
 import { useToast } from "@/src/components/ui/toast-provider";
 import { Product } from "@/src/types/product";
+import { useTranslation } from "@/src/providers/language-provider";
 
 export default function HomePage() {
   const { addItem } = useCart();
   const { addToast } = useToast();
+  const { t } = useTranslation();
   const [products, setProducts] = React.useState<Product[]>([]);
   const [loading, setLoading] = React.useState(true);
 
@@ -34,46 +37,49 @@ export default function HomePage() {
         const response = await productApi.list({ size: 8, page: 0 });
         setProducts(response.items);
       } catch (error) {
-        const message = error instanceof Error ? error.message : "Failed to load products";
+        const message = error instanceof Error ? error.message : t.common.error;
         addToast(message, "error");
       } finally {
         setLoading(false);
       }
     };
     void load();
-  }, [addToast]);
+  }, [addToast, t]);
 
   const handleAdd = async (product: Product) => {
     await addItem(product, 1);
-    addToast(`${product.name} added to cart`, "success");
+    addToast(`${product.name} ${t.cart.added}`, "success");
   };
 
   return (
     <div className="flex flex-col gap-16 pb-20">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-black py-24 text-center text-white sm:py-32">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
-        <div className="relative mx-auto flex max-w-4xl flex-col items-center gap-6 px-4">
-          <div className="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1 text-sm font-medium backdrop-blur">
-            <span className="mr-2 inline-block h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
-            New Collection Available
+      {/* Hero Section - Marketplace Style */}
+      <section className="relative overflow-hidden bg-emerald-700 py-20 text-white sm:py-28">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff1a_1px,transparent_1px),linear-gradient(to_bottom,#ffffff1a_1px,transparent_1px)] bg-[size:2rem_2rem] opacity-20" />
+        <div className="relative mx-auto flex max-w-7xl flex-col items-center gap-8 px-4 text-center sm:items-start sm:text-left">
+          <div className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-sm font-medium backdrop-blur border border-white/20 text-emerald-50">
+            <span className="mr-2 inline-block h-2 w-2 animate-pulse rounded-full bg-yellow-400" />
+            {t.home.hero_badge}
           </div>
-          <h1 className="text-5xl font-extrabold tracking-tight sm:text-7xl">
-            Elevate Your <span className="text-zinc-400">Lifestyle</span>
+          
+          <h1 className="max-w-3xl text-5xl font-extrabold tracking-tight sm:text-7xl leading-[1.1]">
+            {t.home.hero_title} <span className="text-yellow-300">{t.home.hero_title_highlight}</span>
           </h1>
-          <p className="max-w-2xl text-lg text-zinc-400 sm:text-xl">
-            Discover a curated selection of premium products designed for modern living. 
-            Quality meets aesthetics in every piece we offer.
+          
+          <p className="max-w-2xl text-lg text-emerald-100 sm:text-xl">
+            {t.home.hero_desc}
           </p>
-          <div className="mt-4 flex flex-wrap justify-center gap-4">
+
+          <div className="mt-2 flex flex-wrap gap-4">
             <Link href="/products">
-              <Button size="lg" className="h-12 px-8 text-base bg-white text-black hover:bg-zinc-200 border-0">
-                Shop Now <ArrowRight className="ml-2 h-4 w-4" />
+              <Button size="lg" className="h-12 gap-2 bg-white text-emerald-800 hover:bg-emerald-50 border-0 shadow-lg shadow-emerald-900/20 font-bold">
+                {t.home.shop_now} <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
-            <Link href="/register">
-              <Button size="lg" variant="outline" className="h-12 px-8 text-base text-white border-zinc-700 hover:bg-zinc-800 hover:text-white">
-                Create Account
+            <Link href="/seller/register">
+              <Button size="lg" variant="outline" className="h-12 gap-2 border-2 border-emerald-200 text-white bg-transparent hover:bg-white/10 hover:text-white font-semibold">
+                <Store className="h-4 w-4" />
+                {t.home.start_selling}
               </Button>
             </Link>
           </div>
@@ -81,14 +87,14 @@ export default function HomePage() {
       </section>
 
       {/* Features / Trust Signals */}
-      <section className="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-4 sm:grid-cols-3">
+      <section className="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-4 sm:grid-cols-3 -mt-10 relative z-10">
         {[
-          { icon: Truck, title: "Free Shipping", desc: "On all orders over $50" },
-          { icon: ShieldCheck, title: "Secure Payment", desc: "100% secure transaction" },
-          { icon: Clock, title: "24/7 Support", desc: "Dedicated support team" },
+          { icon: Truck, title: t.home.features.shipping, desc: t.home.features.shipping_desc },
+          { icon: ShieldCheck, title: t.home.features.payment, desc: t.home.features.payment_desc },
+          { icon: Clock, title: t.home.features.support, desc: t.home.features.support_desc },
         ].map((feature, i) => (
-          <div key={i} className="flex items-center gap-4 rounded-2xl border border-zinc-100 bg-white p-6 shadow-sm transition-shadow hover:shadow-md">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-black">
+          <div key={i} className="flex items-center gap-4 rounded-xl border border-zinc-100 bg-white p-6 shadow-lg shadow-zinc-200/50 transition-transform hover:-translate-y-1">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
               <feature.icon size={24} />
             </div>
             <div>
@@ -102,27 +108,27 @@ export default function HomePage() {
       {/* Categories */}
       <section className="mx-auto w-full max-w-7xl px-4">
         <div className="mb-8 flex items-end justify-between">
-          <h2 className="text-3xl font-bold tracking-tight text-zinc-900">Shop by Category</h2>
-          <Link href="/products" className="hidden text-sm font-medium text-zinc-500 hover:text-black sm:block">
-            View all categories &rarr;
+          <h2 className="text-2xl font-bold tracking-tight text-zinc-900">{t.home.categories.title}</h2>
+          <Link href="/products" className="hidden text-sm font-medium text-emerald-600 hover:underline sm:block">
+            {t.home.categories.view_all} &rarr;
           </Link>
         </div>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {[
-            { name: "Electronics", icon: Smartphone, color: "bg-blue-50 text-blue-600" },
-            { name: "Fashion", icon: Shirt, color: "bg-rose-50 text-rose-600" },
-            { name: "Accessories", icon: Watch, color: "bg-amber-50 text-amber-600" },
-            { name: "Home", icon: HomeIcon, color: "bg-emerald-50 text-emerald-600" },
-          ].map((cat) => (
+            { name: t.home.categories.electronics, icon: Smartphone, color: "bg-blue-50 text-blue-600", href: "electronics" },
+            { name: t.home.categories.fashion, icon: Shirt, color: "bg-rose-50 text-rose-600", href: "fashion" },
+            { name: t.home.categories.home, icon: HomeIcon, color: "bg-amber-50 text-amber-600", href: "home" },
+            { name: t.home.categories.books, icon: Truck, color: "bg-indigo-50 text-indigo-600", href: "books" }, // Reusing Truck as placeholder for Books
+          ].map((cat, i) => (
             <Link 
-              key={cat.name} 
-              href={`/products?category=${cat.name.toLowerCase()}`}
-              className="group flex flex-col items-center justify-center rounded-xl border border-zinc-100 bg-white py-10 transition-all hover:border-zinc-300 hover:shadow-sm"
+              key={i} 
+              href={`/products?category=${cat.href}`}
+              className="group flex flex-col items-center justify-center rounded-xl border border-zinc-100 bg-white py-8 transition-all hover:border-emerald-200 hover:shadow-md"
             >
-              <div className={`mb-4 flex h-16 w-16 items-center justify-center rounded-full ${cat.color} transition-transform group-hover:scale-110`}>
-                <cat.icon size={32} />
+              <div className={`mb-4 flex h-14 w-14 items-center justify-center rounded-full ${cat.color} transition-transform group-hover:scale-110`}>
+                <cat.icon size={28} />
               </div>
-              <span className="font-semibold text-zinc-900">{cat.name}</span>
+              <span className="font-medium text-zinc-900">{cat.name}</span>
             </Link>
           ))}
         </div>
@@ -130,54 +136,39 @@ export default function HomePage() {
 
       {/* Featured Products */}
       <section className="mx-auto w-full max-w-7xl px-4">
-        <div className="mb-8 flex items-end justify-between">
-          <div>
-            <h2 className="text-3xl font-bold tracking-tight text-zinc-900">Featured Products</h2>
-            <p className="mt-2 text-zinc-500">Hand-picked daily essentials just for you.</p>
+        <div className="mb-6 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 p-6 text-white shadow-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold uppercase tracking-wide flex items-center gap-2">
+                <span className="animate-pulse">⚡</span> {t.home.featured.title}
+              </h2>
+              <p className="mt-1 text-orange-100 text-sm opacity-90">{t.home.featured.subtitle}</p>
+            </div>
+            <Link href="/products">
+              <Button variant="secondary" size="sm" className="gap-1 bg-white text-orange-600 hover:bg-orange-50 border-0">
+                {t.home.featured.view_all} <ChevronRight size={16} />
+              </Button>
+            </Link>
           </div>
-          <Link href="/products">
-            <Button variant="ghost" className="gap-1">
-              View all <ChevronRight size={16} />
-            </Button>
-          </Link>
         </div>
 
         {loading ? (
-          <div className="flex h-64 flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-zinc-200 bg-zinc-50 text-zinc-500">
+          <div className="flex h-64 flex-col items-center justify-center gap-4 rounded-xl bg-zinc-50 text-zinc-500">
             <Spinner />
-            <p>Loading best sellers...</p>
+            <p>{t.common.loading}</p>
           </div>
         ) : (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {products.map((product) => (
               <ProductCard key={product.id} product={product} onAddToCart={handleAdd} />
             ))}
             {!products.length && (
               <div className="col-span-full flex h-40 items-center justify-center rounded-xl border border-dashed border-zinc-200 bg-zinc-50 text-zinc-500">
-                No products found.
+                {t.home.featured.no_products}
               </div>
             )}
           </div>
         )}
-      </section>
-
-      {/* Newsletter CTA */}
-      <section className="mx-4 rounded-3xl bg-zinc-900 px-6 py-16 text-center text-white sm:mx-auto sm:max-w-7xl sm:px-16">
-        <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Stay in the loop</h2>
-        <p className="mx-auto mt-4 max-w-xl text-lg text-zinc-400">
-          Subscribe to our newsletter for exclusive offers, new arrivals, and style tips directly to your inbox.
-        </p>
-        <form className="mx-auto mt-8 flex max-w-md flex-col gap-3 sm:flex-row" onSubmit={(e) => e.preventDefault()}>
-          <input 
-            type="email" 
-            placeholder="Enter your email" 
-            className="flex-1 rounded-lg border-0 bg-white/10 px-4 py-3 text-white placeholder:text-zinc-500 focus:ring-2 focus:ring-white/50"
-            required
-          />
-          <Button size="lg" className="bg-white text-black hover:bg-zinc-200">
-            Subscribe
-          </Button>
-        </form>
       </section>
     </div>
   );

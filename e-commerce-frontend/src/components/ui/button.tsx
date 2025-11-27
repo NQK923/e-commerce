@@ -4,7 +4,7 @@ import React from "react";
 import { cx } from "../../utils/cx";
 
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: "primary" | "secondary" | "ghost";
+  variant?: "primary" | "secondary" | "ghost" | "outline";
   size?: "sm" | "md" | "lg";
   block?: boolean;
 };
@@ -13,9 +13,10 @@ const baseStyles =
   "inline-flex items-center justify-center rounded-lg font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed";
 
 const variantStyles: Record<NonNullable<ButtonProps["variant"]>, string> = {
-  primary: "bg-black text-white hover:bg-zinc-800 focus:ring-black",
-  secondary: "bg-white text-black border border-zinc-200 hover:bg-zinc-50 focus:ring-zinc-300",
-  ghost: "bg-transparent text-black hover:bg-zinc-100 focus:ring-zinc-200",
+  primary: "bg-emerald-600 text-white hover:bg-emerald-700 focus:ring-emerald-600 shadow-sm",
+  secondary: "bg-white text-zinc-900 border border-zinc-200 hover:bg-zinc-50 focus:ring-zinc-200",
+  ghost: "bg-transparent text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 focus:ring-zinc-200",
+  outline: "border border-zinc-200 bg-transparent text-zinc-900 hover:bg-zinc-50 focus:ring-zinc-200",
 };
 
 const sizeStyles: Record<NonNullable<ButtonProps["size"]>, string> = {
