@@ -12,7 +12,6 @@ import com.learnfirebase.ecommerce.inventory.application.port.out.InventoryRepos
 import com.learnfirebase.ecommerce.inventory.domain.exception.InventoryDomainException;
 import com.learnfirebase.ecommerce.inventory.domain.model.Inventory;
 import com.learnfirebase.ecommerce.inventory.domain.model.InventoryId;
-import com.learnfirebase.ecommerce.inventory.domain.model.InventoryItem;
 import com.learnfirebase.ecommerce.inventory.domain.model.Warehouse;
 
 import lombok.RequiredArgsConstructor;

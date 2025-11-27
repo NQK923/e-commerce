@@ -18,7 +18,6 @@ import com.learnfirebase.ecommerce.order.application.port.out.LoadProductPort;
 import com.learnfirebase.ecommerce.order.application.port.out.OrderEventPublisher;
 import com.learnfirebase.ecommerce.order.application.port.out.OrderOutboxPort;
 import com.learnfirebase.ecommerce.order.application.port.out.OrderRepository;
-import com.learnfirebase.ecommerce.order.domain.event.OrderCreated;
 import com.learnfirebase.ecommerce.order.domain.model.Order;
 import com.learnfirebase.ecommerce.order.domain.model.OrderId;
 import com.learnfirebase.ecommerce.order.domain.model.OrderItem;

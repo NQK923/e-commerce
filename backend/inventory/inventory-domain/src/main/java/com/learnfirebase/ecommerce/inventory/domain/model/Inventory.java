@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(of = "id")
+@EqualsAndHashCode(of = "id", callSuper = false)
 public class Inventory extends AggregateRoot<InventoryId> {
     private InventoryId id;
     private Warehouse warehouse;

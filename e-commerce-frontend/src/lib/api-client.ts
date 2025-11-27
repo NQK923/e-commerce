@@ -1,4 +1,4 @@
-import { config } from "../config/env";
+import {config} from "../config/env";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
@@ -73,8 +73,7 @@ export const apiRequest = async <T>(
 
   if (response.ok) {
     if (response.status === 204) return undefined as T;
-    const json = (await response.json()) as T;
-    return json;
+      return (await response.json()) as T;
   }
 
   // Attempt refresh on 401 once.

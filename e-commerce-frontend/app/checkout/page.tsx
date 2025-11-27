@@ -2,13 +2,13 @@
 
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
-import { orderApi } from "../../src/api/orderApi";
-import { CartSummary } from "../../src/components/cart/cart-summary";
-import { Input } from "../../src/components/ui/input";
-import { Spinner } from "../../src/components/ui/spinner";
-import { useRequireAuth } from "../../src/hooks/use-require-auth";
-import { useCart } from "../../src/store/cart-store";
-import { useToast } from "../../src/components/ui/toast-provider";
+import { orderApi } from "@/src/api/orderApi";
+import { CartSummary } from "@/src/components/cart/cart-summary";
+import { Input } from "@/src/components/ui/input";
+import { Spinner } from "@/src/components/ui/spinner";
+import { useRequireAuth } from "@/src/hooks/use-require-auth";
+import { useCart } from "@/src/store/cart-store";
+import { useToast } from "@/src/components/ui/toast-provider";
 
 export default function CheckoutPage() {
   const { isAuthenticated, initializing } = useRequireAuth();

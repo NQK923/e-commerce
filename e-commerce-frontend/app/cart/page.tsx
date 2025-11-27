@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import React from "react";
-import { CartItemCard } from "../../src/components/cart/cart-item-card";
-import { CartSummary } from "../../src/components/cart/cart-summary";
-import { Spinner } from "../../src/components/ui/spinner";
-import { useCart } from "../../src/store/cart-store";
+import { CartItemCard } from "@/src/components/cart/cart-item-card";
+import { CartSummary } from "@/src/components/cart/cart-summary";
+import { Spinner } from "@/src/components/ui/spinner";
+import { useCart } from "@/src/store/cart-store";
 
 export default function CartPage() {
   const { cart, loading, updateQuantity, removeItem } = useCart();

@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
-import { Button } from "../../src/components/ui/button";
-import { Input } from "../../src/components/ui/input";
-import { useToast } from "../../src/components/ui/toast-provider";
-import { useAuth } from "../../src/store/auth-store";
+import { Button } from "@/src/components/ui/button";
+import { Input } from "@/src/components/ui/input";
+import { useToast } from "@/src/components/ui/toast-provider";
+import { useAuth } from "@/src/store/auth-store";
 
 export default function RegisterPage() {
   const router = useRouter();

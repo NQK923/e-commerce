@@ -2,14 +2,14 @@
 
 import { useParams } from "next/navigation";
 import React, { useCallback, useEffect, useState } from "react";
-import { orderApi } from "../../../src/api/orderApi";
-import { Badge } from "../../../src/components/ui/badge";
-import { Button } from "../../../src/components/ui/button";
-import { Spinner } from "../../../src/components/ui/spinner";
-import { useRequireAuth } from "../../../src/hooks/use-require-auth";
-import { Order } from "../../../src/types/order";
-import { formatCurrency, formatDate } from "../../../src/utils/format";
-import { useToast } from "../../../src/components/ui/toast-provider";
+import { orderApi } from "@/src/api/orderApi";
+import { Badge } from "@/src/components/ui/badge";
+import { Button } from "@/src/components/ui/button";
+import { Spinner } from "@/src/components/ui/spinner";
+import { useRequireAuth } from "@/src/hooks/use-require-auth";
+import { Order } from "@/src/types/order";
+import { formatCurrency, formatDate } from "@/src/utils/format";
+import { useToast } from "@/src/components/ui/toast-provider";
 
 export default function OrderDetailPage() {
   const params = useParams<{ id: string }>();

@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useState } from "react";
-import { Button } from "../../src/components/ui/button";
-import { Input } from "../../src/components/ui/input";
-import { useAuth } from "../../src/store/auth-store";
-import { useToast } from "../../src/components/ui/toast-provider";
-import { config } from "../../src/config/env";
+import { Button } from "@/src/components/ui/button";
+import { Input } from "@/src/components/ui/input";
+import { useAuth } from "@/src/store/auth-store";
+import { useToast } from "@/src/components/ui/toast-provider";
+import { config } from "@/src/config/env";
 
 export default function LoginPage() {
   const router = useRouter();

@@ -1,14 +1,14 @@
 'use client';
 
 import React, { useMemo, useState } from "react";
-import { ProductCard } from "../../src/components/product/product-card";
-import { Button } from "../../src/components/ui/button";
-import { Input } from "../../src/components/ui/input";
-import { Spinner } from "../../src/components/ui/spinner";
-import { useProducts } from "../../src/hooks/use-products";
-import { useCart } from "../../src/store/cart-store";
-import { useToast } from "../../src/components/ui/toast-provider";
-import { Product } from "../../src/types/product";
+import { ProductCard } from "@/src/components/product/product-card";
+import { Button } from "@/src/components/ui/button";
+import { Input } from "@/src/components/ui/input";
+import { Spinner } from "@/src/components/ui/spinner";
+import { useProducts } from "@/src/hooks/use-products";
+import { useCart } from "@/src/store/cart-store";
+import { useToast } from "@/src/components/ui/toast-provider";
+import { Product } from "@/src/types/product";
 
 export default function ProductsPage() {
   const { addItem } = useCart();

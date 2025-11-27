@@ -21,7 +21,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(of = "id")
+@EqualsAndHashCode(of = "id", callSuper = false)
 public class Order extends AggregateRoot<OrderId> {
     private OrderId id;
     private UserId userId;
@@ -67,11 +67,10 @@ public class Order extends AggregateRoot<OrderId> {
     }
 
     private void recalculateTotal() {
-        Money newTotal = items.stream()
+        this.totalAmount = items.stream()
             .map(OrderItem::subTotal)
             .reduce(Money::add)
             .orElse(Money.builder().amount(java.math.BigDecimal.ZERO).currency(defaultCurrency()).build());
-        this.totalAmount = newTotal;
         this.updatedAt = Instant.now();
     }
 

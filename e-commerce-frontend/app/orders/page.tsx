@@ -1,13 +1,13 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from "react";
-import { orderApi } from "../../src/api/orderApi";
-import { OrderCard } from "../../src/components/orders/order-card";
-import { Button } from "../../src/components/ui/button";
-import { Spinner } from "../../src/components/ui/spinner";
-import { useRequireAuth } from "../../src/hooks/use-require-auth";
-import { Order } from "../../src/types/order";
-import { useToast } from "../../src/components/ui/toast-provider";
+import { orderApi } from "@/src/api/orderApi";
+import { OrderCard } from "@/src/components/orders/order-card";
+import { Button } from "@/src/components/ui/button";
+import { Spinner } from "@/src/components/ui/spinner";
+import { useRequireAuth } from "@/src/hooks/use-require-auth";
+import { Order } from "@/src/types/order";
+import { useToast } from "@/src/components/ui/toast-provider";
 
 export default function OrdersPage() {
   const { isAuthenticated, initializing } = useRequireAuth();

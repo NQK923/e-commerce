@@ -9,7 +9,6 @@ import com.learnfirebase.ecommerce.promotion.application.port.out.PromotionRepos
 import com.learnfirebase.ecommerce.promotion.application.port.out.PromotionUsageRepository;
 import com.learnfirebase.ecommerce.promotion.domain.model.Promotion;
 import com.learnfirebase.ecommerce.promotion.domain.model.PromotionId;
-import com.learnfirebase.ecommerce.promotion.domain.model.PromotionRule;
 
 import lombok.RequiredArgsConstructor;
 

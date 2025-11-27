@@ -1,10 +1,10 @@
 'use client';
 
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { cartApi } from "../api/cartApi";
-import { useAuth } from "./auth-store";
-import { AddToCartRequest, Cart, CartItem } from "../types/cart";
-import { Product } from "../types/product";
+import React, {createContext, useCallback, useContext, useEffect, useMemo, useState} from "react";
+import {cartApi} from "../api/cartApi";
+import {useAuth} from "./auth-store";
+import {AddToCartRequest, Cart, CartItem} from "../types/cart";
+import {Product} from "../types/product";
 
 type CartContextValue = {
   cart: Cart | null;
@@ -38,8 +38,7 @@ const loadLocalCart = (): Cart | null => {
   const saved = localStorage.getItem(LOCAL_CART_KEY);
   if (!saved) return null;
   try {
-    const parsed = JSON.parse(saved) as Cart;
-    return parsed;
+      return JSON.parse(saved) as Cart;
   } catch {
     return null;
   }

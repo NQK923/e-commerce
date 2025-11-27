@@ -2,15 +2,15 @@
 
 import { useParams } from "next/navigation";
 import React, { useEffect, useMemo, useState } from "react";
-import { productApi } from "../../../src/api/productApi";
-import { ProductGallery } from "../../../src/components/product/product-gallery";
-import { Button } from "../../../src/components/ui/button";
-import { Badge } from "../../../src/components/ui/badge";
-import { Spinner } from "../../../src/components/ui/spinner";
-import { useCart } from "../../../src/store/cart-store";
-import { useToast } from "../../../src/components/ui/toast-provider";
-import { Product } from "../../../src/types/product";
-import { formatCurrency } from "../../../src/utils/format";
+import { productApi } from "@/src/api/productApi";
+import { ProductGallery } from "@/src/components/product/product-gallery";
+import { Button } from "@/src/components/ui/button";
+import { Badge } from "@/src/components/ui/badge";
+import { Spinner } from "@/src/components/ui/spinner";
+import { useCart } from "@/src/store/cart-store";
+import { useToast } from "@/src/components/ui/toast-provider";
+import { Product } from "@/src/types/product";
+import { formatCurrency } from "@/src/utils/format";
 
 type CountdownProps = { endAt: string };
 const FlashSaleCountdown: React.FC<CountdownProps> = ({ endAt }) => {

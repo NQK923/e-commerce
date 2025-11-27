@@ -2,10 +2,10 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
-import { authApi } from "../../../src/api/authApi";
-import { Spinner } from "../../../src/components/ui/spinner";
-import { useToast } from "../../../src/components/ui/toast-provider";
-import { useAuth } from "../../../src/store/auth-store";
+import { authApi } from "@/src/api/authApi";
+import { Spinner } from "@/src/components/ui/spinner";
+import { useToast } from "@/src/components/ui/toast-provider";
+import { useAuth } from "@/src/store/auth-store";
 
 export default function OAuthCallbackPage() {
   const router = useRouter();

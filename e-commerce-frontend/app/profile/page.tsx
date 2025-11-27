@@ -1,13 +1,13 @@
 'use client';
 
 import React, { useEffect, useState } from "react";
-import { profileApi } from "../../src/api/profileApi";
-import { Button } from "../../src/components/ui/button";
-import { Input } from "../../src/components/ui/input";
-import { Spinner } from "../../src/components/ui/spinner";
-import { useRequireAuth } from "../../src/hooks/use-require-auth";
-import { useAuth } from "../../src/store/auth-store";
-import { useToast } from "../../src/components/ui/toast-provider";
+import { profileApi } from "@/src/api/profileApi";
+import { Button } from "@/src/components/ui/button";
+import { Input } from "@/src/components/ui/input";
+import { Spinner } from "@/src/components/ui/spinner";
+import { useRequireAuth } from "@/src/hooks/use-require-auth";
+import { useAuth } from "@/src/store/auth-store";
+import { useToast } from "@/src/components/ui/toast-provider";
 
 export default function ProfilePage() {
   const { user, setUserProfile } = useAuth();
