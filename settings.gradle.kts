@@ -1,6 +1,12 @@
 rootProject.name = "ecommerce-core"
 
-include(
+fun includeModule(path: String) {
+    val projectPath = ":$path"
+    include(projectPath)
+    project(projectPath).projectDir = file("backend/${path.replace(":", "/")}")
+}
+
+listOf(
     // common group
     "common:common-domain",
     "common:common-application",
@@ -62,4 +68,4 @@ include(
 
     // bootstrap
     "bootstrap",
-)
+).forEach { includeModule(it) }
