@@ -1,4 +1,4 @@
-plugins {
+﻿plugins {
     `java-library`
 }
 
@@ -13,5 +13,6 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
     implementation("org.springframework.kafka:spring-kafka")
     implementation("org.postgresql:postgresql")
-    implementation("org.elasticsearch.client:elasticsearch-rest-client:8.15.3")
+    implementation("org.elasticsearch.client:elasticsearch-rest-client")
 }
+

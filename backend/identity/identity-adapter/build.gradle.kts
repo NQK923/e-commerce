@@ -1,4 +1,4 @@
-plugins {
+﻿plugins {
     `java-library`
 }
 
@@ -13,3 +13,4 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
     implementation("org.springframework.kafka:spring-kafka")
 }
+
