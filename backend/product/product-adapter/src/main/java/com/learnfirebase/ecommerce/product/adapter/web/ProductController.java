@@ -27,8 +27,8 @@ public class ProductController {
 
     @GetMapping
     public ResponseEntity<PageResponse<ProductDto>> list(
-        @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "8") int size) {
+        @RequestParam(name = "page", defaultValue = "0") int page,
+        @RequestParam(name = "size", defaultValue = "8") int size) {
         PageRequest pageRequest = PageRequest.builder().page(page).size(size).build();
         return ResponseEntity.ok(queryProductUseCase.listProducts(pageRequest));
     }

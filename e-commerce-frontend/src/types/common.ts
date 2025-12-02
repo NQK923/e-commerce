@@ -3,6 +3,7 @@ export type PaginatedResponse<T> = {
   page: number;
   size: number;
   total: number;
+  totalPages?: number;
 };
 
 export type ApiListParams = {

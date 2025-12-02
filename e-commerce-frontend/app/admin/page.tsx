@@ -1,7 +1,7 @@
 'use client';
 
 import React from "react";
-import { ShieldCheck, Users, Package2, Store, CheckCircle2, XCircle, Clock4, Sparkles, ArrowUpRight } from "lucide-react";
+import { ShieldCheck, Users, Package2, Store, CheckCircle2, Clock4, Sparkles, ArrowUpRight } from "lucide-react";
 import { productApi } from "@/src/api/productApi";
 import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
