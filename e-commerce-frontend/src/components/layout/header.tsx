@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React from "react";
-import { ShoppingBag, User, Search, Menu, LogOut, Globe, Store } from "lucide-react";
+import { ShoppingBag, User, Search, Menu, LogOut, Globe, Store, Shield } from "lucide-react";
 import { useAuth } from "../../store/auth-store";
 import { useCart } from "../../store/cart-store";
 import { cx } from "../../utils/cx";
@@ -17,10 +17,13 @@ export const Header: React.FC = () => {
   const { t, language, setLanguage } = useTranslation();
   const itemCount = cart?.items.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
 
+  const isAdmin = user?.roles?.includes("ADMIN");
+
   const navItems = [
     { href: "/", label: t.nav.home },
     { href: "/products", label: t.nav.products },
     { href: "/orders", label: t.nav.orders, requiresAuth: true },
+    ...(isAdmin ? [{ href: "/admin", label: "Admin" }] : []),
   ];
 
   const toggleLanguage = () => {
@@ -48,6 +51,16 @@ export const Header: React.FC = () => {
               <Store size={16} />
               {t.nav.sellerChannel}
             </Link>
+
+            {isAdmin && (
+              <Link 
+                href="/admin" 
+                className="flex items-center gap-1 font-semibold text-zinc-600 transition-colors hover:text-emerald-600"
+              >
+                <Shield size={16} />
+                Admin
+              </Link>
+            )}
             
             <div className="h-4 w-px bg-zinc-200 mx-1" />
 
