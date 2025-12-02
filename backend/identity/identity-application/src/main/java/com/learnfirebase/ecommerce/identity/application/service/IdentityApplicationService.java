@@ -12,6 +12,7 @@ import com.learnfirebase.ecommerce.identity.application.dto.UserDto;
 import com.learnfirebase.ecommerce.identity.application.port.in.AuthenticateUserUseCase;
 import com.learnfirebase.ecommerce.identity.application.port.in.OAuth2LoginUseCase;
 import com.learnfirebase.ecommerce.identity.application.port.in.RegisterUserUseCase;
+import com.learnfirebase.ecommerce.identity.application.port.in.UserQueryUseCase;
 import com.learnfirebase.ecommerce.identity.application.port.out.PasswordHasher;
 import com.learnfirebase.ecommerce.identity.application.port.out.TokenProvider;
 import com.learnfirebase.ecommerce.identity.application.port.out.UserRepository;
@@ -24,7 +25,7 @@ import com.learnfirebase.ecommerce.identity.domain.model.UserId;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class IdentityApplicationService implements RegisterUserUseCase, AuthenticateUserUseCase, OAuth2LoginUseCase {
+public class IdentityApplicationService implements RegisterUserUseCase, AuthenticateUserUseCase, OAuth2LoginUseCase, UserQueryUseCase {
     private final UserRepository userRepository;
     private final PasswordHasher passwordHasher;
     private final TokenProvider tokenProvider;
@@ -45,12 +46,7 @@ public class IdentityApplicationService implements RegisterUserUseCase, Authenti
             .build();
 
         User saved = userRepository.save(user);
-        return UserDto.builder()
-            .id(saved.getId().getValue())
-            .email(saved.getEmail().getValue())
-            .roles(saved.getRoles().stream().map(Enum::name).toList())
-            .createdAt(saved.getCreatedAt())
-            .build();
+        return toDto(saved, command.getDisplayName());
     }
 
     @Override
@@ -95,6 +91,33 @@ public class IdentityApplicationService implements RegisterUserUseCase, Authenti
         return AuthTokenDto.builder()
             .accessToken(tokenProvider.generateAccessToken(user.getId().getValue(), emailForToken))
             .refreshToken(tokenProvider.generateRefreshToken(user.getId().getValue(), emailForToken, command.getProviderUserId()))
+            .build();
+    }
+
+    @Override
+    public UserDto getByEmail(String email) {
+        return userRepository.findByEmail(email)
+            .map(user -> toDto(user, null))
+            .orElseThrow(() -> new IdentityDomainException("User not found"));
+    }
+
+    @Override
+    public UserDto getById(String id) {
+        return userRepository.findById(new UserId(id))
+            .map(user -> toDto(user, null))
+            .orElseThrow(() -> new IdentityDomainException("User not found"));
+    }
+
+    private UserDto toDto(User user, String displayNameOverride) {
+        String displayName = displayNameOverride != null ? displayNameOverride
+            : (user.getEmail() != null ? user.getEmail().getValue() : user.getProviderUserId());
+        return UserDto.builder()
+            .id(user.getId().getValue())
+            .email(user.getEmail() != null ? user.getEmail().getValue() : null)
+            .displayName(displayName)
+            .provider(user.getAuthProvider())
+            .roles(user.getRoles().stream().map(Enum::name).toList())
+            .createdAt(user.getCreatedAt())
             .build();
     }
 }
