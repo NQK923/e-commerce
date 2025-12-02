@@ -7,6 +7,8 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Repository;
 
+import com.learnfirebase.ecommerce.common.application.pagination.PageRequest;
+import com.learnfirebase.ecommerce.common.application.pagination.PageResponse;
 import com.learnfirebase.ecommerce.common.domain.valueobject.Money;
 import com.learnfirebase.ecommerce.product.application.port.out.ProductRepository;
 import com.learnfirebase.ecommerce.product.domain.model.Category;
@@ -33,6 +35,19 @@ public class ProductRepositoryImpl implements ProductRepository {
     @Override
     public Optional<Product> findById(ProductId id) {
         return productJpaRepository.findById(id.getValue()).map(this::toDomain);
+    }
+
+    @Override
+    public PageResponse<Product> findAll(PageRequest pageRequest) {
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(pageRequest.getPage(), pageRequest.getSize());
+        org.springframework.data.domain.Page<ProductEntity> page = productJpaRepository.findAll(pageable);
+        return PageResponse.<Product>builder()
+            .content(page.getContent().stream().map(this::toDomain).toList())
+            .totalElements(page.getTotalElements())
+            .totalPages(page.getTotalPages())
+            .page(pageRequest.getPage())
+            .size(pageRequest.getSize())
+            .build();
     }
 
     private ProductEntity toEntity(Product product) {

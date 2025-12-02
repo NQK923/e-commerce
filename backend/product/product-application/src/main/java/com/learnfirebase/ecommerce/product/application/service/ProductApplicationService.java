@@ -6,9 +6,12 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import com.learnfirebase.ecommerce.common.domain.valueobject.Money;
+import com.learnfirebase.ecommerce.common.application.pagination.PageRequest;
+import com.learnfirebase.ecommerce.common.application.pagination.PageResponse;
 import com.learnfirebase.ecommerce.product.application.command.UpsertProductCommand;
 import com.learnfirebase.ecommerce.product.application.dto.ProductDto;
 import com.learnfirebase.ecommerce.product.application.port.in.ManageProductUseCase;
+import com.learnfirebase.ecommerce.product.application.port.in.QueryProductUseCase;
 import com.learnfirebase.ecommerce.product.application.port.out.ProductEventPublisher;
 import com.learnfirebase.ecommerce.product.application.port.out.ProductRepository;
 import com.learnfirebase.ecommerce.product.application.port.out.ProductSearchIndexPort;
@@ -23,7 +26,7 @@ import com.learnfirebase.ecommerce.product.domain.model.ProductVariant;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class ProductApplicationService implements ManageProductUseCase {
+public class ProductApplicationService implements ManageProductUseCase, QueryProductUseCase {
     private final ProductRepository productRepository;
     private final ProductSearchIndexPort productSearchIndexPort;
     private final ProductEventPublisher eventPublisher;
@@ -62,6 +65,26 @@ public class ProductApplicationService implements ManageProductUseCase {
         productSearchIndexPort.index(saved);
         eventPublisher.publish(new com.learnfirebase.ecommerce.common.domain.DomainEvent() {});
         return toDto(saved);
+    }
+
+    @Override
+    public PageResponse<ProductDto> listProducts(PageRequest pageRequest) {
+        PageResponse<Product> page = productRepository.findAll(pageRequest);
+        return PageResponse.<ProductDto>builder()
+            .content(page.getContent().stream().map(this::toDto).toList())
+            .totalElements(page.getTotalElements())
+            .totalPages(page.getTotalPages())
+            .page(page.getPage())
+            .size(page.getSize())
+            .build();
+    }
+
+    @Override
+    public ProductDto getProduct(String id) {
+        ProductId productId = new ProductId(id);
+        Product product = productRepository.findById(productId)
+            .orElseThrow(() -> new ProductDomainException("Product not found: " + id));
+        return toDto(product);
     }
 
     private ProductDto toDto(Product product) {
