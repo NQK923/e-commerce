@@ -23,6 +23,9 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 const ACCESS_KEY = "ecommerce_access_token";
 const REFRESH_KEY = "ecommerce_refresh_token";
 
+const getStoredAccessToken = () => (typeof window === "undefined" ? null : localStorage.getItem(ACCESS_KEY));
+const getStoredRefreshToken = () => (typeof window === "undefined" ? null : localStorage.getItem(REFRESH_KEY));
+
 const persistTokens = (tokens: AuthTokens | null) => {
   if (typeof window === "undefined") return;
   if (tokens) {
@@ -40,6 +43,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [refreshToken, setRefreshToken] = useState<string | null>(null);
   const [initializing, setInitializing] = useState(true);
 
+  const resolveRefreshToken = useCallback(() => refreshToken ?? getStoredRefreshToken(), [refreshToken]);
+
   const syncTokens = useCallback((tokens: AuthTokens | null) => {
     setAccessToken(tokens?.accessToken ?? null);
     setRefreshToken(tokens?.refreshToken ?? null);
@@ -47,21 +52,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const logout = useCallback(async () => {
-    if (refreshToken) {
+    const tokenToRevoke = resolveRefreshToken();
+    if (tokenToRevoke) {
       try {
-        await authApi.logout(refreshToken);
+        await authApi.logout(tokenToRevoke);
       } catch {
         // Ignore logout failures to avoid blocking user.
       }
     }
     syncTokens(null);
     setUser(null);
-  }, [refreshToken, syncTokens]);
+  }, [resolveRefreshToken, syncTokens]);
 
   const refresh = useCallback(async () => {
-    if (!refreshToken) return false;
+    const tokenToRefresh = resolveRefreshToken();
+    if (!tokenToRefresh) return false;
     try {
-      const tokens = await authApi.refresh(refreshToken);
+      const tokens = await authApi.refresh(tokenToRefresh);
       syncTokens(tokens);
       return true;
     } catch {
@@ -111,7 +118,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     // Configure API client hooks for auth.
-    setAuthTokenProvider(() => accessToken);
+    setAuthTokenProvider(() => accessToken ?? getStoredAccessToken());
     setRefreshHandler(refresh);
     setLogoutHandler(logout);
   }, [accessToken, logout, refresh]);
@@ -119,8 +126,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const bootstrap = async () => {
       if (typeof window === "undefined") return;
-      const storedAccess = localStorage.getItem(ACCESS_KEY);
-      const storedRefresh = localStorage.getItem(REFRESH_KEY);
+      const storedAccess = getStoredAccessToken();
+      const storedRefresh = getStoredRefreshToken();
       if (storedAccess && storedRefresh) {
         syncTokens({ accessToken: storedAccess, refreshToken: storedRefresh });
         await fetchUser();

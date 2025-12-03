@@ -140,4 +140,34 @@ export const en = {
     rights_reserved: "All rights reserved.",
     region: "Country & Region: Singapore | Indonesia | Vietnam | Thailand",
   },
+  seller: {
+    title: "Open your store",
+    subtitle: "Tell us about your shop and start selling to millions of shoppers.",
+    cta: "Submit application",
+    success: "We received your seller application.",
+    missing_fields: "Please fill all required fields and accept the terms.",
+    highlights: [
+      { title: "Quick onboarding", desc: "We guide you through product setup and policies." },
+      { title: "Marketing boosts", desc: "Access campaigns, vouchers, and sponsored slots." },
+      { title: "Seller tools", desc: "Dashboard for orders, inventory, chat, and analytics." },
+    ],
+    form: {
+      store_name: "Store name",
+      contact_email: "Contact email",
+      phone: "Phone / Zalo",
+      category: "Main category",
+      categories: ["Fashion", "Electronics", "Home & Living", "Beauty & Health", "Others"],
+      description: "What do you sell?",
+      accept: "I agree to marketplace terms & policies.",
+      loading: "Submitting...",
+    },
+    faq: {
+      title: "Frequently asked",
+      items: [
+        { q: "How long does approval take?", a: "Most applications are reviewed within 1 business day." },
+        { q: "Do I need a company?", a: "You can start as an individual. Company docs can be added later." },
+        { q: "What fees apply?", a: "Standard commission applies per order; no listing fee." },
+      ],
+    },
+  },
 };

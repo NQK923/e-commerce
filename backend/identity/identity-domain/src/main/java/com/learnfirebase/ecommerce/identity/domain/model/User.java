@@ -17,7 +17,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(of = "id")
+@EqualsAndHashCode(of = "id", callSuper = false)
 public class User extends AggregateRoot<UserId> {
     private UserId id;
     private Email email;
@@ -29,6 +29,7 @@ public class User extends AggregateRoot<UserId> {
     private Set<Role> roles = EnumSet.of(Role.CUSTOMER);
     @Builder.Default
     private Set<Permission> permissions = EnumSet.noneOf(Permission.class);
+    private String displayName;
     private Instant createdAt;
     private Instant updatedAt;
 

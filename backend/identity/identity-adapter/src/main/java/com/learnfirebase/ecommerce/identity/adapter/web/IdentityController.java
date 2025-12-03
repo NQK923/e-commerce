@@ -14,15 +14,19 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.learnfirebase.ecommerce.identity.application.command.LoginCommand;
 import com.learnfirebase.ecommerce.identity.application.command.RegisterUserCommand;
+import com.learnfirebase.ecommerce.identity.application.command.UpdateProfileCommand;
 import com.learnfirebase.ecommerce.identity.application.dto.AuthTokenDto;
 import com.learnfirebase.ecommerce.identity.application.dto.UserDto;
 import com.learnfirebase.ecommerce.identity.application.port.in.AuthenticateUserUseCase;
 import com.learnfirebase.ecommerce.identity.application.port.in.RegisterUserUseCase;
 import com.learnfirebase.ecommerce.identity.application.port.in.UserQueryUseCase;
+import com.learnfirebase.ecommerce.identity.application.port.in.UpdateUserProfileUseCase;
 
 import lombok.Builder;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 @RestController
 @RequestMapping("/api/users")
@@ -31,6 +35,7 @@ public class IdentityController {
     private final RegisterUserUseCase registerUserUseCase;
     private final AuthenticateUserUseCase authenticateUserUseCase;
     private final UserQueryUseCase userQueryUseCase;
+    private final UpdateUserProfileUseCase updateUserProfileUseCase;
 
     @PostMapping
     public ResponseEntity<UserDto> register(@RequestBody RegisterUserCommand command) {
@@ -59,16 +64,13 @@ public class IdentityController {
             return ResponseEntity.status(401).build();
         }
         UserDto user = userQueryUseCase.getByEmail(email);
-        // displayName is not persisted yet; return updated view for frontend.
-        UserDto updatedView = UserDto.builder()
-            .id(user.getId())
+        UpdateProfileCommand command = UpdateProfileCommand.builder()
+            .userId(user.getId())
             .email(user.getEmail())
-            .displayName(request.getDisplayName() != null ? request.getDisplayName() : user.getDisplayName())
-            .provider(user.getProvider())
-            .roles(user.getRoles())
-            .createdAt(user.getCreatedAt())
+            .displayName(request.getDisplayName())
             .build();
-        return ResponseEntity.ok(updatedView);
+        UserDto updated = updateUserProfileUseCase.execute(command);
+        return ResponseEntity.ok(updated);
     }
 
     private String extractEmailFromAccessToken(String authorization) {
@@ -90,6 +92,8 @@ public class IdentityController {
 
     @Data
     @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     private static class UpdateProfileRequest {
         private String displayName;
     }

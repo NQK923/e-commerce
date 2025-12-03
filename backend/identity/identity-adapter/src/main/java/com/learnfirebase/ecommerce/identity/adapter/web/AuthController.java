@@ -7,6 +7,7 @@ import java.util.Set;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,8 +20,10 @@ import com.learnfirebase.ecommerce.identity.application.dto.UserDto;
 import com.learnfirebase.ecommerce.identity.application.port.in.AuthenticateUserUseCase;
 import com.learnfirebase.ecommerce.identity.application.port.in.RegisterUserUseCase;
 import com.learnfirebase.ecommerce.identity.application.port.in.UserQueryUseCase;
+import com.learnfirebase.ecommerce.identity.application.port.out.TokenProvider;
 
 import lombok.Builder;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
 
@@ -31,6 +34,7 @@ public class AuthController {
     private final AuthenticateUserUseCase authenticateUserUseCase;
     private final RegisterUserUseCase registerUserUseCase;
     private final UserQueryUseCase userQueryUseCase;
+    private final TokenProvider tokenProvider;
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@RequestBody RegisterUserCommand command) {
@@ -58,6 +62,27 @@ public class AuthController {
         }
         UserDto user = userQueryUseCase.getByEmail(email);
         return ResponseEntity.ok(toUserResponse(user));
+    }
+
+    @PostMapping("/refresh-token")
+    public ResponseEntity<AuthTokenDto> refresh(@RequestBody RefreshRequest request) {
+        String email = extractEmailFromRefreshToken(request.getRefreshToken());
+        String userId = extractUserIdFromRefreshToken(request.getRefreshToken());
+        String deviceId = extractDeviceIdFromRefreshToken(request.getRefreshToken());
+        if (email == null || userId == null || deviceId == null) {
+            return ResponseEntity.status(401).build();
+        }
+        String newAccess = tokenProvider.generateAccessToken(userId, email);
+        return ResponseEntity.ok(AuthTokenDto.builder()
+            .accessToken(newAccess)
+            .refreshToken(request.getRefreshToken())
+            .build());
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout() {
+        // No server-side session to invalidate in this simplified setup.
+        return ResponseEntity.noContent().build();
     }
 
     private AuthResponse toResponse(UserDto user, AuthTokenDto tokens) {
@@ -93,6 +118,38 @@ public class AuthController {
             // invalid token
         }
         return null;
+    }
+
+    private String extractUserIdFromRefreshToken(String refreshToken) {
+        return extractRefreshParts(refreshToken, 0);
+    }
+
+    private String extractEmailFromRefreshToken(String refreshToken) {
+        return extractRefreshParts(refreshToken, 1);
+    }
+
+    private String extractDeviceIdFromRefreshToken(String refreshToken) {
+        return extractRefreshParts(refreshToken, 2);
+    }
+
+    private String extractRefreshParts(String token, int index) {
+        if (token == null) {
+            return null;
+        }
+        try {
+            String decoded = new String(Base64.getDecoder().decode(token), StandardCharsets.UTF_8);
+            String[] parts = decoded.split(":");
+            if (parts.length >= 4 && "refresh".equals(parts[3])) {
+                return parts[index];
+            }
+        } catch (IllegalArgumentException ignored) {
+        }
+        return null;
+    }
+
+    @Data
+    private static class RefreshRequest {
+        private String refreshToken;
     }
 
     @Value

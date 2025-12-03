@@ -7,12 +7,14 @@ import com.learnfirebase.ecommerce.common.domain.valueobject.Email;
 import com.learnfirebase.ecommerce.identity.application.command.LoginCommand;
 import com.learnfirebase.ecommerce.identity.application.command.OAuth2LoginCommand;
 import com.learnfirebase.ecommerce.identity.application.command.RegisterUserCommand;
+import com.learnfirebase.ecommerce.identity.application.command.UpdateProfileCommand;
 import com.learnfirebase.ecommerce.identity.application.dto.AuthTokenDto;
 import com.learnfirebase.ecommerce.identity.application.dto.UserDto;
 import com.learnfirebase.ecommerce.identity.application.port.in.AuthenticateUserUseCase;
 import com.learnfirebase.ecommerce.identity.application.port.in.OAuth2LoginUseCase;
 import com.learnfirebase.ecommerce.identity.application.port.in.RegisterUserUseCase;
 import com.learnfirebase.ecommerce.identity.application.port.in.UserQueryUseCase;
+import com.learnfirebase.ecommerce.identity.application.port.in.UpdateUserProfileUseCase;
 import com.learnfirebase.ecommerce.identity.application.port.out.PasswordHasher;
 import com.learnfirebase.ecommerce.identity.application.port.out.TokenProvider;
 import com.learnfirebase.ecommerce.identity.application.port.out.UserRepository;
@@ -25,7 +27,7 @@ import com.learnfirebase.ecommerce.identity.domain.model.UserId;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class IdentityApplicationService implements RegisterUserUseCase, AuthenticateUserUseCase, OAuth2LoginUseCase, UserQueryUseCase {
+public class IdentityApplicationService implements RegisterUserUseCase, AuthenticateUserUseCase, OAuth2LoginUseCase, UserQueryUseCase, UpdateUserProfileUseCase {
     private final UserRepository userRepository;
     private final PasswordHasher passwordHasher;
     private final TokenProvider tokenProvider;
@@ -41,6 +43,7 @@ public class IdentityApplicationService implements RegisterUserUseCase, Authenti
             .email(new Email(command.getEmail()))
             .password(new HashedPassword(passwordHasher.hash(command.getPassword())))
             .authProvider(AuthProvider.LOCAL)
+            .displayName(command.getDisplayName() != null ? command.getDisplayName() : command.getEmail())
             .createdAt(Instant.now())
             .updatedAt(Instant.now())
             .build();
@@ -81,6 +84,7 @@ public class IdentityApplicationService implements RegisterUserUseCase, Authenti
                     .password(new HashedPassword(""))
                     .authProvider(provider)
                     .providerUserId(providerUserId)
+                    .displayName(email != null ? email : providerUserId)
                     .createdAt(Instant.now())
                     .updatedAt(Instant.now())
                     .build();
@@ -108,9 +112,32 @@ public class IdentityApplicationService implements RegisterUserUseCase, Authenti
             .orElseThrow(() -> new IdentityDomainException("User not found"));
     }
 
+    @Override
+    public UserDto execute(UpdateProfileCommand command) {
+        User user = userRepository.findById(new UserId(command.getUserId()))
+            .orElseGet(() -> userRepository.findByEmail(command.getEmail())
+                .orElseThrow(() -> new IdentityDomainException("User not found")));
+        String displayName = command.getDisplayName() != null ? command.getDisplayName() : user.getDisplayName();
+        User updated = User.builder()
+            .id(user.getId())
+            .email(user.getEmail())
+            .password(user.getPassword())
+            .authProvider(user.getAuthProvider())
+            .providerUserId(user.getProviderUserId())
+            .roles(user.getRoles())
+            .permissions(user.getPermissions())
+            .displayName(displayName)
+            .createdAt(user.getCreatedAt())
+            .updatedAt(Instant.now())
+            .build();
+        User saved = userRepository.save(updated);
+        return toDto(saved, null);
+    }
+
     private UserDto toDto(User user, String displayNameOverride) {
         String displayName = displayNameOverride != null ? displayNameOverride
-            : (user.getEmail() != null ? user.getEmail().getValue() : user.getProviderUserId());
+            : (user.getDisplayName() != null ? user.getDisplayName()
+                : (user.getEmail() != null ? user.getEmail().getValue() : user.getProviderUserId()));
         return UserDto.builder()
             .id(user.getId().getValue())
             .email(user.getEmail() != null ? user.getEmail().getValue() : null)

@@ -1,8 +1,8 @@
 package com.learnfirebase.ecommerce.cart.infrastructure.persistence;
 
 import java.math.BigDecimal;
-import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
 
@@ -48,7 +48,7 @@ public class CartRepositoryImpl implements CartRepository {
     private Cart toDomain(CartEntity entity) {
         return Cart.builder()
             .id(new CartId(entity.getId()))
-            .items(entity.getItems().stream()
+            .items(Optional.ofNullable(entity.getItems()).orElseGet(java.util.ArrayList::new).stream()
                 .map(item -> CartItem.builder()
                     .productId(item.getProductId())
                     .quantity(item.getQuantity())

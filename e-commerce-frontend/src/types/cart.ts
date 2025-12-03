@@ -21,6 +21,9 @@ export type Cart = {
 export type AddToCartRequest = {
   productId: string;
   quantity: number;
+  price?: number;
+  currency?: string;
+  cartId?: string;
 };
 
 export type UpdateCartItemRequest = {

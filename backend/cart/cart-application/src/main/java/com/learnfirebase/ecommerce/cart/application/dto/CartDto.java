@@ -14,6 +14,9 @@ public class CartDto {
     List<CartItemDto> items;
     String total;
     String currency;
+    String subtotal;
+    String discountTotal;
+    String shippingEstimate;
 
     @Value
     @Builder
@@ -21,5 +24,6 @@ public class CartDto {
         String productId;
         int quantity;
         String price;
+        String currency;
     }
 }

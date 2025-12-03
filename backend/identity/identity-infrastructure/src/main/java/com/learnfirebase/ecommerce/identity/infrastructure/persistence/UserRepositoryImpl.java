@@ -50,6 +50,7 @@ public class UserRepositoryImpl implements UserRepository {
             .authProvider(user.getAuthProvider())
             .providerUserId(user.getProviderUserId())
             .roles(user.getRoles().stream().map(Enum::name).collect(Collectors.toSet()))
+            .displayName(user.getDisplayName())
             .createdAt(user.getCreatedAt())
             .updatedAt(user.getUpdatedAt())
             .build();
@@ -63,6 +64,7 @@ public class UserRepositoryImpl implements UserRepository {
             .authProvider(entity.getAuthProvider())
             .providerUserId(entity.getProviderUserId())
             .roles(entity.getRoles() != null ? entity.getRoles().stream().map(Role::valueOf).collect(Collectors.toSet()) : java.util.Collections.emptySet())
+            .displayName(entity.getDisplayName())
             .createdAt(entity.getCreatedAt())
             .updatedAt(entity.getUpdatedAt())
             .build();

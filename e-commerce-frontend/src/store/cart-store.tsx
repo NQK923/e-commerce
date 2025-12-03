@@ -57,16 +57,49 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { user, initializing } = useAuth();
   const [cart, setCart] = useState<Cart | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const [serverCartUnavailable, setServerCartUnavailable] = useState<boolean>(false);
+  const [serverCartId, setServerCartId] = useState<string | null>(null);
 
-  const useLocalCart = !user;
+  const useLocalCart = !user || serverCartUnavailable;
 
   const setAndPersistLocal = useCallback((next: Cart | null) => {
     setCart(next);
     persistLocalCart(next);
   }, []);
 
+  const addItemToLocal = useCallback(
+    (product: Product, quantity = 1) => {
+      const existingItems = loadLocalCart()?.items ?? [];
+      const found = existingItems.find((item) => item.product.id === product.id);
+      const updatedItems = found
+        ? existingItems.map((item) =>
+            item.product.id === product.id
+              ? { ...item, quantity: item.quantity + quantity, subtotal: (item.quantity + quantity) * item.unitPrice }
+              : item,
+          )
+        : [
+            ...existingItems,
+            {
+              id: product.id,
+              product,
+              quantity,
+              unitPrice: product.price,
+              subtotal: product.price * quantity,
+            },
+          ];
+      const nextCart = calculateTotals(updatedItems);
+      setAndPersistLocal(nextCart);
+    },
+    [setAndPersistLocal],
+  );
+
   const refreshCart = useCallback(async () => {
     if (!user) {
+      const stored = loadLocalCart();
+      setCart(stored);
+      return;
+    }
+    if (serverCartUnavailable) {
       const stored = loadLocalCart();
       setCart(stored);
       return;
@@ -75,46 +108,46 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const serverCart = await cartApi.get();
       setCart(serverCart);
+      setServerCartId(serverCart?.id ?? null);
+    } catch (error) {
+      console.error("Failed to refresh server cart, falling back to local cart", error);
+      setServerCartUnavailable(true);
+      setServerCartId(null);
+      const stored = loadLocalCart();
+      setCart(stored);
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [serverCartUnavailable, user]);
 
   const addItem = useCallback(
     async (product: Product, quantity = 1) => {
       if (useLocalCart) {
-        const existingItems = loadLocalCart()?.items ?? [];
-        const found = existingItems.find((item) => item.product.id === product.id);
-        const updatedItems = found
-          ? existingItems.map((item) =>
-              item.product.id === product.id
-                ? { ...item, quantity: item.quantity + quantity, subtotal: (item.quantity + quantity) * item.unitPrice }
-                : item,
-            )
-          : [
-              ...existingItems,
-              {
-                id: product.id,
-                product,
-                quantity,
-                unitPrice: product.price,
-                subtotal: product.price * quantity,
-              },
-            ];
-        const nextCart = calculateTotals(updatedItems);
-        setAndPersistLocal(nextCart);
+        addItemToLocal(product, quantity);
         return;
       }
 
       setLoading(true);
       try {
-        const serverCart = await cartApi.addItem({ productId: product.id, quantity });
+        const serverCart = await cartApi.addItem({
+          productId: product.id,
+          quantity,
+          price: product.price,
+          currency: product.currency ?? "USD",
+          cartId: serverCartId ?? undefined,
+        });
         setCart(serverCart);
+        setServerCartId(serverCart?.id ?? null);
+      } catch (error) {
+        console.error("Failed to add item to server cart, using local cart instead", error);
+        setServerCartUnavailable(true);
+        setServerCartId(null);
+        addItemToLocal(product, quantity);
       } finally {
         setLoading(false);
       }
     },
-    [setAndPersistLocal, useLocalCart],
+    [addItemToLocal, serverCartId, useLocalCart],
   );
 
   const updateQuantity = useCallback(
@@ -137,6 +170,21 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const serverCart = await cartApi.updateItem({ itemId, quantity });
         setCart(serverCart);
+        setServerCartId(serverCart?.id ?? null);
+      } catch (error) {
+        console.error("Failed to update server cart, using local cart instead", error);
+        setServerCartUnavailable(true);
+        setServerCartId(null);
+        const existingItems = loadLocalCart()?.items ?? [];
+        const updatedItems = existingItems
+          .map((item) =>
+            item.id === itemId
+              ? { ...item, quantity, subtotal: item.unitPrice * quantity }
+              : item,
+          )
+          .filter((item) => item.quantity > 0);
+        const nextCart = updatedItems.length ? calculateTotals(updatedItems) : null;
+        setAndPersistLocal(nextCart);
       } finally {
         setLoading(false);
       }
@@ -158,6 +206,15 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const serverCart = await cartApi.removeItem(itemId);
         setCart(serverCart);
+        setServerCartId(serverCart?.id ?? null);
+      } catch (error) {
+        console.error("Failed to remove item from server cart, using local cart instead", error);
+        setServerCartUnavailable(true);
+        setServerCartId(null);
+        const existingItems = loadLocalCart()?.items ?? [];
+        const updatedItems = existingItems.filter((item) => item.id !== itemId);
+        const nextCart = updatedItems.length ? calculateTotals(updatedItems) : null;
+        setAndPersistLocal(nextCart);
       } finally {
         setLoading(false);
       }
@@ -174,6 +231,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const serverCart = await cartApi.clear().catch(() => null);
       setCart(serverCart);
+      setServerCartId(serverCart?.id ?? null);
+    } catch (error) {
+      console.error("Failed to clear server cart, using local cart instead", error);
+      setServerCartUnavailable(true);
+      setServerCartId(null);
+      setAndPersistLocal(null);
     } finally {
       setLoading(false);
     }
@@ -186,6 +249,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [initializing, refreshCart]);
 
   useEffect(() => {
+    // Reset server cart state when auth changes.
+    setServerCartUnavailable(false);
+    setServerCartId(null);
+  }, [user]);
+
+  useEffect(() => {
     // Merge local cart to server on login.
     const mergeAndLoad = async () => {
       if (!user) return;
@@ -194,11 +263,20 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const items: AddToCartRequest[] = local.items.map((item) => ({
           productId: item.product.id,
           quantity: item.quantity,
+          price: item.unitPrice,
+          currency: item.product.currency ?? "USD",
         }));
+        let merged = false;
         try {
           await cartApi.merge(items);
+          merged = true;
+        } catch (error) {
+          console.error("Failed to merge local cart to server, keeping local cart", error);
+          setServerCartUnavailable(true);
         } finally {
-          persistLocalCart(null);
+          if (merged) {
+            persistLocalCart(null);
+          }
         }
       }
       await refreshCart();

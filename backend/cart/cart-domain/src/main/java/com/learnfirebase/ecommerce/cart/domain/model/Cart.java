@@ -23,7 +23,45 @@ public class Cart extends AggregateRoot<CartId> {
     private List<CartItem> items = new ArrayList<>();
 
     public void addItem(CartItem item) {
-        this.items.add(item);
+        this.items.stream()
+            .filter(existing -> existing.getProductId().equals(item.getProductId()))
+            .findFirst()
+            .ifPresentOrElse(existing -> existing.setQuantity(existing.getQuantity() + item.getQuantity()), () -> this.items.add(item));
+    }
+
+    public void updateQuantity(String productId, int quantity, Money price) {
+        this.items.removeIf(i -> i.getProductId().equals(productId) && quantity <= 0);
+        this.items.stream()
+            .filter(i -> i.getProductId().equals(productId))
+            .findFirst()
+            .ifPresentOrElse(
+                i -> {
+                    if (quantity <= 0) {
+                        this.items.remove(i);
+                    } else {
+                        i.setQuantity(quantity);
+                        if (price != null) {
+                            i.setPrice(price);
+                        }
+                    }
+                },
+                () -> {
+                    if (quantity > 0) {
+                        this.items.add(CartItem.builder().productId(productId).quantity(quantity).price(price).build());
+                    }
+                });
+    }
+
+    public void removeItem(String productId) {
+        this.items.removeIf(item -> item.getProductId().equals(productId));
+    }
+
+    public void clear() {
+        this.items.clear();
+    }
+
+    public void merge(List<CartItem> incoming) {
+        incoming.forEach(this::addItem);
     }
 
     public Money total(String currency) {

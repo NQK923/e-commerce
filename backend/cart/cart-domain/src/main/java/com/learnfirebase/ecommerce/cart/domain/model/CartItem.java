@@ -15,4 +15,12 @@ public class CartItem {
     private String productId;
     private int quantity;
     private Money price;
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
+    }
+
+    public void setPrice(Money price) {
+        this.price = price;
+    }
 }

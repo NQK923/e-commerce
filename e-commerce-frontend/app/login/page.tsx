@@ -9,16 +9,24 @@ import { useAuth } from "@/src/store/auth-store";
 import { useToast } from "@/src/components/ui/toast-provider";
 import { config } from "@/src/config/env";
 import { useTranslation } from "@/src/providers/language-provider";
+import { Spinner } from "@/src/components/ui/spinner";
 
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams?.get("next");
-  const { login } = useAuth();
+  const { login, user, initializing } = useAuth();
   const { addToast } = useToast();
   const { t } = useTranslation();
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
+
+  React.useEffect(() => {
+    if (initializing) return;
+    if (user) {
+      router.replace(next || "/");
+    }
+  }, [initializing, next, router, user]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -39,6 +47,18 @@ export default function LoginPage() {
     const redirectUri = `${config.frontendBaseUrl}/oauth2/callback`;
     window.location.href = `${config.apiBaseUrl}/oauth2/authorization/${provider}?redirect_uri=${encodeURIComponent(redirectUri)}`;
   };
+
+  if (initializing) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Spinner />
+      </div>
+    );
+  }
+
+  if (user) {
+    return null;
+  }
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-10 md:flex-row md:items-start">

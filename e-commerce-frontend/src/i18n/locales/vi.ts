@@ -6,7 +6,7 @@ export const vi = {
     retry: "Thử lại",
     in_stock: "Còn hàng",
     out_of_stock: "Hết hàng",
-    sku: "Mã SP",
+    sku: "SKU",
   },
   nav: {
     home: "Trang chủ",
@@ -32,7 +32,7 @@ export const vi = {
     no_account: "Chưa có tài khoản?",
     create_one: "Đăng ký ngay",
     social_login_title: "Hoặc đăng nhập với",
-    social_login_subtitle: "Tiếp tục với tài khoản mạng xã hội của bạn.",
+    social_login_subtitle: "Tiếp tục với tài khoản mạng xã hội.",
     continue_google: "Tiếp tục với Google",
     continue_facebook: "Tiếp tục với Facebook",
     create_account_title: "Tạo tài khoản mới",
@@ -47,8 +47,8 @@ export const vi = {
   home: {
     hero_badge: "Nền tảng TMĐT hàng đầu",
     hero_title: "Mua bán",
-    hero_title_highlight: "Mọi thứ",
-    hero_desc: "Tham gia cùng hàng triệu người dùng. Mua sắm thả ga hoặc mở gian hàng kinh doanh ngay hôm nay.",
+    hero_title_highlight: "mọi thứ",
+    hero_desc: "Tham gia cộng đồng hàng triệu người dùng. Mua sắm hoặc mở shop ngay hôm nay.",
     shop_now: "Mua sắm ngay",
     start_selling: "Đăng ký bán hàng",
     features: {
@@ -69,7 +69,7 @@ export const vi = {
     },
     featured: {
       title: "Gợi ý hôm nay",
-      subtitle: "Sản phẩm nổi bật từ các Shop uy tín",
+      subtitle: "Sản phẩm nổi bật từ shop uy tín",
       view_all: "Xem thêm",
       no_products: "Chưa có sản phẩm nào",
     },
@@ -80,7 +80,7 @@ export const vi = {
     view_details: "Xem",
     sold: "đã bán",
     flash_sale: "Flash Sale",
-    discount: "GIẢM",
+    discount: "Giảm",
     sale_ended: "Đã kết thúc",
     ends_in: "Kết thúc sau",
     description: "Mô tả sản phẩm",
@@ -88,7 +88,7 @@ export const vi = {
     availability: "Tình trạng",
     loading: "Đang tải sản phẩm...",
     load_failed: "Không thể tải sản phẩm",
-    added_to_cart: "đã thêm vào giỏ hàng",
+    added_to_cart: "đã thêm vào giỏ",
   },
   cart: {
     title: "Giỏ hàng của bạn",
@@ -139,5 +139,35 @@ export const vi = {
     seller_centre: "Kênh Người Bán",
     rights_reserved: "Bảo lưu mọi quyền.",
     region: "Quốc gia & Khu vực: Singapore | Indonesia | Việt Nam | Thái Lan",
+  },
+  seller: {
+    title: "Đăng ký gian hàng",
+    subtitle: "Chia sẻ về shop của bạn để bắt đầu bán hàng.",
+    cta: "Gửi đăng ký",
+    success: "Chúng tôi đã nhận đơn đăng ký người bán.",
+    missing_fields: "Vui lòng điền đủ thông tin và đồng ý điều khoản.",
+    highlights: [
+      { title: "Thẩm định nhanh", desc: "Hỗ trợ thiết lập sản phẩm và chính sách." },
+      { title: "Chiến dịch Marketing", desc: "Tham gia voucher, combo và khuyến mại." },
+      { title: "Công cụ cho người bán", desc: "Quản lý đơn, kho, chat và báo cáo." },
+    ],
+    form: {
+      store_name: "Tên gian hàng",
+      contact_email: "Email liên hệ",
+      phone: "Số điện thoại / Zalo",
+      category: "Ngành hàng chính",
+      categories: ["Thời trang", "Điện tử", "Nhà cửa", "Làm đẹp & Sức khỏe", "Khác"],
+      description: "Bạn bán gì?",
+      accept: "Tôi đồng ý với điều khoản / chính sách.",
+      loading: "Đang gửi...",
+    },
+    faq: {
+      title: "Câu hỏi thường gặp",
+      items: [
+        { q: "Xét duyệt bao lâu?", a: "Thường trong 1 ngày làm việc." },
+        { q: "Có cần pháp nhân?", a: "Bạn có thể bắt đầu với cá nhân, bổ sung sau." },
+        { q: "Phí hợp tác gì?", a: "Phí dựa trên hoa hồng đơn hàng, không thu phí đăng sản phẩm." },
+      ],
+    },
   },
 };

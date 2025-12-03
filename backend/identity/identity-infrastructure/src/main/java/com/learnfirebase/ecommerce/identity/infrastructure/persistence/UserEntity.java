@@ -38,6 +38,8 @@ public class UserEntity {
     @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "role")
     private Set<String> roles;
+    @Column(name = "display_name")
+    private String displayName;
     private Instant createdAt;
     private Instant updatedAt;
 }

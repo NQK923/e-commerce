@@ -36,6 +36,7 @@ public class StartupAdminSeeder implements ApplicationRunner {
                     .email(new Email(adminEmail))
                     .password(new HashedPassword(passwordHasher.hash("Admin@123")))
                     .authProvider(AuthProvider.LOCAL)
+                    .displayName("Admin")
                     .roles(EnumSet.of(Role.ADMIN))
                     .createdAt(Instant.now())
                     .updatedAt(Instant.now())
