@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.GetMapping;
 
 import com.learnfirebase.ecommerce.identity.application.command.LoginCommand;
 import com.learnfirebase.ecommerce.identity.application.command.RegisterUserCommand;
@@ -21,6 +22,7 @@ import com.learnfirebase.ecommerce.identity.application.port.in.AuthenticateUser
 import com.learnfirebase.ecommerce.identity.application.port.in.RegisterUserUseCase;
 import com.learnfirebase.ecommerce.identity.application.port.in.UserQueryUseCase;
 import com.learnfirebase.ecommerce.identity.application.port.in.UpdateUserProfileUseCase;
+import com.learnfirebase.ecommerce.identity.application.port.in.ListUsersUseCase;
 
 import lombok.Builder;
 import lombok.Data;
@@ -36,6 +38,7 @@ public class IdentityController {
     private final AuthenticateUserUseCase authenticateUserUseCase;
     private final UserQueryUseCase userQueryUseCase;
     private final UpdateUserProfileUseCase updateUserProfileUseCase;
+    private final ListUsersUseCase listUsersUseCase;
 
     @PostMapping
     public ResponseEntity<UserDto> register(@RequestBody RegisterUserCommand command) {
@@ -54,6 +57,11 @@ public class IdentityController {
             return ResponseEntity.status(401).build();
         }
         return ResponseEntity.ok(userQueryUseCase.getByEmail(email));
+    }
+
+    @GetMapping
+    public ResponseEntity<java.util.List<UserDto>> listUsers() {
+        return ResponseEntity.ok(listUsersUseCase.list());
     }
 
     @PatchMapping("/me")

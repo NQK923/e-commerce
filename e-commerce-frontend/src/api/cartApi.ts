@@ -11,9 +11,25 @@ const toProduct = (productId: string, price: number, currency?: string): Product
   images: [],
 });
 
-const toCart = (payload: any): Cart => {
+type CartResponse = {
+  id?: string;
+  items?: Array<{
+    productId: string;
+    quantity: number;
+    price?: string;
+    currency?: string;
+  }>;
+  subtotal?: string | number;
+  discountTotal?: string | number;
+  shippingEstimate?: string | number;
+  total?: string | number;
+  currency?: string;
+};
+
+const toCart = (payload: CartResponse | unknown): Cart => {
+  const data = (payload as CartResponse) ?? {};
   const items =
-    payload?.items?.map((item: any) => {
+    data?.items?.map((item) => {
       const unitPrice = parseFloat(item.price ?? "0");
       const quantity = item.quantity ?? 0;
       return {
@@ -24,20 +40,20 @@ const toCart = (payload: any): Cart => {
         subtotal: unitPrice * quantity,
       };
     }) ?? [];
-  const subtotal = items.reduce((sum: number, i: any) => sum + i.subtotal, 0);
+  const subtotal = items.reduce((sum: number, i) => sum + i.subtotal, 0);
   return {
-    id: payload?.id ?? "local",
+    id: data?.id ?? "local",
     items,
     subtotal,
-    discountTotal: parseFloat(payload?.discountTotal ?? "0"),
-    shippingEstimate: parseFloat(payload?.shippingEstimate ?? "0"),
-    total: parseFloat(payload?.total ?? subtotal),
-    currency: payload?.currency,
+    discountTotal: parseFloat((data?.discountTotal ?? "0").toString()),
+    shippingEstimate: parseFloat((data?.shippingEstimate ?? "0").toString()),
+    total: parseFloat((data?.total ?? subtotal).toString()),
+    currency: data?.currency,
   };
 };
 
 export const cartApi = {
-  get: async () => toCart(await apiRequest("/api/carts")),
+  get: async () => toCart(await apiRequest("/api/carts") as CartResponse),
   addItem: (payload: AddToCartRequest) =>
     apiRequest("/api/carts/items", {
       method: "POST",
@@ -48,14 +64,14 @@ export const cartApi = {
         currency: payload.currency,
         cartId: payload.cartId,
       },
-    }).then(toCart),
+    }).then((resp) => toCart(resp as CartResponse)),
   updateItem: (payload: UpdateCartItemRequest) =>
     apiRequest(`/api/carts/items/${payload.itemId}`, {
       method: "PATCH",
       body: { quantity: payload.quantity },
-    }).then(toCart),
+    }).then((resp) => toCart(resp as CartResponse)),
   removeItem: (itemId: string) =>
-    apiRequest(`/api/carts/items/${itemId}`, { method: "DELETE" }).then(toCart),
+    apiRequest(`/api/carts/items/${itemId}`, { method: "DELETE" }).then((resp) => toCart(resp as CartResponse)),
   merge: (items: AddToCartRequest[]) =>
     apiRequest("/api/carts/merge", {
       method: "POST",
@@ -68,6 +84,6 @@ export const cartApi = {
           cartId: item.cartId,
         })),
       },
-    }).then(toCart),
-  clear: () => apiRequest("/api/carts/clear", { method: "POST" }).then(toCart),
+    }).then((resp) => toCart(resp as CartResponse)),
+  clear: () => apiRequest("/api/carts/clear", { method: "POST" }).then((resp) => toCart(resp as CartResponse)),
 };

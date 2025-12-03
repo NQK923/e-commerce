@@ -2,6 +2,7 @@ package com.learnfirebase.ecommerce.identity.infrastructure.persistence;
 
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.List;
 
 import org.springframework.stereotype.Repository;
 
@@ -40,6 +41,11 @@ public class UserRepositoryImpl implements UserRepository {
     @Override
     public Optional<User> findByProvider(AuthProvider provider, String providerUserId) {
         return userJpaRepository.findByAuthProviderAndProviderUserId(provider, providerUserId).map(this::toDomain);
+    }
+
+    @Override
+    public List<User> findAll() {
+        return userJpaRepository.findAll().stream().map(this::toDomain).toList();
     }
 
     private UserEntity toEntity(User user) {

@@ -1,6 +1,7 @@
 package com.learnfirebase.ecommerce.identity.application.port.out;
 
 import java.util.Optional;
+import java.util.List;
 
 import com.learnfirebase.ecommerce.identity.domain.model.AuthProvider;
 import com.learnfirebase.ecommerce.identity.domain.model.User;
@@ -14,4 +15,6 @@ public interface UserRepository {
     Optional<User> findById(UserId id);
 
     Optional<User> findByProvider(AuthProvider provider, String providerUserId);
+
+    List<User> findAll();
 }

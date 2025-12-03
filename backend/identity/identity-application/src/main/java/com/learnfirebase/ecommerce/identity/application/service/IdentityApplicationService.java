@@ -15,6 +15,7 @@ import com.learnfirebase.ecommerce.identity.application.port.in.OAuth2LoginUseCa
 import com.learnfirebase.ecommerce.identity.application.port.in.RegisterUserUseCase;
 import com.learnfirebase.ecommerce.identity.application.port.in.UserQueryUseCase;
 import com.learnfirebase.ecommerce.identity.application.port.in.UpdateUserProfileUseCase;
+import com.learnfirebase.ecommerce.identity.application.port.in.ListUsersUseCase;
 import com.learnfirebase.ecommerce.identity.application.port.out.PasswordHasher;
 import com.learnfirebase.ecommerce.identity.application.port.out.TokenProvider;
 import com.learnfirebase.ecommerce.identity.application.port.out.UserRepository;
@@ -27,7 +28,7 @@ import com.learnfirebase.ecommerce.identity.domain.model.UserId;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class IdentityApplicationService implements RegisterUserUseCase, AuthenticateUserUseCase, OAuth2LoginUseCase, UserQueryUseCase, UpdateUserProfileUseCase {
+public class IdentityApplicationService implements RegisterUserUseCase, AuthenticateUserUseCase, OAuth2LoginUseCase, UserQueryUseCase, UpdateUserProfileUseCase, ListUsersUseCase {
     private final UserRepository userRepository;
     private final PasswordHasher passwordHasher;
     private final TokenProvider tokenProvider;
@@ -110,6 +111,13 @@ public class IdentityApplicationService implements RegisterUserUseCase, Authenti
         return userRepository.findById(new UserId(id))
             .map(user -> toDto(user, null))
             .orElseThrow(() -> new IdentityDomainException("User not found"));
+    }
+
+    @Override
+    public java.util.List<UserDto> list() {
+        return userRepository.findAll().stream()
+            .map(user -> toDto(user, null))
+            .toList();
     }
 
     @Override
