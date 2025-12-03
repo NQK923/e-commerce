@@ -59,7 +59,7 @@ public class IdentityController {
         return ResponseEntity.ok(userQueryUseCase.getByEmail(email));
     }
 
-    @GetMapping
+    @GetMapping("/all")
     public ResponseEntity<java.util.List<UserDto>> listUsers() {
         return ResponseEntity.ok(listUsersUseCase.list());
     }

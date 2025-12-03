@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.GetMapping;
 
 import com.learnfirebase.ecommerce.identity.application.command.LoginCommand;
 import com.learnfirebase.ecommerce.identity.application.command.RegisterUserCommand;
@@ -82,6 +83,11 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<Void> logout() {
         // No server-side session to invalidate in this simplified setup.
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/logout")
+    public ResponseEntity<Void> logoutGet() {
         return ResponseEntity.noContent().build();
     }
 

@@ -22,6 +22,20 @@ export type Product = {
   images: ProductImage[];
 };
 
+export type UpsertProductRequest = {
+  id?: string;
+  name: string;
+  description?: string;
+  price: number;
+  currency?: string;
+  categoryId?: string;
+  images: Array<{
+    url: string;
+    altText?: string;
+    primary?: boolean;
+  }>;
+};
+
 export type ProductListParams = {
   search?: string;
   category?: string;

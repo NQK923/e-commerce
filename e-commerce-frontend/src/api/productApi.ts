@@ -1,7 +1,7 @@
 import { apiRequest } from "../lib/api-client";
 import { buildQueryString } from "../lib/query-string";
 import { PaginatedResponse } from "../types/common";
-import { Product, ProductListParams } from "../types/product";
+import { Product, ProductListParams, UpsertProductRequest } from "../types/product";
 
 type BackendPageResponse<T> = {
   content: T[];
@@ -33,4 +33,20 @@ export const productApi = {
     );
   },
   detail: (id: string) => apiRequest<Product>(`/api/products/${id}`),
+  create: (payload: UpsertProductRequest) =>
+    apiRequest<Product>("/api/products", {
+      method: "POST",
+      body: {
+        name: payload.name,
+        description: payload.description,
+        price: payload.price.toString(),
+        currency: payload.currency ?? "VND",
+        categoryId: payload.categoryId,
+        images: payload.images?.map((img, idx) => ({
+          url: img.url,
+          sortOrder: idx,
+          primaryImage: img.primary ?? idx === 0,
+        })),
+      },
+    }),
 };
