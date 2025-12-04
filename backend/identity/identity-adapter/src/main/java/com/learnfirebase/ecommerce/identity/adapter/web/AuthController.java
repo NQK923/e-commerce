@@ -104,6 +104,7 @@ public class AuthController {
             .id(user.getId())
             .email(user.getEmail())
             .displayName(user.getDisplayName())
+            .avatarUrl(user.getAvatarUrl())
             .provider(user.getProvider() != null ? user.getProvider().name() : null)
             .roles(user.getRoles())
             .build();

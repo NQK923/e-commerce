@@ -2,6 +2,7 @@ import { apiRequest } from "../lib/api-client";
 import { buildQueryString } from "../lib/query-string";
 import { PaginatedResponse } from "../types/common";
 import { Product, ProductListParams, UpsertProductRequest } from "../types/product";
+import { ProductImage } from "../types/product";
 
 type BackendPageResponse<T> = {
   content: T[];
@@ -42,7 +43,7 @@ export const productApi = {
         price: payload.price.toString(),
         currency: payload.currency ?? "VND",
         categoryId: payload.categoryId,
-        images: payload.images?.map((img, idx) => ({
+        images: payload.images?.map((img: ProductImage, idx: number) => ({
           url: img.url,
           sortOrder: idx,
           primaryImage: img.primary ?? idx === 0,

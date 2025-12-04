@@ -15,6 +15,7 @@ public class UserDto {
     String id;
     String email;
     String displayName;
+    String avatarUrl;
     AuthProvider provider;
     @Singular
     Set<String> roles;

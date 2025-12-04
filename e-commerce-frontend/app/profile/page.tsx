@@ -8,19 +8,25 @@ import { Spinner } from "@/src/components/ui/spinner";
 import { useRequireAuth } from "@/src/hooks/use-require-auth";
 import { useAuth } from "@/src/store/auth-store";
 import { useToast } from "@/src/components/ui/toast-provider";
+import { uploadToBucket } from "@/src/lib/storage";
 
 export default function ProfilePage() {
   const { user, setUserProfile } = useAuth();
   const { isAuthenticated, initializing } = useRequireAuth();
   const { addToast } = useToast();
   const [displayName, setDisplayName] = useState(user?.displayName ?? "");
+  const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl ?? "");
+  const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (user?.displayName) {
       setDisplayName(user.displayName);
     }
-  }, [user?.displayName]);
+    if (user?.avatarUrl) {
+      setAvatarUrl(user.avatarUrl);
+    }
+  }, [user?.displayName, user?.avatarUrl]);
 
   if (initializing || !isAuthenticated) {
     return (
@@ -43,7 +49,7 @@ export default function ProfilePage() {
     event.preventDefault();
     setLoading(true);
     try {
-      const updated = await profileApi.update({ displayName });
+      const updated = await profileApi.update({ displayName, avatarUrl });
       setUserProfile(updated);
       addToast("Profile updated", "success");
     } catch (error) {
@@ -51,6 +57,21 @@ export default function ProfilePage() {
       addToast(message, "error");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAvatarUpload = async (file?: File) => {
+    if (!file) return;
+    setUploading(true);
+    try {
+      const publicUrl = await uploadToBucket("Avatars", file);
+      setAvatarUrl(publicUrl);
+      addToast("Uploaded avatar", "success");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Upload failed";
+      addToast(message, "error");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -72,6 +93,24 @@ export default function ProfilePage() {
           </div>
         </div>
         <form className="mt-6 grid gap-4" onSubmit={handleUpdate}>
+          <div className="flex items-center gap-4">
+            <div className="h-16 w-16 overflow-hidden rounded-full border border-zinc-200 bg-zinc-100">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-xs text-zinc-400">No avatar</div>
+              )}
+            </div>
+            <div className="flex flex-col gap-2 text-sm">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleAvatarUpload(e.target.files?.[0])}
+                disabled={uploading}
+              />
+              <p className="text-xs text-zinc-500">Ảnh sẽ được lưu vào bucket Avatars (public).</p>
+            </div>
+          </div>
           <Input
             label="Display name"
             value={displayName}

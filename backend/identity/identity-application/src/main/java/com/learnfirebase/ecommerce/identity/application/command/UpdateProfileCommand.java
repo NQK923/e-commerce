@@ -9,4 +9,5 @@ public class UpdateProfileCommand {
     String userId;
     String email;
     String displayName;
+    String avatarUrl;
 }

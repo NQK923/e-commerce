@@ -45,6 +45,7 @@ public class IdentityApplicationService implements RegisterUserUseCase, Authenti
             .password(new HashedPassword(passwordHasher.hash(command.getPassword())))
             .authProvider(AuthProvider.LOCAL)
             .displayName(command.getDisplayName() != null ? command.getDisplayName() : command.getEmail())
+            .avatarUrl(null)
             .createdAt(Instant.now())
             .updatedAt(Instant.now())
             .build();
@@ -86,6 +87,7 @@ public class IdentityApplicationService implements RegisterUserUseCase, Authenti
                     .authProvider(provider)
                     .providerUserId(providerUserId)
                     .displayName(email != null ? email : providerUserId)
+                    .avatarUrl(null)
                     .createdAt(Instant.now())
                     .updatedAt(Instant.now())
                     .build();
@@ -135,6 +137,7 @@ public class IdentityApplicationService implements RegisterUserUseCase, Authenti
             .roles(user.getRoles())
             .permissions(user.getPermissions())
             .displayName(displayName)
+            .avatarUrl(command.getAvatarUrl() != null ? command.getAvatarUrl() : user.getAvatarUrl())
             .createdAt(user.getCreatedAt())
             .updatedAt(Instant.now())
             .build();
@@ -152,6 +155,7 @@ public class IdentityApplicationService implements RegisterUserUseCase, Authenti
             .displayName(displayName)
             .provider(user.getAuthProvider())
             .roles(user.getRoles().stream().map(Enum::name).toList())
+            .avatarUrl(user.getAvatarUrl())
             .createdAt(user.getCreatedAt())
             .build();
     }

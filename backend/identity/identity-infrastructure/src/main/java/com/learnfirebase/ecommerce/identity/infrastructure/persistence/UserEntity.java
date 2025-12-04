@@ -40,6 +40,8 @@ public class UserEntity {
     private Set<String> roles;
     @Column(name = "display_name")
     private String displayName;
+    @Column(name = "avatar_url")
+    private String avatarUrl;
     private Instant createdAt;
     private Instant updatedAt;
 }

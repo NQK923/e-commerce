@@ -30,6 +30,7 @@ public class User extends AggregateRoot<UserId> {
     @Builder.Default
     private Set<Permission> permissions = EnumSet.noneOf(Permission.class);
     private String displayName;
+    private String avatarUrl;
     private Instant createdAt;
     private Instant updatedAt;
 

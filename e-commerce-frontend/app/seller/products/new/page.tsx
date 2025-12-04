@@ -8,6 +8,7 @@ import { Input } from "@/src/components/ui/input";
 import { Spinner } from "@/src/components/ui/spinner";
 import { useToast } from "@/src/components/ui/toast-provider";
 import { useRequireAuth } from "@/src/hooks/use-require-auth";
+import { uploadToBucket } from "@/src/lib/storage";
 
 export default function NewProductPage() {
   const router = useRouter();
@@ -20,8 +21,10 @@ export default function NewProductPage() {
     currency: "VND",
     categoryId: "",
     imageUrl: "",
+    gallery: [] as string[],
   });
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,10 +41,8 @@ export default function NewProductPage() {
         currency: form.currency || "VND",
         categoryId: form.categoryId || undefined,
         images: [
-          {
-            url: form.imageUrl,
-            primary: true,
-          },
+          { url: form.imageUrl, primary: true },
+          ...form.gallery.map((url, idx) => ({ url, primary: false, sortOrder: idx + 1 })),
         ],
       });
       addToast("Đã tạo sản phẩm", "success");
@@ -115,6 +116,43 @@ export default function NewProductPage() {
           onChange={(e) => setForm((prev) => ({ ...prev, imageUrl: e.target.value }))}
           placeholder="https://..."
         />
+        <div className="flex flex-col gap-2 text-sm">
+          <label className="font-medium text-zinc-700">Tải ảnh lên bucket Product Images</label>
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            disabled={uploading}
+            onChange={async (e) => {
+              const files = Array.from(e.target.files ?? []);
+              if (!files.length) return;
+              setUploading(true);
+              try {
+                const uploaded: string[] = [];
+                for (const file of files) {
+                  const url = await uploadToBucket("Product Images", file);
+                  uploaded.push(url);
+                }
+                setForm((prev) => ({
+                  ...prev,
+                  imageUrl: prev.imageUrl || uploaded[0] || "",
+                  gallery: [...prev.gallery, ...uploaded],
+                }));
+                addToast("Đã upload ảnh sản phẩm", "success");
+              } catch (error) {
+                const message = error instanceof Error ? error.message : "Upload thất bại";
+                addToast(message, "error");
+              } finally {
+                setUploading(false);
+              }
+            }}
+          />
+          <div className="flex flex-wrap gap-2">
+            {[form.imageUrl, ...form.gallery].filter(Boolean).map((url) => (
+              <img key={url} src={url} alt="preview" className="h-16 w-16 rounded border object-cover" />
+            ))}
+          </div>
+        </div>
 
         <div className="flex gap-3">
           <Button type="submit" disabled={loading} className="bg-emerald-600 hover:bg-emerald-700">

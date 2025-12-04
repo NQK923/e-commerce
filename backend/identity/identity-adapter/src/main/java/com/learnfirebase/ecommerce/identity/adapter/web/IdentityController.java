@@ -76,6 +76,7 @@ public class IdentityController {
             .userId(user.getId())
             .email(user.getEmail())
             .displayName(request.getDisplayName())
+            .avatarUrl(request.getAvatarUrl())
             .build();
         UserDto updated = updateUserProfileUseCase.execute(command);
         return ResponseEntity.ok(updated);
@@ -104,5 +105,6 @@ public class IdentityController {
     @AllArgsConstructor
     private static class UpdateProfileRequest {
         private String displayName;
+        private String avatarUrl;
     }
 }
