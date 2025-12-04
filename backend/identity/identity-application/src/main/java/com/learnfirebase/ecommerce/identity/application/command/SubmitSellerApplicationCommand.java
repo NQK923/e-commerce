@@ -13,4 +13,6 @@ public class SubmitSellerApplicationCommand {
     private String category;
     private String description;
     private boolean acceptedTerms;
+    private String avatarUrl;
+    private String coverUrl;
 }

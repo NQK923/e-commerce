@@ -42,6 +42,12 @@ public class SellerApplicationEntity {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(name = "avatar_url")
+    private String avatarUrl;
+
+    @Column(name = "cover_url")
+    private String coverUrl;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private SellerApplicationStatus status;

@@ -8,6 +8,8 @@ export type SellerApplication = {
   phone: string;
   category?: string;
   description?: string;
+  avatarUrl?: string;
+  coverUrl?: string;
   status: SellerApplicationStatus;
   acceptedTerms: boolean;
   createdAt?: string;
@@ -22,4 +24,6 @@ export type SubmitSellerApplicationRequest = {
   category?: string;
   description?: string;
   acceptedTerms: boolean;
+  avatarUrl?: string;
+  coverUrl?: string;
 };

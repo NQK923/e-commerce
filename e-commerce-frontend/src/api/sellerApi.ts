@@ -17,6 +17,8 @@ export const sellerApi = {
         category: payload.category,
         description: payload.description,
         acceptedTerms: payload.acceptedTerms,
+        avatarUrl: payload.avatarUrl,
+        coverUrl: payload.coverUrl,
       },
     }),
 

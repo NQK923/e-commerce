@@ -11,6 +11,7 @@ import { useRequireAuth } from "@/src/hooks/use-require-auth";
 import { Spinner } from "@/src/components/ui/spinner";
 import { sellerApi } from "@/src/api/sellerApi";
 import { ApiError } from "@/src/lib/api-client";
+import { uploadToBucket } from "@/src/lib/storage";
 
 type SellerForm = {
   storeName: string;
@@ -26,6 +27,8 @@ export default function SellerRegisterPage() {
   const { addToast } = useToast();
   const { user, initializing } = useRequireAuth();
   const [loading, setLoading] = useState(false);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
   const [form, setForm] = useState<SellerForm>({
     storeName: "",
     email: "",
@@ -53,6 +56,10 @@ export default function SellerRegisterPage() {
     }
     setLoading(true);
     try {
+      const [avatarUrl, coverUrl] = await Promise.all([
+        avatarFile ? uploadToBucket("seller", avatarFile) : Promise.resolve(undefined),
+        coverFile ? uploadToBucket("seller", coverFile) : Promise.resolve(undefined),
+      ]);
       await sellerApi.submitApplication({
         userId: user?.id,
         storeName: form.storeName,
@@ -60,6 +67,8 @@ export default function SellerRegisterPage() {
         phone: form.phone,
         category: form.category,
         description: form.description,
+        avatarUrl,
+        coverUrl,
         acceptedTerms: form.accept,
       });
       addToast(t.seller.success, "success");
@@ -190,6 +199,29 @@ export default function SellerRegisterPage() {
                 onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
                 placeholder="List your main products, expected monthly orders, logistics needs..."
               />
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="flex flex-col gap-2 text-sm text-zinc-700">
+                <span className="font-medium">Store avatar (optional)</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setAvatarFile(e.target.files?.[0] ?? null)}
+                  className="h-11 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                />
+                {avatarFile && <span className="text-xs text-zinc-500 truncate">{avatarFile.name}</span>}
+              </div>
+              <div className="flex flex-col gap-2 text-sm text-zinc-700">
+                <span className="font-medium">Cover image (optional)</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setCoverFile(e.target.files?.[0] ?? null)}
+                  className="h-11 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                />
+                {coverFile && <span className="text-xs text-zinc-500 truncate">{coverFile.name}</span>}
+              </div>
             </div>
 
             <label className="flex items-start gap-3 text-sm text-zinc-700">

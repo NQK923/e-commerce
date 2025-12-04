@@ -17,6 +17,8 @@ public class SellerApplicationDto {
     String phone;
     String category;
     String description;
+    String avatarUrl;
+    String coverUrl;
     SellerApplicationStatus status;
     boolean acceptedTerms;
     Instant createdAt;

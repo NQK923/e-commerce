@@ -24,6 +24,8 @@ public class SellerApplication extends AggregateRoot<SellerApplicationId> {
     private String phone;
     private String category;
     private String description;
+    private String avatarUrl;
+    private String coverUrl;
     @Builder.Default
     private SellerApplicationStatus status = SellerApplicationStatus.PENDING;
     @Builder.Default

@@ -302,8 +302,19 @@ export default function AdminPage() {
                 {sellerRequests.map((req) => (
                   <tr key={req.id} className="hover:bg-zinc-50">
                     <td className="px-4 py-3">
-                      <div className="font-semibold text-zinc-900">{req.storeName}</div>
-                      <div className="text-xs text-zinc-500">#{req.id.slice(0, 8)}</div>
+                      <div className="flex items-center gap-3">
+                        {req.avatarUrl && (
+                          <img
+                            src={req.avatarUrl}
+                            alt={req.storeName}
+                            className="h-10 w-10 rounded-full object-cover border border-zinc-200"
+                          />
+                        )}
+                        <div>
+                          <div className="font-semibold text-zinc-900">{req.storeName}</div>
+                          <div className="text-xs text-zinc-500">#{req.id.slice(0, 8)}</div>
+                        </div>
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <div className="text-sm text-zinc-800">{req.contactEmail}</div>

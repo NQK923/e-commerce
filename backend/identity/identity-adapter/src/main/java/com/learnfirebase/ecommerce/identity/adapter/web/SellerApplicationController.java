@@ -62,6 +62,8 @@ public class SellerApplicationController {
                 .phone(request.getPhone())
                 .category(request.getCategory())
                 .description(request.getDescription())
+                .avatarUrl(request.getAvatarUrl())
+                .coverUrl(request.getCoverUrl())
                 .acceptedTerms(Boolean.TRUE.equals(request.getAcceptedTerms()))
                 .build());
             return ResponseEntity.ok(dto);
@@ -149,6 +151,8 @@ public class SellerApplicationController {
         private String category;
         private String description;
         private Boolean acceptedTerms;
+        private String avatarUrl;
+        private String coverUrl;
     }
 
     @Value
