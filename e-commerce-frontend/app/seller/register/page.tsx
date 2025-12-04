@@ -1,7 +1,7 @@
 'use client';
 
 import Link from "next/link";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ArrowRight, CheckCircle2, ShieldCheck, Sparkles, Store, MessageCircle } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
@@ -9,6 +9,8 @@ import { useToast } from "@/src/components/ui/toast-provider";
 import { useTranslation } from "@/src/providers/language-provider";
 import { useRequireAuth } from "@/src/hooks/use-require-auth";
 import { Spinner } from "@/src/components/ui/spinner";
+import { sellerApi } from "@/src/api/sellerApi";
+import { ApiError } from "@/src/lib/api-client";
 
 type SellerForm = {
   storeName: string;
@@ -33,6 +35,16 @@ export default function SellerRegisterPage() {
     accept: true,
   });
 
+  useEffect(() => {
+    if (user) {
+      setForm((prev) => ({
+        ...prev,
+        email: prev.email || user.email,
+        storeName: prev.storeName || user.displayName || user.email,
+      }));
+    }
+  }, [user]);
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!form.storeName || !form.email || !form.phone || !form.description || !form.accept) {
@@ -40,10 +52,23 @@ export default function SellerRegisterPage() {
       return;
     }
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      await sellerApi.submitApplication({
+        userId: user?.id,
+        storeName: form.storeName,
+        email: form.email,
+        phone: form.phone,
+        category: form.category,
+        description: form.description,
+        acceptedTerms: form.accept,
+      });
       addToast(t.seller.success, "success");
-    }, 600);
+    } catch (error) {
+      const message = error instanceof ApiError ? error.message : t.common.error;
+      addToast(message, "error");
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (initializing || !user) {

@@ -4,11 +4,15 @@ import React from "react";
 import { ShieldCheck, Users, Package2, Store, CheckCircle2, Sparkles, ArrowUpRight, Clock4 } from "lucide-react";
 import { productApi } from "@/src/api/productApi";
 import { adminApi } from "@/src/api/adminApi";
+import { sellerApi } from "@/src/api/sellerApi";
 import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
 import { Spinner } from "@/src/components/ui/spinner";
+import { useToast } from "@/src/components/ui/toast-provider";
+import { ApiError } from "@/src/lib/api-client";
 import { Product } from "@/src/types/product";
 import { User } from "@/src/types/auth";
+import { SellerApplication } from "@/src/types/seller";
 
 type AdminUser = User & {
   status?: "active" | "blocked" | "pending";
@@ -17,10 +21,13 @@ type AdminUser = User & {
 };
 
 export default function AdminPage() {
+  const { addToast } = useToast();
   const [users, setUsers] = React.useState<AdminUser[]>([]);
   const [products, setProducts] = React.useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = React.useState(false);
   const [loadingUsers, setLoadingUsers] = React.useState(false);
+  const [sellerRequests, setSellerRequests] = React.useState<SellerApplication[]>([]);
+  const [loadingSellerRequests, setLoadingSellerRequests] = React.useState(false);
 
   React.useEffect(() => {
     const loadUsers = async () => {
@@ -53,13 +60,40 @@ export default function AdminPage() {
         setLoadingProducts(false);
       }
     };
+    const loadSellerRequests = async () => {
+      setLoadingSellerRequests(true);
+      try {
+        const data = await sellerApi.listApplications();
+        setSellerRequests(data ?? []);
+      } catch {
+        setSellerRequests([]);
+      } finally {
+        setLoadingSellerRequests(false);
+      }
+    };
     void loadUsers();
     void loadProducts();
+    void loadSellerRequests();
   }, []);
 
   const toggleUserStatus = (id: string, status: AdminUser["status"]) => {
     setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, status } : u)));
   };
+
+  const reviewApplication = async (id: string, approve: boolean) => {
+    try {
+      const updated = approve ? await sellerApi.approve(id) : await sellerApi.reject(id);
+      setSellerRequests((prev) => prev.map((req) => (req.id === id ? updated : req)));
+      addToast(approve ? "Approved seller request" : "Rejected seller request", "success");
+    } catch (error) {
+      const message = error instanceof ApiError ? error.message : "Unable to update request";
+      addToast(message, "error");
+    }
+  };
+
+  const pendingSellerRequests = sellerRequests.filter((req) => req.status === "PENDING").length;
+  const approvedSellerRequests = sellerRequests.filter((req) => req.status === "APPROVED").length;
+  const formatDate = (value?: string) => (value ? new Date(value).toLocaleString() : "N/A");
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 space-y-10">
@@ -85,10 +119,10 @@ export default function AdminPage() {
         </div>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            { icon: Users, label: "Người dùng", value: users.length, tone: "bg-white/10" },
-            { icon: Package2, label: "Sản phẩm", value: products.length || "—", tone: "bg-white/10" },
-            { icon: Store, label: "Yêu cầu gian hàng", value: 0, tone: "bg-white/10" },
-            { icon: CheckCircle2, label: "Duyệt hôm nay", value: 0, tone: "bg-white/10" },
+            { icon: Users, label: "Users", value: users.length, tone: "bg-white/10" },
+            { icon: Package2, label: "Products", value: products.length || 0, tone: "bg-white/10" },
+            { icon: Store, label: "Seller requests", value: pendingSellerRequests, tone: "bg-white/10" },
+            { icon: CheckCircle2, label: "Approved sellers", value: approvedSellerRequests, tone: "bg-white/10" },
           ].map((item) => (
             <div key={item.label} className={`flex items-center gap-4 rounded-2xl px-4 py-3 ${item.tone}`}>
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20">
@@ -238,17 +272,84 @@ export default function AdminPage() {
       <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-semibold text-emerald-700">Yêu cầu mở gian hàng</p>
+            <p className="text-sm font-semibold text-emerald-700">Yeu cau mo gian hang</p>
             <h2 className="text-2xl font-bold text-zinc-900">Seller Requests</h2>
           </div>
           <Badge tone="warning" className="flex items-center gap-1">
             <Clock4 size={14} />
-            0 pending
+            {pendingSellerRequests} pending
           </Badge>
         </div>
-        <div className="mt-4 rounded-xl border border-dashed border-zinc-200 p-6 text-sm text-zinc-600">
-          Chưa có yêu cầu mở gian hàng.
-        </div>
+        {loadingSellerRequests ? (
+          <div className="mt-4 flex h-24 items-center justify-center gap-2 text-sm text-zinc-600">
+            <Spinner />
+            Loading seller requests...
+          </div>
+        ) : sellerRequests.length ? (
+          <div className="mt-4 overflow-x-auto rounded-xl border border-zinc-100">
+            <table className="min-w-full text-left text-sm">
+              <thead className="bg-zinc-50 text-zinc-500">
+                <tr>
+                  <th className="px-4 py-3 font-semibold">Store</th>
+                  <th className="px-4 py-3 font-semibold">Contact</th>
+                  <th className="px-4 py-3 font-semibold">Category</th>
+                  <th className="px-4 py-3 font-semibold">Status</th>
+                  <th className="px-4 py-3 font-semibold">Created</th>
+                  <th className="px-4 py-3 font-semibold">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100">
+                {sellerRequests.map((req) => (
+                  <tr key={req.id} className="hover:bg-zinc-50">
+                    <td className="px-4 py-3">
+                      <div className="font-semibold text-zinc-900">{req.storeName}</div>
+                      <div className="text-xs text-zinc-500">#{req.id.slice(0, 8)}</div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="text-sm text-zinc-800">{req.contactEmail}</div>
+                      <div className="text-xs text-zinc-500">{req.phone}</div>
+                    </td>
+                    <td className="px-4 py-3">{req.category || "-"}</td>
+                    <td className="px-4 py-3">
+                      <Badge
+                        tone={req.status === "APPROVED" ? "success" : req.status === "REJECTED" ? "danger" : "warning"}
+                        className="uppercase"
+                      >
+                        {req.status}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3 text-zinc-500">{formatDate(req.createdAt)}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="primary"
+                          disabled={req.status !== "PENDING"}
+                          onClick={() => reviewApplication(req.id, true)}
+                        >
+                          Approve
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-red-600 hover:text-red-700"
+                          disabled={req.status !== "PENDING"}
+                          onClick={() => reviewApplication(req.id, false)}
+                        >
+                          Reject
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="mt-4 rounded-xl border border-dashed border-zinc-200 p-6 text-sm text-zinc-600">
+            No seller requests yet.
+          </div>
+        )}
       </section>
     </div>
   );

@@ -10,8 +10,10 @@ import com.learnfirebase.ecommerce.identity.application.port.out.PasswordHasher;
 import com.learnfirebase.ecommerce.identity.application.port.out.TokenProvider;
 import com.learnfirebase.ecommerce.identity.application.port.out.UserRepository;
 import com.learnfirebase.ecommerce.identity.application.service.IdentityApplicationService;
+import com.learnfirebase.ecommerce.identity.application.service.SellerApplicationService;
 import com.learnfirebase.ecommerce.identity.infrastructure.persistence.UserEntity;
 import com.learnfirebase.ecommerce.identity.infrastructure.persistence.UserJpaRepository;
+import com.learnfirebase.ecommerce.identity.application.port.out.SellerApplicationRepository;
 
 @Configuration
 @EnableJpaRepositories(basePackageClasses = UserJpaRepository.class)
@@ -20,6 +22,11 @@ public class IdentityModuleConfig {
     @Bean
     public IdentityApplicationService identityApplicationService(UserRepository userRepository, PasswordHasher passwordHasher, TokenProvider tokenProvider) {
         return new IdentityApplicationService(userRepository, passwordHasher, tokenProvider);
+    }
+
+    @Bean
+    public SellerApplicationService sellerApplicationService(SellerApplicationRepository sellerApplicationRepository, UserRepository userRepository) {
+        return new SellerApplicationService(sellerApplicationRepository, userRepository);
     }
 
     @Bean

@@ -82,14 +82,10 @@ export default function ProfilePage() {
         <p className="text-sm text-zinc-600">Manage your account information.</p>
       </div>
       <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4">
           <div>
             <div className="text-xs uppercase text-zinc-500">Email</div>
             <div className="text-sm font-semibold text-black">{user.email}</div>
-          </div>
-          <div>
-            <div className="text-xs uppercase text-zinc-500">Provider</div>
-            <div className="text-sm font-semibold text-black">{user.provider}</div>
           </div>
         </div>
         <form className="mt-6 grid gap-4" onSubmit={handleUpdate}>
@@ -108,7 +104,6 @@ export default function ProfilePage() {
                 onChange={(e) => handleAvatarUpload(e.target.files?.[0])}
                 disabled={uploading}
               />
-              <p className="text-xs text-zinc-500">Ảnh sẽ được lưu vào bucket Avatars (public).</p>
             </div>
           </div>
           <Input

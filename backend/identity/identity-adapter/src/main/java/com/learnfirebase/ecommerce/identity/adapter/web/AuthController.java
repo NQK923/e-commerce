@@ -7,12 +7,10 @@ import java.util.Set;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.GetMapping;
 
 import com.learnfirebase.ecommerce.identity.application.command.LoginCommand;
 import com.learnfirebase.ecommerce.identity.application.command.RegisterUserCommand;
@@ -22,6 +20,7 @@ import com.learnfirebase.ecommerce.identity.application.port.in.AuthenticateUser
 import com.learnfirebase.ecommerce.identity.application.port.in.RegisterUserUseCase;
 import com.learnfirebase.ecommerce.identity.application.port.in.UserQueryUseCase;
 import com.learnfirebase.ecommerce.identity.application.port.out.TokenProvider;
+import com.learnfirebase.ecommerce.identity.domain.exception.IdentityDomainException;
 
 import lombok.Builder;
 import lombok.Data;
@@ -49,10 +48,17 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody LoginCommand command) {
-        AuthTokenDto tokens = authenticateUserUseCase.execute(command);
-        UserDto user = userQueryUseCase.getByEmail(command.getEmail());
-        return ResponseEntity.ok(toResponse(user, tokens));
+    public ResponseEntity<?> login(@RequestBody LoginCommand command) {
+        try {
+            AuthTokenDto tokens = authenticateUserUseCase.execute(command);
+            UserDto user = userQueryUseCase.getByEmail(command.getEmail());
+            return ResponseEntity.ok(toResponse(user, tokens));
+        } catch (IdentityDomainException ex) {
+            return ResponseEntity.status(401).body(ErrorResponse.builder()
+                .code("INVALID_CREDENTIALS")
+                .message("Email or password is incorrect")
+                .build());
+        }
     }
 
     @GetMapping("/me")
@@ -173,7 +179,15 @@ public class AuthController {
         String id;
         String email;
         String displayName;
+        String avatarUrl;
         String provider;
         Set<String> roles;
+    }
+
+    @Value
+    @Builder
+    static class ErrorResponse {
+        String code;
+        String message;
     }
 }

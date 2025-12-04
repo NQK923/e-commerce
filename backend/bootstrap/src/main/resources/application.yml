@@ -4,6 +4,10 @@ spring:
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:Khanh090203}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      data-source-properties:
+        preferQueryMode: simple
+        prepareThreshold: 0
   jpa:
     hibernate:
       ddl-auto: validate

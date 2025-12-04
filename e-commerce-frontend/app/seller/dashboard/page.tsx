@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Package2, ShoppingBag, TrendingUp, Wallet, Plus, Sparkles } from "lucide-react";
 import { productApi } from "@/src/api/productApi";
 import { Button } from "@/src/components/ui/button";
@@ -11,10 +12,12 @@ import { Product } from "@/src/types/product";
 
 export default function SellerDashboardPage() {
   const { user, initializing } = useRequireAuth("/login");
+  const router = useRouter();
   const [products, setProducts] = React.useState<Product[]>([]);
   const [loading, setLoading] = React.useState(false);
 
   React.useEffect(() => {
+    if (!user || !user.roles?.includes("SELLER")) return;
     const load = async () => {
       setLoading(true);
       try {
@@ -25,7 +28,14 @@ export default function SellerDashboardPage() {
       }
     };
     void load();
-  }, []);
+  }, [user]);
+
+  React.useEffect(() => {
+    if (initializing) return;
+    if (user && !user.roles?.includes("SELLER")) {
+      router.replace("/seller/register?next=/seller/dashboard");
+    }
+  }, [initializing, router, user]);
 
   const totalProducts = products.length;
   const totalValue = products.reduce((sum, p) => sum + (p.price ?? 0), 0);
@@ -36,6 +46,15 @@ export default function SellerDashboardPage() {
       <div className="flex min-h-[60vh] items-center justify-center gap-3 text-sm text-zinc-600">
         <Spinner />
         Loading dashboard...
+      </div>
+    );
+  }
+
+  if (!user.roles?.includes("SELLER")) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-sm text-zinc-600">
+        <Spinner />
+        Redirecting to seller registration...
       </div>
     );
   }
