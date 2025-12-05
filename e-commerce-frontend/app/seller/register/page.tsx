@@ -89,8 +89,8 @@ function SellerRegisterContent() {
     setLoading(true);
     try {
       const [avatarUrl, coverUrl] = await Promise.all([
-        avatarFile ? uploadToBucket("seller", avatarFile) : Promise.resolve(undefined),
-        coverFile ? uploadToBucket("seller", coverFile) : Promise.resolve(undefined),
+        avatarFile ? uploadToBucket("Seller", avatarFile) : Promise.resolve(undefined),
+        coverFile ? uploadToBucket("Seller", coverFile) : Promise.resolve(undefined),
       ]);
       const created = await sellerApi.submitApplication({
         userId: user?.id,

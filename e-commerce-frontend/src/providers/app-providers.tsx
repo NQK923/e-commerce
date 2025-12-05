@@ -6,9 +6,14 @@ import { CartProvider } from "../store/cart-store";
 import { ToastProvider } from "../components/ui/toast-provider";
 import { LanguageProvider } from "./language-provider";
 
-export const AppProviders: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+type AppProvidersProps = {
+  children: React.ReactNode;
+  initialLanguage?: "en" | "vi";
+};
+
+export const AppProviders: React.FC<AppProvidersProps> = ({ children, initialLanguage }) => {
   return (
-    <LanguageProvider>
+    <LanguageProvider initialLanguage={initialLanguage}>
       <ToastProvider>
         <AuthProvider>
           <CartProvider>{children}</CartProvider>

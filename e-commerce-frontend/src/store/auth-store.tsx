@@ -14,7 +14,7 @@ type AuthContextValue = {
   register: (payload: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
   refresh: () => Promise<boolean>;
-  setSessionFromOAuth: (payload: AuthResponse | (AuthTokens & { user?: User })) => Promise<void>;
+  setSessionFromOAuth: (payload: AuthResponse | (AuthTokens & { user?: User })) => Promise<User | null>;
   setUserProfile: (user: User) => void;
 };
 
@@ -75,7 +75,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await logout();
       return false;
     }
-  }, [logout, refreshToken, syncTokens]);
+  }, [logout, resolveRefreshToken, syncTokens]);
 
   const fetchUser = useCallback(async () => {
     try {

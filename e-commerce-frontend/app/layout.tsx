@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { cookies } from "next/headers";
 import { Suspense } from "react";
 import "./globals.css";
 import { AppProviders } from "@/src/providers/app-providers";
 import { Header } from "@/src/components/layout/header";
 import { Footer } from "@/src/components/layout/footer";
 import { ProtectedRouteGuard } from "@/src/components/auth/protected-route-guard";
+
+const LANGUAGE_COOKIE = "ecommerce_lang_v2";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,15 +25,19 @@ export const metadata: Metadata = {
   description: "Production-ready e-commerce frontend",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const savedLang = cookieStore.get(LANGUAGE_COOKIE)?.value;
+  const initialLanguage = savedLang === "en" || savedLang === "vi" ? savedLang : "vi";
+
   return (
-    <html lang="en">
+    <html lang={initialLanguage}>
       <body className={`${geistSans.variable} ${geistMono.variable} bg-zinc-50 text-zinc-900 antialiased`}>
-        <AppProviders>
+        <AppProviders initialLanguage={initialLanguage}>
           <Suspense fallback={null}>
             <ProtectedRouteGuard />
           </Suspense>

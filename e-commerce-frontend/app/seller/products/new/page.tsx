@@ -36,10 +36,10 @@ function NewProductContent() {
     price: "",
     currency: "VND",
     categoryId: CATEGORIES[0],
-    imageUrl: "",
-    gallery: [] as string[],
   });
   
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [previewImages, setPreviewImages] = useState<string[]>([]);
   const [hasVariants, setHasVariants] = useState(false);
   const [variants, setVariants] = useState<ProductVariantRequest[]>([]);
   const [newVariant, setNewVariant] = useState({ sku: "", name: "", price: "" });
@@ -62,7 +62,7 @@ function NewProductContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name || !form.price || !form.imageUrl) {
+    if (!form.name || !form.price || selectedImages.length === 0) {
       addToast("Vui lòng nhập tên, giá và hình ảnh sản phẩm", "error");
       return;
     }
@@ -72,7 +72,16 @@ function NewProductContent() {
     }
 
     setLoading(true);
+    setUploading(true);
     try {
+      const uploaded: string[] = [];
+      for (const file of selectedImages) {
+        const url = await uploadToBucket("ProductImages", file);
+        uploaded.push(url);
+      }
+
+      const [primaryImage, ...galleryImages] = uploaded;
+
       await productApi.create({
         name: form.name,
         description: form.description,
@@ -80,8 +89,8 @@ function NewProductContent() {
         currency: form.currency || "VND",
         categoryId: form.categoryId || undefined,
         images: [
-          { url: form.imageUrl, primary: true },
-          ...form.gallery.map((url, idx) => ({ url, primary: false, sortOrder: idx + 1 })),
+          { url: primaryImage, primary: true },
+          ...galleryImages.map((url, idx) => ({ url, primary: false, sortOrder: idx + 1 })),
         ],
         variants: hasVariants ? variants : undefined,
       });
@@ -92,6 +101,7 @@ function NewProductContent() {
       addToast(message, "error");
     } finally {
       setLoading(false);
+      setUploading(false);
     }
   };
 
@@ -168,31 +178,17 @@ function NewProductContent() {
                         accept="image/*"
                         multiple
                         disabled={uploading}
-                        onChange={async (e) => {
-                          const files = Array.from(e.target.files ?? []);
-                          if (!files.length) return;
-                          setUploading(true);
-                          try {
-                            const uploaded: string[] = [];
-                            for (const file of files) {
-                              const url = await uploadToBucket("Product Images", file);
-                              uploaded.push(url);
-                            }
-                            setForm((prev) => ({
-                              ...prev,
-                              imageUrl: prev.imageUrl || uploaded[0] || "",
-                              gallery: [...prev.gallery, ...uploaded],
-                            }));
-                            addToast("Đã tải ảnh lên", "success");
-                          } catch (error) {
-                            addToast("Tải ảnh thất bại", "error");
-                          } finally {
-                            setUploading(false);
-                          }
+                                  onChange={(e) => {
+                          const files = Array.from(e.target.files ?? []);
+                          if (!files.length) return;
+                          const previews = files.map((file) => URL.createObjectURL(file));
+                          setSelectedImages((prev) => [...prev, ...files]);
+                          setPreviewImages((prev) => [...prev, ...previews]);
+                          addToast("Đã chọn ảnh, nhấn Lưu để tải lên", "success");
                         }}
                       />
                    </label>
-                   {[form.imageUrl, ...form.gallery].filter(Boolean).map((url, idx) => (
+                   {previewImages.map((url, idx) => (
                       <div key={idx} className="relative h-24 w-24 overflow-hidden rounded-lg border border-zinc-200">
                         <img src={url} alt="preview" className="h-full w-full object-cover" />
                         {idx === 0 && <span className="absolute bottom-0 left-0 right-0 bg-black/60 text-center text-[10px] text-white">Ảnh bìa</span>}
