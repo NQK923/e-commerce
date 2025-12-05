@@ -1,18 +1,23 @@
 package com.learnfirebase.ecommerce.order.adapter.web;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.learnfirebase.ecommerce.common.application.pagination.PageRequest;
+import com.learnfirebase.ecommerce.common.application.pagination.PageResponse;
 import com.learnfirebase.ecommerce.order.application.command.CancelOrderCommand;
 import com.learnfirebase.ecommerce.order.application.command.CreateOrderCommand;
 import com.learnfirebase.ecommerce.order.application.command.PayOrderCommand;
 import com.learnfirebase.ecommerce.order.application.dto.OrderDto;
 import com.learnfirebase.ecommerce.order.application.port.in.CancelOrderUseCase;
 import com.learnfirebase.ecommerce.order.application.port.in.CreateOrderUseCase;
+import com.learnfirebase.ecommerce.order.application.port.in.ListOrdersUseCase;
 import com.learnfirebase.ecommerce.order.application.port.in.PayOrderUseCase;
 
 import lombok.RequiredArgsConstructor;
@@ -24,6 +29,15 @@ public class OrderController {
     private final CreateOrderUseCase createOrderUseCase;
     private final PayOrderUseCase payOrderUseCase;
     private final CancelOrderUseCase cancelOrderUseCase;
+    private final ListOrdersUseCase listOrdersUseCase;
+
+    @GetMapping
+    public ResponseEntity<PageResponse<OrderDto>> list(
+        @RequestParam(name = "page", defaultValue = "0") int page,
+        @RequestParam(name = "size", defaultValue = "10") int size) {
+        PageRequest pageRequest = PageRequest.builder().page(page).size(size).build();
+        return ResponseEntity.ok(listOrdersUseCase.listOrders(pageRequest));
+    }
 
     @PostMapping
     public ResponseEntity<OrderDto> create(@RequestBody CreateOrderCommand command) {

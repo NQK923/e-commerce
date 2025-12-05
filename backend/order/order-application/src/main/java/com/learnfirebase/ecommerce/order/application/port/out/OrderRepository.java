@@ -1,5 +1,6 @@
 package com.learnfirebase.ecommerce.order.application.port.out;
 
+import java.util.List;
 import java.util.Optional;
 
 import com.learnfirebase.ecommerce.order.domain.model.Order;
@@ -9,4 +10,8 @@ public interface OrderRepository {
     Order save(Order order);
 
     Optional<Order> findById(OrderId id);
+
+    List<Order> findAll(int page, int size);
+
+    long count();
 }

@@ -1,9 +1,11 @@
 package com.learnfirebase.ecommerce.order.infrastructure.persistence;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
 import com.learnfirebase.ecommerce.common.domain.valueobject.Money;
@@ -31,6 +33,18 @@ public class OrderRepositoryImpl implements OrderRepository {
     @Override
     public Optional<Order> findById(OrderId id) {
         return orderJpaRepository.findById(id.getValue()).map(this::toDomain);
+    }
+
+    @Override
+    public List<Order> findAll(int page, int size) {
+        return orderJpaRepository.findAll(PageRequest.of(page, size)).stream()
+            .map(this::toDomain)
+            .collect(Collectors.toList());
+    }
+
+    @Override
+    public long count() {
+        return orderJpaRepository.count();
     }
 
     private JpaOrderEntity toEntity(Order order) {

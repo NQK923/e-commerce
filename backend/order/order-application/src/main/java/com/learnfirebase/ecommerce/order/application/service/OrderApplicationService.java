@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.learnfirebase.ecommerce.common.application.pagination.PageRequest;
+import com.learnfirebase.ecommerce.common.application.pagination.PageResponse;
 import com.learnfirebase.ecommerce.common.domain.valueobject.Money;
 import com.learnfirebase.ecommerce.order.application.command.CancelOrderCommand;
 import com.learnfirebase.ecommerce.order.application.command.CreateOrderCommand;
@@ -12,6 +14,7 @@ import com.learnfirebase.ecommerce.order.application.command.PayOrderCommand;
 import com.learnfirebase.ecommerce.order.application.dto.OrderDto;
 import com.learnfirebase.ecommerce.order.application.port.in.CancelOrderUseCase;
 import com.learnfirebase.ecommerce.order.application.port.in.CreateOrderUseCase;
+import com.learnfirebase.ecommerce.order.application.port.in.ListOrdersUseCase;
 import com.learnfirebase.ecommerce.order.application.port.in.PayOrderUseCase;
 import com.learnfirebase.ecommerce.order.application.port.out.InventoryReservationPort;
 import com.learnfirebase.ecommerce.order.application.port.out.LoadProductPort;
@@ -28,7 +31,7 @@ import com.learnfirebase.ecommerce.order.domain.exception.OrderDomainException;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseCase, CancelOrderUseCase {
+public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseCase, CancelOrderUseCase, ListOrdersUseCase {
 
     private final OrderRepository orderRepository;
     private final LoadProductPort loadProductPort;
@@ -91,6 +94,23 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
         Order saved = orderRepository.save(order);
         order.getDomainEvents().forEach(eventPublisher::publish);
         return toDto(saved);
+    }
+
+    @Override
+    public PageResponse<OrderDto> listOrders(PageRequest pageRequest) {
+        List<Order> orders = orderRepository.findAll(pageRequest.getPage(), pageRequest.getSize());
+        long total = orderRepository.count();
+        int totalPages = (int) Math.ceil((double) total / pageRequest.getSize());
+
+        List<OrderDto> dtos = orders.stream().map(this::toDto).collect(Collectors.toList());
+
+        return PageResponse.<OrderDto>builder()
+            .content(dtos)
+            .page(pageRequest.getPage())
+            .size(pageRequest.getSize())
+            .totalElements(total)
+            .totalPages(totalPages)
+            .build();
     }
 
     private OrderDto toDto(Order order) {
