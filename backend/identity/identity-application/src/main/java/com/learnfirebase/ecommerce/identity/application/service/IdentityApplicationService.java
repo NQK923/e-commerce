@@ -2,15 +2,19 @@ package com.learnfirebase.ecommerce.identity.application.service;
 
 import java.time.Instant;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import com.learnfirebase.ecommerce.common.domain.valueobject.Email;
+import com.learnfirebase.ecommerce.identity.application.command.AddAddressCommand;
 import com.learnfirebase.ecommerce.identity.application.command.LoginCommand;
 import com.learnfirebase.ecommerce.identity.application.command.OAuth2LoginCommand;
 import com.learnfirebase.ecommerce.identity.application.command.RegisterUserCommand;
 import com.learnfirebase.ecommerce.identity.application.command.UpdateProfileCommand;
 import com.learnfirebase.ecommerce.identity.application.dto.AuthTokenDto;
+import com.learnfirebase.ecommerce.identity.application.dto.UserAddressDto;
 import com.learnfirebase.ecommerce.identity.application.dto.UserDto;
 import com.learnfirebase.ecommerce.identity.application.port.in.AuthenticateUserUseCase;
+import com.learnfirebase.ecommerce.identity.application.port.in.ManageUserAddressUseCase;
 import com.learnfirebase.ecommerce.identity.application.port.in.OAuth2LoginUseCase;
 import com.learnfirebase.ecommerce.identity.application.port.in.RegisterUserUseCase;
 import com.learnfirebase.ecommerce.identity.application.port.in.UserQueryUseCase;
@@ -23,12 +27,13 @@ import com.learnfirebase.ecommerce.identity.domain.exception.IdentityDomainExcep
 import com.learnfirebase.ecommerce.identity.domain.model.AuthProvider;
 import com.learnfirebase.ecommerce.identity.domain.model.HashedPassword;
 import com.learnfirebase.ecommerce.identity.domain.model.User;
+import com.learnfirebase.ecommerce.identity.domain.model.UserAddress;
 import com.learnfirebase.ecommerce.identity.domain.model.UserId;
 
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class IdentityApplicationService implements RegisterUserUseCase, AuthenticateUserUseCase, OAuth2LoginUseCase, UserQueryUseCase, UpdateUserProfileUseCase, ListUsersUseCase {
+public class IdentityApplicationService implements RegisterUserUseCase, AuthenticateUserUseCase, OAuth2LoginUseCase, UserQueryUseCase, UpdateUserProfileUseCase, ListUsersUseCase, ManageUserAddressUseCase {
     private final UserRepository userRepository;
     private final PasswordHasher passwordHasher;
     private final TokenProvider tokenProvider;
@@ -140,9 +145,51 @@ public class IdentityApplicationService implements RegisterUserUseCase, Authenti
             .avatarUrl(command.getAvatarUrl() != null ? command.getAvatarUrl() : user.getAvatarUrl())
             .createdAt(user.getCreatedAt())
             .updatedAt(Instant.now())
+            .addresses(user.getAddresses())
             .build();
         User saved = userRepository.save(updated);
         return toDto(saved, null);
+    }
+
+    @Override
+    public UserAddressDto addAddress(String userId, AddAddressCommand command) {
+        User user = userRepository.findById(new UserId(userId))
+            .orElseThrow(() -> new IdentityDomainException("User not found"));
+
+        UserAddress newAddress = UserAddress.builder()
+            .label(command.getLabel())
+            .isDefault(command.isDefault())
+            .address(command.getAddress())
+            .build();
+
+        if (command.isDefault()) {
+            user.getAddresses().forEach(a -> a.setDefault(false));
+        }
+        
+        user.getAddresses().add(newAddress);
+        userRepository.save(user);
+
+        return toAddressDto(newAddress);
+    }
+
+    @Override
+    public void deleteAddress(String userId, String addressId) {
+        User user = userRepository.findById(new UserId(userId))
+            .orElseThrow(() -> new IdentityDomainException("User not found"));
+
+        boolean removed = user.getAddresses().removeIf(a -> a.getId().equals(addressId));
+        if (removed) {
+            userRepository.save(user);
+        }
+    }
+
+    private UserAddressDto toAddressDto(UserAddress domain) {
+        return UserAddressDto.builder()
+            .id(domain.getId())
+            .label(domain.getLabel())
+            .isDefault(domain.isDefault())
+            .address(domain.getAddress())
+            .build();
     }
 
     private UserDto toDto(User user, String displayNameOverride) {
@@ -157,6 +204,7 @@ public class IdentityApplicationService implements RegisterUserUseCase, Authenti
             .roles(user.getRoles().stream().map(Enum::name).toList())
             .avatarUrl(user.getAvatarUrl())
             .createdAt(user.getCreatedAt())
+            .addresses(user.getAddresses() != null ? user.getAddresses().stream().map(this::toAddressDto).toList() : java.util.Collections.emptyList())
             .build();
     }
 }

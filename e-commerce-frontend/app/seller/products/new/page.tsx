@@ -109,13 +109,7 @@ export default function NewProductPage() {
           value={form.categoryId}
           onChange={(e) => setForm((prev) => ({ ...prev, categoryId: e.target.value }))}
         />
-        <Input
-          label="Ảnh sản phẩm (URL)"
-          required
-          value={form.imageUrl}
-          onChange={(e) => setForm((prev) => ({ ...prev, imageUrl: e.target.value }))}
-          placeholder="https://..."
-        />
+
         <div className="flex flex-col gap-2 text-sm">
           <label className="font-medium text-zinc-700">Tải ảnh lên bucket Product Images</label>
           <input

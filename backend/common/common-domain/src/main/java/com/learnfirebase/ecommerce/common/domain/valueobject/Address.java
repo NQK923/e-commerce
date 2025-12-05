@@ -6,6 +6,8 @@ import lombok.Value;
 @Value
 @Builder
 public class Address {
+    String fullName;
+    String phoneNumber;
     String line1;
     String line2;
     String city;

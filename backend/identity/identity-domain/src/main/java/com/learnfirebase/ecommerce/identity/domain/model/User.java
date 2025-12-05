@@ -1,7 +1,9 @@
 package com.learnfirebase.ecommerce.identity.domain.model;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Set;
 
 import com.learnfirebase.ecommerce.common.domain.AggregateRoot;
@@ -29,6 +31,8 @@ public class User extends AggregateRoot<UserId> {
     private Set<Role> roles = EnumSet.of(Role.CUSTOMER);
     @Builder.Default
     private Set<Permission> permissions = EnumSet.noneOf(Permission.class);
+    @Builder.Default
+    private List<UserAddress> addresses = new ArrayList<>();
     private String displayName;
     private String avatarUrl;
     private Instant createdAt;

@@ -1,6 +1,7 @@
 package com.learnfirebase.ecommerce.identity.application.dto;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Set;
 
 import com.learnfirebase.ecommerce.identity.domain.model.AuthProvider;
@@ -19,5 +20,6 @@ public class UserDto {
     AuthProvider provider;
     @Singular
     Set<String> roles;
+    List<UserAddressDto> addresses;
     Instant createdAt;
 }

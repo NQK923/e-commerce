@@ -3,15 +3,18 @@ package com.learnfirebase.ecommerce.identity.infrastructure.persistence;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.List;
+import java.util.ArrayList;
 
 import org.springframework.stereotype.Repository;
 
+import com.learnfirebase.ecommerce.common.domain.valueobject.Address;
 import com.learnfirebase.ecommerce.common.domain.valueobject.Email;
 import com.learnfirebase.ecommerce.identity.application.port.out.UserRepository;
 import com.learnfirebase.ecommerce.identity.domain.model.AuthProvider;
 import com.learnfirebase.ecommerce.identity.domain.model.HashedPassword;
 import com.learnfirebase.ecommerce.identity.domain.model.Role;
 import com.learnfirebase.ecommerce.identity.domain.model.User;
+import com.learnfirebase.ecommerce.identity.domain.model.UserAddress;
 import com.learnfirebase.ecommerce.identity.domain.model.UserId;
 
 import lombok.RequiredArgsConstructor;
@@ -49,7 +52,7 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     private UserEntity toEntity(User user) {
-        return UserEntity.builder()
+        UserEntity entity = UserEntity.builder()
             .id(user.getId().getValue())
             .email(user.getEmail() != null ? user.getEmail().getValue() : null)
             .password(user.getPassword() != null ? user.getPassword().getValue() : null)
@@ -60,7 +63,17 @@ public class UserRepositoryImpl implements UserRepository {
             .avatarUrl(user.getAvatarUrl())
             .createdAt(user.getCreatedAt())
             .updatedAt(user.getUpdatedAt())
+            .addresses(new ArrayList<>())
             .build();
+            
+        if (user.getAddresses() != null) {
+            List<UserAddressEntity> addressEntities = user.getAddresses().stream()
+                .map(addr -> toAddressEntity(addr, entity))
+                .collect(Collectors.toList());
+            entity.setAddresses(addressEntities);
+        }
+        
+        return entity;
     }
 
     private User toDomain(UserEntity entity) {
@@ -75,6 +88,42 @@ public class UserRepositoryImpl implements UserRepository {
             .avatarUrl(entity.getAvatarUrl())
             .createdAt(entity.getCreatedAt())
             .updatedAt(entity.getUpdatedAt())
+            .addresses(entity.getAddresses() != null ? entity.getAddresses().stream().map(this::toAddressDomain).collect(Collectors.toList()) : new ArrayList<>())
+            .build();
+    }
+
+    private UserAddressEntity toAddressEntity(UserAddress domain, UserEntity userEntity) {
+        return UserAddressEntity.builder()
+            .id(domain.getId())
+            .user(userEntity)
+            .label(domain.getLabel())
+            .isDefault(domain.isDefault())
+            .fullName(domain.getAddress().getFullName())
+            .phoneNumber(domain.getAddress().getPhoneNumber())
+            .line1(domain.getAddress().getLine1())
+            .line2(domain.getAddress().getLine2())
+            .city(domain.getAddress().getCity())
+            .state(domain.getAddress().getState())
+            .postalCode(domain.getAddress().getPostalCode())
+            .country(domain.getAddress().getCountry())
+            .build();
+    }
+
+    private UserAddress toAddressDomain(UserAddressEntity entity) {
+        return UserAddress.builder()
+            .id(entity.getId())
+            .label(entity.getLabel())
+            .isDefault(entity.isDefault())
+            .address(Address.builder()
+                .fullName(entity.getFullName())
+                .phoneNumber(entity.getPhoneNumber())
+                .line1(entity.getLine1())
+                .line2(entity.getLine2())
+                .city(entity.getCity())
+                .state(entity.getState())
+                .postalCode(entity.getPostalCode())
+                .country(entity.getCountry())
+                .build())
             .build();
     }
 }
