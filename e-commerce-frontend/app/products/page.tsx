@@ -1,7 +1,7 @@
 'use client';
 
 import React, { Suspense, useMemo, useState } from "react";
-import { Filter, SlidersHorizontal, X } from "lucide-react";
+import { Filter, SlidersHorizontal } from "lucide-react";
 import { ProductCard } from "@/src/components/product/product-card";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
@@ -201,7 +201,7 @@ function ProductsContent() {
                   </div>
                   <h3 className="text-lg font-semibold text-zinc-900">No products found</h3>
                   <p className="text-zinc-500 max-w-md mt-2">
-                    Try adjusting your filters or search query to find what you're looking for.
+                    Try adjusting your filters or search query to find what you&#39;re looking for.
                   </p>
                   <Button variant="secondary" className="mt-6" onClick={clearFilters}>
                     Clear Filters

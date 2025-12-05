@@ -15,9 +15,15 @@ export const Header: React.FC = () => {
   const { user, logout } = useAuth();
   const { cart } = useCart();
   const { t, language, setLanguage } = useTranslation();
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const itemCount = cart?.items.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
 
-  const isAdmin = user?.roles?.includes("ADMIN");
+  const isAdmin = mounted && user?.roles?.includes("ADMIN");
 
   const navItems = [
     { href: "/", label: t.nav.home },
@@ -29,6 +35,10 @@ export const Header: React.FC = () => {
   const toggleLanguage = () => {
     setLanguage(language === 'vi' ? 'en' : 'vi');
   };
+
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
 
   return (
     <header className="sticky top-0 z-40 border-b border-zinc-200 bg-white/80 backdrop-blur-md">
@@ -65,7 +75,7 @@ export const Header: React.FC = () => {
             <div className="h-4 w-px bg-zinc-200 mx-1" />
 
             {navItems
-              .filter((item) => (item.requiresAuth ? Boolean(user) : true))
+              .filter((item) => (item.requiresAuth ? (mounted && Boolean(user)) : true))
               .map((item) => (
                 <Link
                   key={item.href}
@@ -101,7 +111,7 @@ export const Header: React.FC = () => {
           {/* Cart */}
           <Link href="/cart" className="group relative p-2 text-zinc-600 hover:text-emerald-600 transition-colors">
             <ShoppingBag size={22} />
-            {itemCount > 0 && (
+            {mounted && itemCount > 0 && (
               <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-[10px] font-bold text-white ring-2 ring-white transition-transform group-hover:scale-110 shadow-sm">
                 {itemCount}
               </span>
@@ -110,7 +120,7 @@ export const Header: React.FC = () => {
 
           {/* Auth */}
           <div className="flex items-center gap-2 border-l border-zinc-200 pl-4">
-            {user ? (
+            {mounted && user ? (
               <div className="flex items-center gap-3">
                 <Link href="/profile" className="hidden flex items-center gap-2 text-sm font-medium text-zinc-600 hover:text-emerald-600 sm:flex">
                   <User size={18} />

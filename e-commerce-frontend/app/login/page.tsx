@@ -32,9 +32,13 @@ function LoginContent() {
     event.preventDefault();
     setLoading(true);
     try {
-      await login(form);
+      const loggedInUser = await login(form);
       addToast(t.auth.logged_in_success, "success");
-      router.replace(next || "/");
+      if (loggedInUser?.roles?.includes("ADMIN")) {
+        router.replace("/admin");
+      } else {
+        router.replace(next || "/");
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : t.common.error;
       addToast(message, "error");

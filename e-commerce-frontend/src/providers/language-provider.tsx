@@ -15,20 +15,33 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
+const STORAGE_KEY = 'ecommerce_lang_v2';
+
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  // Default to Vietnamese
+  // Default to 'vi' for SSR consistency
   const [language, setLanguageState] = useState<Language>('vi');
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    const savedLang = localStorage.getItem('app-language') as Language;
-    if (savedLang) {
-      setLanguageState(savedLang);
+    try {
+      const savedLang = localStorage.getItem(STORAGE_KEY);
+      if (savedLang === 'en' || savedLang === 'vi') {
+        setLanguageState(savedLang);
+      }
+    } catch (e) {
+      console.error("Failed to read language from storage", e);
+    } finally {
+      setIsLoaded(true);
     }
   }, []);
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
-    localStorage.setItem('app-language', lang);
+    try {
+        localStorage.setItem(STORAGE_KEY, lang);
+    } catch (e) {
+        console.error("Failed to save language to storage", e);
+    }
   };
 
   const t = language === 'vi' ? vi : en;

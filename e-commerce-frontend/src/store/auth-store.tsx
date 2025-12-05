@@ -10,7 +10,7 @@ type AuthContextValue = {
   accessToken: string | null;
   refreshToken: string | null;
   initializing: boolean;
-  login: (payload: LoginRequest) => Promise<void>;
+  login: (payload: LoginRequest) => Promise<User | null>;
   register: (payload: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
   refresh: () => Promise<boolean>;
@@ -81,8 +81,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const me = await authApi.me();
       setUser(me);
+      return me;
     } catch {
       setUser(null);
+      return null;
     }
   }, []);
 
@@ -91,8 +93,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       syncTokens({ accessToken: auth.accessToken, refreshToken: auth.refreshToken });
       if ("user" in auth && auth.user) {
         setUser(auth.user);
+        return auth.user;
       } else {
-        await fetchUser();
+        return await fetchUser();
       }
     },
     [fetchUser, syncTokens],
@@ -101,7 +104,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = useCallback(
     async (payload: LoginRequest) => {
       const response = await authApi.login(payload);
-      await handleAuthResponse(response);
+      return await handleAuthResponse(response);
     },
     [handleAuthResponse],
   );
