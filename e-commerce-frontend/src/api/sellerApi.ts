@@ -27,6 +27,8 @@ export const sellerApi = {
     return apiRequest<SellerApplication[]>(`/api/seller/applications${query}`);
   },
 
+  myApplication: () => apiRequest<SellerApplication>("/api/seller/applications/me"),
+
   approve: (id: string) =>
     apiRequest<SellerApplication>(`/api/seller/applications/${id}/approve`, {
       method: "POST",

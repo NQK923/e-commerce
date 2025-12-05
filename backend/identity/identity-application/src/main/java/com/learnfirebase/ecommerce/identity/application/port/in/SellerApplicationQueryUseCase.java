@@ -7,4 +7,5 @@ import com.learnfirebase.ecommerce.identity.domain.model.SellerApplicationStatus
 
 public interface SellerApplicationQueryUseCase {
     List<SellerApplicationDto> list(SellerApplicationStatus status);
+    SellerApplicationDto getLatestForUser(String userId);
 }

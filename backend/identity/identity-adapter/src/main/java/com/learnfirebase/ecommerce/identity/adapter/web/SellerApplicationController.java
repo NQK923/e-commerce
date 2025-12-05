@@ -85,6 +85,19 @@ public class SellerApplicationController {
         return ResponseEntity.ok(sellerApplicationQueryUseCase.list(parsedStatus));
     }
 
+    @GetMapping("/me")
+    public ResponseEntity<?> myApplication(@RequestHeader(name = "Authorization", required = false) String authorization) {
+        String userId = extractUserIdFromAccessToken(authorization);
+        if (userId == null) {
+            return ResponseEntity.status(401).build();
+        }
+        SellerApplicationDto dto = sellerApplicationQueryUseCase.getLatestForUser(userId);
+        if (dto == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(dto);
+    }
+
     @PostMapping("/{id}/approve")
     public ResponseEntity<?> approve(@PathVariable String id) {
         return review(id, true);

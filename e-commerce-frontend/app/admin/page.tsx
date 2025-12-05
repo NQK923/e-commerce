@@ -28,6 +28,7 @@ export default function AdminPage() {
   const [loadingUsers, setLoadingUsers] = React.useState(false);
   const [sellerRequests, setSellerRequests] = React.useState<SellerApplication[]>([]);
   const [loadingSellerRequests, setLoadingSellerRequests] = React.useState(false);
+  const [selectedRequest, setSelectedRequest] = React.useState<SellerApplication | null>(null);
 
   React.useEffect(() => {
     const loadUsers = async () => {
@@ -65,8 +66,10 @@ export default function AdminPage() {
       try {
         const data = await sellerApi.listApplications();
         setSellerRequests(data ?? []);
+        setSelectedRequest((data ?? [])[0] ?? null);
       } catch {
         setSellerRequests([]);
+        setSelectedRequest(null);
       } finally {
         setLoadingSellerRequests(false);
       }
@@ -84,6 +87,7 @@ export default function AdminPage() {
     try {
       const updated = approve ? await sellerApi.approve(id) : await sellerApi.reject(id);
       setSellerRequests((prev) => prev.map((req) => (req.id === id ? updated : req)));
+      setSelectedRequest((prev) => (prev && prev.id === id ? updated : prev));
       addToast(approve ? "Approved seller request" : "Rejected seller request", "success");
     } catch (error) {
       const message = error instanceof ApiError ? error.message : "Unable to update request";
@@ -331,7 +335,14 @@ export default function AdminPage() {
                     </td>
                     <td className="px-4 py-3 text-zinc-500">{formatDate(req.createdAt)}</td>
                     <td className="px-4 py-3">
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setSelectedRequest(req)}
+                        >
+                          View
+                        </Button>
                         <Button
                           size="sm"
                           variant="primary"
@@ -359,6 +370,45 @@ export default function AdminPage() {
         ) : (
           <div className="mt-4 rounded-xl border border-dashed border-zinc-200 p-6 text-sm text-zinc-600">
             No seller requests yet.
+          </div>
+        )}
+        {selectedRequest && (
+          <div className="mt-6 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-emerald-700">Chi tiết yêu cầu</p>
+                <h3 className="text-xl font-bold text-zinc-900">{selectedRequest.storeName}</h3>
+                <p className="text-xs text-zinc-500">#{selectedRequest.id.slice(0, 8)}</p>
+              </div>
+              <Badge
+                tone={selectedRequest.status === "APPROVED" ? "success" : selectedRequest.status === "REJECTED" ? "danger" : "warning"}
+                className="uppercase"
+              >
+                {selectedRequest.status}
+              </Badge>
+            </div>
+            <div className="mt-3 grid gap-4 md:grid-cols-2">
+              <div className="space-y-2 text-sm text-zinc-700">
+                <div><span className="font-semibold">Liên hệ:</span> {selectedRequest.contactEmail} - {selectedRequest.phone}</div>
+                <div><span className="font-semibold">Danh mục:</span> {selectedRequest.category || "-"}</div>
+                <div><span className="font-semibold">Mô tả:</span> {selectedRequest.description || "-"}</div>
+                <div><span className="font-semibold">Tạo lúc:</span> {formatDate(selectedRequest.createdAt)}</div>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {selectedRequest.avatarUrl && (
+                  <div className="space-y-1">
+                    <p className="text-xs font-semibold text-zinc-600">Avatar</p>
+                    <img src={selectedRequest.avatarUrl} alt="Avatar" className="h-24 w-24 rounded-full object-cover border" />
+                  </div>
+                )}
+                {selectedRequest.coverUrl && (
+                  <div className="space-y-1 sm:col-span-1">
+                    <p className="text-xs font-semibold text-zinc-600">Ảnh bìa</p>
+                    <img src={selectedRequest.coverUrl} alt="Cover" className="h-24 w-full rounded-lg object-cover border" />
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </section>

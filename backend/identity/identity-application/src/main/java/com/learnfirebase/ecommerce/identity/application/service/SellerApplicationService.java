@@ -91,6 +91,13 @@ public class SellerApplicationService implements SubmitSellerApplicationUseCase,
     }
 
     @Override
+    public SellerApplicationDto getLatestForUser(String userId) {
+        return sellerApplicationRepository.findLatestByUserId(new UserId(userId))
+            .map(this::toDto)
+            .orElse(null);
+    }
+
+    @Override
     public SellerApplicationDto execute(ReviewSellerApplicationCommand command) {
         SellerApplication application = sellerApplicationRepository.findById(new SellerApplicationId(command.getApplicationId()))
             .orElseThrow(() -> new IdentityDomainException("Seller application not found"));
