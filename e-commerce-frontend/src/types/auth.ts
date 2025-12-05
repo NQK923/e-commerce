@@ -1,4 +1,13 @@
+import { Address } from "./order";
+
 export type AuthProvider = "LOCAL" | "GOOGLE" | "FACEBOOK";
+
+export type UserAddress = {
+  id: string;
+  label: string;
+  isDefault: boolean;
+  address: Address;
+};
 
 export type User = {
   id: string;
@@ -7,6 +16,7 @@ export type User = {
   roles: string[];
   provider: AuthProvider;
   avatarUrl?: string;
+  addresses?: UserAddress[];
 };
 
 export type AuthTokens = {

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { profileApi } from "@/src/api/profileApi";
 import { Button } from "@/src/components/ui/button";
@@ -11,7 +11,7 @@ import { useAuth } from "@/src/store/auth-store";
 import { useToast } from "@/src/components/ui/toast-provider";
 import { uploadToBucket } from "@/src/lib/storage";
 
-export default function ProfilePage() {
+function ProfileContent() {
   const { user, setUserProfile } = useAuth();
   const { isAuthenticated, initializing } = useRequireAuth();
   const { addToast } = useToast();
@@ -76,8 +76,6 @@ export default function ProfilePage() {
       setUploading(false);
     }
   };
-
-
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 space-y-8">
@@ -204,5 +202,18 @@ export default function ProfilePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-[60vh] items-center justify-center gap-3 text-sm text-zinc-600">
+        <Spinner />
+        Loading profile...
+      </div>
+    }>
+      <ProfileContent />
+    </Suspense>
   );
 }

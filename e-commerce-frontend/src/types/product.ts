@@ -22,6 +22,12 @@ export type Product = {
   images: ProductImage[];
 };
 
+export type ProductVariantRequest = {
+  sku: string;
+  name: string;
+  price: number;
+};
+
 export type UpsertProductRequest = {
   id?: string;
   name: string;
@@ -34,6 +40,7 @@ export type UpsertProductRequest = {
     altText?: string;
     primary?: boolean;
   }>;
+  variants?: ProductVariantRequest[];
 };
 
 export type ProductListParams = {

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import React, { useState } from "react";
+import React, { Suspense, useState } from "react";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
 import { useAuth } from "@/src/store/auth-store";
@@ -11,7 +11,7 @@ import { config } from "@/src/config/env";
 import { useTranslation } from "@/src/providers/language-provider";
 import { Spinner } from "@/src/components/ui/spinner";
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams?.get("next");
@@ -104,5 +104,17 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Spinner />
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
   );
 }

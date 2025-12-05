@@ -1,13 +1,13 @@
 'use client';
 
 import { useRouter, useSearchParams } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { authApi } from "@/src/api/authApi";
 import { Spinner } from "@/src/components/ui/spinner";
 import { useToast } from "@/src/components/ui/toast-provider";
 import { useAuth } from "@/src/store/auth-store";
 
-export default function OAuthCallbackPage() {
+function OAuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { setSessionFromOAuth } = useAuth();
@@ -64,5 +64,18 @@ export default function OAuthCallbackPage() {
       <Spinner className="h-8 w-8" />
       <p className="text-sm text-zinc-600">Completing sign-in...</p>
     </div>
+  );
+}
+
+export default function OAuthCallbackPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3">
+        <Spinner className="h-8 w-8" />
+        <p className="text-sm text-zinc-600">Loading...</p>
+      </div>
+    }>
+      <OAuthCallbackContent />
+    </Suspense>
   );
 }

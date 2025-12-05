@@ -1,6 +1,6 @@
 'use client';
 
-import React from "react";
+import React, { Suspense } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Package2, ShoppingBag, TrendingUp, Wallet, Plus, Sparkles } from "lucide-react";
@@ -10,7 +10,7 @@ import { Spinner } from "@/src/components/ui/spinner";
 import { useRequireAuth } from "@/src/hooks/use-require-auth";
 import { Product } from "@/src/types/product";
 
-export default function SellerDashboardPage() {
+function SellerDashboardContent() {
   const { user, initializing } = useRequireAuth("/login");
   const router = useRouter();
   const [products, setProducts] = React.useState<Product[]>([]);
@@ -158,5 +158,18 @@ export default function SellerDashboardPage() {
         )}
       </section>
     </div>
+  );
+}
+
+export default function SellerDashboardPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-[60vh] items-center justify-center gap-3 text-sm text-zinc-600">
+        <Spinner />
+        Loading dashboard...
+      </div>
+    }>
+      <SellerDashboardContent />
+    </Suspense>
   );
 }

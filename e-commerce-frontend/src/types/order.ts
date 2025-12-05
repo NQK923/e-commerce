@@ -13,6 +13,7 @@ export type Order = {
 
 export type Address = {
   fullName?: string;
+  phoneNumber?: string;
   line1: string;
   line2?: string;
   city: string;

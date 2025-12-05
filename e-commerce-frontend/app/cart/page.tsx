@@ -1,7 +1,7 @@
 'use client';
 
 import Link from "next/link";
-import React, { useEffect } from "react";
+import React, { Suspense, useEffect } from "react";
 import { CartItemCard } from "@/src/components/cart/cart-item-card";
 import { CartSummary } from "@/src/components/cart/cart-summary";
 import { Spinner } from "@/src/components/ui/spinner";
@@ -11,7 +11,7 @@ import { useRequireAuth } from "@/src/hooks/use-require-auth";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "@/src/providers/language-provider";
 
-export default function CartPage() {
+function CartContent() {
   const { isAuthenticated, initializing } = useRequireAuth();
   const { cart, loading, refreshCart, updateQuantity, removeItem } = useCart();
   const { addToast } = useToast();
@@ -87,5 +87,18 @@ export default function CartPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function CartPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-[60vh] items-center justify-center gap-3 text-sm text-zinc-600">
+        <Spinner />
+        Loading cart...
+      </div>
+    }>
+      <CartContent />
+    </Suspense>
   );
 }

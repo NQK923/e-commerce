@@ -1,6 +1,6 @@
 'use client';
 
-import React from "react";
+import React, { Suspense } from "react";
 import { ShieldCheck, Users, Package2, Store, CheckCircle2, Sparkles, ArrowUpRight, Clock4 } from "lucide-react";
 import { productApi } from "@/src/api/productApi";
 import { adminApi } from "@/src/api/adminApi";
@@ -21,7 +21,7 @@ type AdminUser = User & {
   orders?: number;
 };
 
-export default function AdminPage() {
+function AdminContent() {
   const { addToast } = useToast();
   const { user, isAuthenticated, initializing } = useRequireAuth("/login");
   const isAdmin = user?.roles?.includes("ADMIN");
@@ -436,5 +436,18 @@ export default function AdminPage() {
         )}
       </section>
     </div>
+  );
+}
+
+export default function AdminPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-[60vh] items-center justify-center gap-3 text-sm text-zinc-600">
+        <Spinner />
+        Loading admin console...
+      </div>
+    }>
+      <AdminContent />
+    </Suspense>
   );
 }

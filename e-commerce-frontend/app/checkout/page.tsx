@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { orderApi } from "@/src/api/orderApi";
 import { CartSummary } from "@/src/components/cart/cart-summary";
 import { Input } from "@/src/components/ui/input";
@@ -12,7 +12,7 @@ import { useToast } from "@/src/components/ui/toast-provider";
 import { useTranslation } from "@/src/providers/language-provider";
 import { formatCurrency } from "@/src/utils/format";
 
-export default function CheckoutPage() {
+function CheckoutContent() {
   const { isAuthenticated, initializing } = useRequireAuth();
   const router = useRouter();
   const { cart, loading, clearCart, refreshCart } = useCart();
@@ -130,5 +130,18 @@ export default function CheckoutPage() {
       </div>
       <CartSummary cart={cart} actionLabel={t.checkout.place_order} />
     </div>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-[60vh] items-center justify-center gap-3 text-sm text-zinc-600">
+        <Spinner />
+        Loading checkout...
+      </div>
+    }>
+      <CheckoutContent />
+    </Suspense>
   );
 }

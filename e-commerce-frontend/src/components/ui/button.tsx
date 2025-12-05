@@ -5,7 +5,7 @@ import { cx } from "../../utils/cx";
 
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: "primary" | "secondary" | "ghost" | "outline";
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "icon";
   block?: boolean;
 };
 
@@ -23,6 +23,7 @@ const sizeStyles: Record<NonNullable<ButtonProps["size"]>, string> = {
   sm: "px-3 py-2 text-sm",
   md: "px-4 py-2.5 text-sm",
   lg: "px-5 py-3 text-base",
+  icon: "h-9 w-9 p-0",
 };
 
 export const Button: React.FC<ButtonProps> = ({

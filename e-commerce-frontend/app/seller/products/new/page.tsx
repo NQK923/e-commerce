@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from "react";
+import React, { Suspense, useState } from "react";
 import { useRouter } from "next/navigation";
 import { productApi } from "@/src/api/productApi";
 import { Button } from "@/src/components/ui/button";
@@ -9,22 +9,56 @@ import { Spinner } from "@/src/components/ui/spinner";
 import { useToast } from "@/src/components/ui/toast-provider";
 import { useRequireAuth } from "@/src/hooks/use-require-auth";
 import { uploadToBucket } from "@/src/lib/storage";
+import { ProductVariantRequest } from "@/src/types/product";
 
-export default function NewProductPage() {
+const CATEGORIES = [
+  "Điện tử",
+  "Thời trang",
+  "Gia dụng",
+  "Sách",
+  "Làm đẹp",
+  "Sức khỏe",
+  "Đồ chơi",
+  "Thể thao",
+  "Ô tô - Xe máy",
+  "Bách hóa online",
+  "Khác",
+];
+
+function NewProductContent() {
   const router = useRouter();
   const { addToast } = useToast();
   const { user, initializing } = useRequireAuth("/login");
+  
   const [form, setForm] = useState({
     name: "",
     description: "",
     price: "",
     currency: "VND",
-    categoryId: "",
+    categoryId: CATEGORIES[0],
     imageUrl: "",
     gallery: [] as string[],
   });
+  
+  const [hasVariants, setHasVariants] = useState(false);
+  const [variants, setVariants] = useState<ProductVariantRequest[]>([]);
+  const [newVariant, setNewVariant] = useState({ sku: "", name: "", price: "" });
+
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+
+  const handleAddVariant = () => {
+    if (!newVariant.sku || !newVariant.name || !newVariant.price) {
+      addToast("Vui lòng nhập đầy đủ thông tin phân loại", "error");
+      return;
+    }
+    setVariants([...variants, { ...newVariant, price: parseFloat(newVariant.price) }]);
+    setNewVariant({ sku: "", name: "", price: "" });
+  };
+
+  const removeVariant = (index: number) => {
+    setVariants(variants.filter((_, i) => i !== index));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,6 +66,11 @@ export default function NewProductPage() {
       addToast("Vui lòng nhập tên, giá và hình ảnh sản phẩm", "error");
       return;
     }
+    if (hasVariants && variants.length === 0) {
+      addToast("Vui lòng thêm ít nhất một phân loại hoặc tắt chế độ phân loại", "error");
+      return;
+    }
+
     setLoading(true);
     try {
       await productApi.create({
@@ -44,6 +83,7 @@ export default function NewProductPage() {
           { url: form.imageUrl, primary: true },
           ...form.gallery.map((url, idx) => ({ url, primary: false, sortOrder: idx + 1 })),
         ],
+        variants: hasVariants ? variants : undefined,
       });
       addToast("Đã tạo sản phẩm", "success");
       router.replace("/seller/dashboard");
@@ -59,104 +99,218 @@ export default function NewProductPage() {
     return (
       <div className="flex min-h-[60vh] items-center justify-center gap-3 text-sm text-zinc-600">
         <Spinner />
-        Loading...
+        Đang tải...
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10 space-y-6">
+    <div className="mx-auto max-w-4xl px-4 py-10 space-y-8">
       <div>
-        <p className="text-sm font-semibold text-emerald-700">Sản phẩm</p>
+        <p className="text-sm font-semibold text-emerald-700">Kênh người bán</p>
         <h1 className="text-3xl font-bold text-zinc-900">Thêm sản phẩm mới</h1>
-        <p className="text-sm text-zinc-600">Nhập thông tin cơ bản để đăng sản phẩm lên gian hàng.</p>
+        <p className="text-sm text-zinc-600">Điền đầy đủ thông tin để sản phẩm của bạn nổi bật hơn.</p>
       </div>
 
-      <form className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm space-y-4" onSubmit={handleSubmit}>
-        <Input
-          label="Tên sản phẩm"
-          required
-          value={form.name}
-          onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-        />
-        <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium text-zinc-700">Mô tả</label>
-          <textarea
-            className="min-h-[120px] rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
-            value={form.description}
-            onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
-            placeholder="Mô tả ngắn về sản phẩm, chất liệu, điểm nổi bật..."
-          />
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Input
-            label="Giá"
-            type="number"
-            min="0"
-            step="0.01"
-            required
-            value={form.price}
-            onChange={(e) => setForm((prev) => ({ ...prev, price: e.target.value }))}
-          />
-          <Input
-            label="Tiền tệ"
-            value={form.currency}
-            onChange={(e) => setForm((prev) => ({ ...prev, currency: e.target.value }))}
-          />
-        </div>
-        <Input
-          label="Danh mục (tùy chọn)"
-          value={form.categoryId}
-          onChange={(e) => setForm((prev) => ({ ...prev, categoryId: e.target.value }))}
-        />
+      <form className="space-y-8" onSubmit={handleSubmit}>
+        {/* Basic Info */}
+        <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm space-y-6">
+          <h2 className="text-lg font-bold text-zinc-900">Thông tin cơ bản</h2>
+          <div className="grid gap-6">
+             <div className="grid gap-2">
+                <label className="text-sm font-medium text-zinc-700">Tên sản phẩm <span className="text-red-500">*</span></label>
+                <Input
+                  value={form.name}
+                  onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
+                  placeholder="VD: Áo thun nam cotton..."
+                  required
+                />
+             </div>
 
-        <div className="flex flex-col gap-2 text-sm">
-          <label className="font-medium text-zinc-700">Tải ảnh lên bucket Product Images</label>
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            disabled={uploading}
-            onChange={async (e) => {
-              const files = Array.from(e.target.files ?? []);
-              if (!files.length) return;
-              setUploading(true);
-              try {
-                const uploaded: string[] = [];
-                for (const file of files) {
-                  const url = await uploadToBucket("Product Images", file);
-                  uploaded.push(url);
-                }
-                setForm((prev) => ({
-                  ...prev,
-                  imageUrl: prev.imageUrl || uploaded[0] || "",
-                  gallery: [...prev.gallery, ...uploaded],
-                }));
-                addToast("Đã upload ảnh sản phẩm", "success");
-              } catch (error) {
-                const message = error instanceof Error ? error.message : "Upload thất bại";
-                addToast(message, "error");
-              } finally {
-                setUploading(false);
-              }
-            }}
-          />
-          <div className="flex flex-wrap gap-2">
-            {[form.imageUrl, ...form.gallery].filter(Boolean).map((url) => (
-              <img key={url} src={url} alt="preview" className="h-16 w-16 rounded border object-cover" />
-            ))}
+             <div className="grid gap-2">
+                <label className="text-sm font-medium text-zinc-700">Ngành hàng <span className="text-red-500">*</span></label>
+                <select 
+                  className="h-10 w-full rounded-lg border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                  value={form.categoryId}
+                  onChange={(e) => setForm((prev) => ({ ...prev, categoryId: e.target.value }))}
+                >
+                  {CATEGORIES.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+             </div>
+
+             <div className="grid gap-2">
+                <label className="text-sm font-medium text-zinc-700">Mô tả sản phẩm</label>
+                <textarea
+                  className="min-h-[150px] rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                  value={form.description}
+                  onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
+                  placeholder="Mô tả chi tiết về sản phẩm..."
+                />
+             </div>
           </div>
         </div>
 
-        <div className="flex gap-3">
-          <Button type="submit" disabled={loading} className="bg-emerald-600 hover:bg-emerald-700">
-            {loading ? "Đang tạo..." : "Tạo sản phẩm"}
+        {/* Media */}
+        <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm space-y-6">
+          <h2 className="text-lg font-bold text-zinc-900">Hình ảnh sản phẩm</h2>
+          <div className="space-y-4">
+             <div className="flex flex-col gap-2 text-sm">
+                <label className="font-medium text-zinc-700">Ảnh bìa & Thư viện ảnh <span className="text-red-500">*</span></label>
+                <p className="text-xs text-zinc-500">Ảnh đầu tiên sẽ là ảnh bìa. Tải lên nhiều ảnh để khách hàng dễ hình dung.</p>
+                <div className="mt-2 flex flex-wrap gap-4">
+                   <label className="flex h-24 w-24 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-zinc-300 bg-zinc-50 hover:bg-zinc-100">
+                      <span className="text-xs text-zinc-500 text-center px-1">{uploading ? "..." : "+ Thêm ảnh"}</span>
+                      <input
+                        type="file"
+                        className="hidden"
+                        accept="image/*"
+                        multiple
+                        disabled={uploading}
+                        onChange={async (e) => {
+                          const files = Array.from(e.target.files ?? []);
+                          if (!files.length) return;
+                          setUploading(true);
+                          try {
+                            const uploaded: string[] = [];
+                            for (const file of files) {
+                              const url = await uploadToBucket("Product Images", file);
+                              uploaded.push(url);
+                            }
+                            setForm((prev) => ({
+                              ...prev,
+                              imageUrl: prev.imageUrl || uploaded[0] || "",
+                              gallery: [...prev.gallery, ...uploaded],
+                            }));
+                            addToast("Đã tải ảnh lên", "success");
+                          } catch (error) {
+                            addToast("Tải ảnh thất bại", "error");
+                          } finally {
+                            setUploading(false);
+                          }
+                        }}
+                      />
+                   </label>
+                   {[form.imageUrl, ...form.gallery].filter(Boolean).map((url, idx) => (
+                      <div key={idx} className="relative h-24 w-24 overflow-hidden rounded-lg border border-zinc-200">
+                        <img src={url} alt="preview" className="h-full w-full object-cover" />
+                        {idx === 0 && <span className="absolute bottom-0 left-0 right-0 bg-black/60 text-center text-[10px] text-white">Ảnh bìa</span>}
+                      </div>
+                   ))}
+                </div>
+             </div>
+          </div>
+        </div>
+
+        {/* Pricing & Variants */}
+        <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm space-y-6">
+          <h2 className="text-lg font-bold text-zinc-900">Thông tin bán hàng</h2>
+          
+          <div className="grid gap-4 sm:grid-cols-2">
+             <Input
+                label="Giá cơ bản (VND)"
+                type="number"
+                min="0"
+                required
+                value={form.price}
+                onChange={(e) => setForm((prev) => ({ ...prev, price: e.target.value }))}
+                placeholder="0"
+             />
+             <Input
+                label="Đơn vị tiền tệ"
+                value={form.currency}
+                onChange={(e) => setForm((prev) => ({ ...prev, currency: e.target.value }))}
+                disabled
+             />
+          </div>
+
+          <div className="border-t border-zinc-100 pt-4">
+             <label className="flex items-center gap-2 cursor-pointer select-none mb-4">
+                <input 
+                  type="checkbox" 
+                  className="h-4 w-4 rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500"
+                  checked={hasVariants}
+                  onChange={(e) => setHasVariants(e.target.checked)}
+                />
+                <span className="font-medium text-zinc-900">Sản phẩm có nhiều phân loại (Màu sắc, Kích cỡ...)</span>
+             </label>
+
+             {hasVariants && (
+               <div className="rounded-lg border border-zinc-100 bg-zinc-50 p-4 space-y-4">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-4 items-end">
+                     <Input 
+                        label="Tên phân loại (VD: Đỏ, Size L)" 
+                        value={newVariant.name} 
+                        onChange={e => setNewVariant({...newVariant, name: e.target.value})} 
+                     />
+                     <Input 
+                        label="SKU (Mã kho)" 
+                        value={newVariant.sku} 
+                        onChange={e => setNewVariant({...newVariant, sku: e.target.value})} 
+                     />
+                     <Input 
+                        label="Giá bán" 
+                        type="number"
+                        value={newVariant.price} 
+                        onChange={e => setNewVariant({...newVariant, price: e.target.value})} 
+                     />
+                     <Button type="button" onClick={handleAddVariant} className="bg-white border border-zinc-300 text-zinc-700 hover:bg-zinc-50">Thêm</Button>
+                  </div>
+
+                  {variants.length > 0 && (
+                    <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
+                       <table className="w-full text-sm text-left">
+                          <thead className="bg-zinc-50 text-zinc-700">
+                             <tr>
+                                <th className="px-4 py-3 font-medium">Tên phân loại</th>
+                                <th className="px-4 py-3 font-medium">SKU</th>
+                                <th className="px-4 py-3 font-medium">Giá</th>
+                                <th className="px-4 py-3 font-medium">Hành động</th>
+                             </tr>
+                          </thead>
+                          <tbody className="divide-y divide-zinc-100">
+                             {variants.map((v, idx) => (
+                                <tr key={idx}>
+                                   <td className="px-4 py-3">{v.name}</td>
+                                   <td className="px-4 py-3 text-zinc-500">{v.sku}</td>
+                                   <td className="px-4 py-3 font-medium text-emerald-600">{v.price.toLocaleString()}</td>
+                                   <td className="px-4 py-3">
+                                      <button type="button" onClick={() => removeVariant(idx)} className="text-red-600 hover:underline text-xs">Xóa</button>
+                                   </td>
+                                </tr>
+                             ))}
+                          </tbody>
+                       </table>
+                    </div>
+                  )}
+               </div>
+             )}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4 pt-4">
+          <Button type="submit" disabled={loading} className="bg-emerald-600 hover:bg-emerald-700 px-8 h-12 text-base">
+            {loading ? "Đang xử lý..." : "Lưu & Hiển thị"}
           </Button>
-          <Button type="button" variant="ghost" onClick={() => router.back()}>
-            Hủy
+          <Button type="button" variant="ghost" onClick={() => router.back()} className="h-12 px-6">
+            Hủy bỏ
           </Button>
         </div>
       </form>
     </div>
+  );
+}
+
+export default function NewProductPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-[60vh] items-center justify-center gap-3 text-sm text-zinc-600">
+        <Spinner />
+        Đang tải...
+      </div>
+    }>
+      <NewProductContent />
+    </Suspense>
   );
 }

@@ -49,7 +49,7 @@ export const Header: React.FC = () => {
               className="flex items-center gap-1 font-semibold text-zinc-600 transition-colors hover:text-emerald-600"
             >
               <Store size={16} />
-              {t.nav.sellerChannel}
+              <span suppressHydrationWarning>{t.nav.sellerChannel}</span>
             </Link>
 
             {isAdmin && (
@@ -75,7 +75,7 @@ export const Header: React.FC = () => {
                     pathname === item.href ? "text-emerald-700 font-bold" : "text-zinc-600",
                   )}
                 >
-                  {item.label}
+                  <span suppressHydrationWarning>{item.label}</span>
                 </Link>
               ))}
           </nav>
@@ -95,7 +95,7 @@ export const Header: React.FC = () => {
             title="Switch Language"
           >
             <Globe size={16} />
-            {language}
+            <span suppressHydrationWarning>{language}</span>
           </button>
 
           {/* Cart */}
@@ -114,7 +114,7 @@ export const Header: React.FC = () => {
               <div className="flex items-center gap-3">
                 <Link href="/profile" className="hidden flex items-center gap-2 text-sm font-medium text-zinc-600 hover:text-emerald-600 sm:flex">
                   <User size={18} />
-                  {user.displayName || t.nav.account}
+                  <span suppressHydrationWarning>{user.displayName || t.nav.account}</span>
                 </Link>
                 <Button 
                   variant="ghost" 
@@ -130,12 +130,12 @@ export const Header: React.FC = () => {
               <div className="flex items-center gap-2">
                 <Link href="/login">
                   <Button size="sm" variant="ghost" className="font-semibold">
-                    {t.nav.login}
+                    <span suppressHydrationWarning>{t.nav.login}</span>
                   </Button>
                 </Link>
                 <Link href="/register">
                   <Button size="sm" className="rounded-full px-5 bg-emerald-600 hover:bg-emerald-700 text-white border-0">
-                    {t.nav.signup}
+                    <span suppressHydrationWarning>{t.nav.signup}</span>
                   </Button>
                 </Link>
               </div>

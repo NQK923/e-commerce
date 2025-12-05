@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Suspense } from "react";
 import "./globals.css";
 import { AppProviders } from "@/src/providers/app-providers";
 import { Header } from "@/src/components/layout/header";
@@ -30,8 +31,12 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} bg-zinc-50 text-zinc-900 antialiased`}>
         <AppProviders>
-          <ProtectedRouteGuard />
-          <Header />
+          <Suspense fallback={null}>
+            <ProtectedRouteGuard />
+          </Suspense>
+          <Suspense fallback={null}>
+            <Header />
+          </Suspense>
           <main className="min-h-[70vh]">{children}</main>
           <Footer />
         </AppProviders>

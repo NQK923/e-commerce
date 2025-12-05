@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, CheckCircle2, ShieldCheck, Sparkles, Store, MessageCircle } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
@@ -23,7 +23,7 @@ type SellerForm = {
   accept: boolean;
 };
 
-export default function SellerRegisterPage() {
+function SellerRegisterContent() {
   const { t } = useTranslation();
   const { addToast } = useToast();
   const { user, initializing } = useRequireAuth();
@@ -357,5 +357,17 @@ export default function SellerRegisterPage() {
         </div>
       </section>
     </div>
+  );
+}
+
+export default function SellerRegisterPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Spinner />
+      </div>
+    }>
+      <SellerRegisterContent />
+    </Suspense>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { Suspense, useCallback, useEffect, useState } from "react";
 import { orderApi } from "@/src/api/orderApi";
 import { OrderCard } from "@/src/components/orders/order-card";
 import { Button } from "@/src/components/ui/button";
@@ -9,7 +9,7 @@ import { useRequireAuth } from "@/src/hooks/use-require-auth";
 import { Order } from "@/src/types/order";
 import { useToast } from "@/src/components/ui/toast-provider";
 
-export default function OrdersPage() {
+function OrdersContent() {
   const { isAuthenticated, initializing } = useRequireAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -79,5 +79,18 @@ export default function OrdersPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function OrdersPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-[60vh] items-center justify-center gap-3 text-sm text-zinc-600">
+        <Spinner />
+        Loading orders...
+      </div>
+    }>
+      <OrdersContent />
+    </Suspense>
   );
 }
