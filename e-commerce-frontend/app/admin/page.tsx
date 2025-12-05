@@ -9,6 +9,7 @@ import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
 import { Spinner } from "@/src/components/ui/spinner";
 import { useToast } from "@/src/components/ui/toast-provider";
+import { useRequireAuth } from "@/src/hooks/use-require-auth";
 import { ApiError } from "@/src/lib/api-client";
 import { Product } from "@/src/types/product";
 import { User } from "@/src/types/auth";
@@ -22,6 +23,8 @@ type AdminUser = User & {
 
 export default function AdminPage() {
   const { addToast } = useToast();
+  const { user, isAuthenticated, initializing } = useRequireAuth("/login");
+  const isAdmin = user?.roles?.includes("ADMIN");
   const [users, setUsers] = React.useState<AdminUser[]>([]);
   const [products, setProducts] = React.useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = React.useState(false);
@@ -31,6 +34,7 @@ export default function AdminPage() {
   const [selectedRequest, setSelectedRequest] = React.useState<SellerApplication | null>(null);
 
   React.useEffect(() => {
+    if (initializing || !isAuthenticated || !isAdmin) return;
     const loadUsers = async () => {
       setLoadingUsers(true);
       try {
@@ -77,7 +81,7 @@ export default function AdminPage() {
     void loadUsers();
     void loadProducts();
     void loadSellerRequests();
-  }, []);
+  }, [initializing, isAuthenticated, isAdmin]);
 
   const toggleUserStatus = (id: string, status: AdminUser["status"]) => {
     setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, status } : u)));
@@ -94,6 +98,25 @@ export default function AdminPage() {
       addToast(message, "error");
     }
   };
+
+  if (initializing || !isAuthenticated) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center gap-3 text-sm text-zinc-600">
+        <Spinner />
+        Checking authentication...
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="mx-auto flex min-h-[60vh] max-w-2xl flex-col items-center justify-center gap-3 px-4 text-center">
+        <ShieldCheck size={36} className="text-emerald-600" />
+        <p className="text-lg font-semibold text-zinc-900">Admin access required</p>
+        <p className="text-sm text-zinc-600">Please sign in with an administrator account to view this page.</p>
+      </div>
+    );
+  }
 
   const pendingSellerRequests = sellerRequests.filter((req) => req.status === "PENDING").length;
   const approvedSellerRequests = sellerRequests.filter((req) => req.status === "APPROVED").length;

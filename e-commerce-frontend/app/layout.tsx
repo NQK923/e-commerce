@@ -4,6 +4,7 @@ import "./globals.css";
 import { AppProviders } from "@/src/providers/app-providers";
 import { Header } from "@/src/components/layout/header";
 import { Footer } from "@/src/components/layout/footer";
+import { ProtectedRouteGuard } from "@/src/components/auth/protected-route-guard";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,6 +30,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} bg-zinc-50 text-zinc-900 antialiased`}>
         <AppProviders>
+          <ProtectedRouteGuard />
           <Header />
           <main className="min-h-[70vh]">{children}</main>
           <Footer />

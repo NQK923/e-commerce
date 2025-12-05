@@ -79,7 +79,6 @@ public class SellerApplicationController {
             try {
                 parsedStatus = SellerApplicationStatus.valueOf(status.toUpperCase());
             } catch (IllegalArgumentException ignored) {
-                parsedStatus = null;
             }
         }
         return ResponseEntity.ok(sellerApplicationQueryUseCase.list(parsedStatus));
@@ -99,12 +98,12 @@ public class SellerApplicationController {
     }
 
     @PostMapping("/{id}/approve")
-    public ResponseEntity<?> approve(@PathVariable String id) {
+    public ResponseEntity<?> approve(@PathVariable("id") String id) {
         return review(id, true);
     }
 
     @PostMapping("/{id}/reject")
-    public ResponseEntity<?> reject(@PathVariable String id) {
+    public ResponseEntity<?> reject(@PathVariable("id") String id) {
         return review(id, false);
     }
 
