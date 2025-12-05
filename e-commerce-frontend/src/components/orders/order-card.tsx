@@ -26,7 +26,7 @@ export const OrderCard: React.FC<{ order: Order }> = ({ order }) => {
         </div>
       </div>
       <div className="mt-3 text-sm text-zinc-600">
-        {order.items.length} items • {order.paymentStatus ?? "Unspecified payment"}
+        {order.items.length} items - Status: {order.status}
       </div>
     </Link>
   );

@@ -79,11 +79,14 @@ export default function OrderDetailPage() {
             {order.items.map((item) => (
               <div key={item.id} className="flex items-center justify-between rounded-xl border border-zinc-200 p-3">
                 <div className="flex flex-col">
-                  <span className="text-sm font-semibold text-black">{item.product.name}</span>
-                  <span className="text-xs text-zinc-500">x{item.quantity}</span>
+                  <span className="text-sm font-semibold text-black">Product {item.productId}</span>
+                  <span className="text-xs text-zinc-500">Quantity: {item.quantity}</span>
                 </div>
                 <div className="text-right text-sm font-semibold text-black">
                   {formatCurrency(item.subtotal, order.currency ?? "USD")}
+                  <div className="text-xs text-zinc-500">
+                    {formatCurrency(item.price, order.currency ?? "USD")} each
+                  </div>
                 </div>
               </div>
             ))}
@@ -92,25 +95,11 @@ export default function OrderDetailPage() {
         <div className="space-y-4">
           <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
             <h3 className="text-lg font-semibold text-black">Payment</h3>
-            <p className="mt-2 text-sm text-zinc-600">Status: {order.paymentStatus ?? "Unknown"}</p>
+            <p className="mt-2 text-sm text-zinc-600">Status: {order.status}</p>
             <p className="text-sm text-zinc-600">
               Total: {formatCurrency(order.total, order.currency ?? "USD")}
             </p>
           </div>
-          {order.shippingAddress && (
-            <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-              <h3 className="text-lg font-semibold text-black">Shipping address</h3>
-              <div className="mt-2 text-sm text-zinc-700">
-                {order.shippingAddress.fullName && <div>{order.shippingAddress.fullName}</div>}
-                <div>{order.shippingAddress.line1}</div>
-                {order.shippingAddress.line2 && <div>{order.shippingAddress.line2}</div>}
-                <div>
-                  {order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.postalCode}
-                </div>
-                <div>{order.shippingAddress.country}</div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

@@ -14,6 +14,7 @@ import com.learnfirebase.ecommerce.order.application.command.PayOrderCommand;
 import com.learnfirebase.ecommerce.order.application.dto.OrderDto;
 import com.learnfirebase.ecommerce.order.application.port.in.CancelOrderUseCase;
 import com.learnfirebase.ecommerce.order.application.port.in.CreateOrderUseCase;
+import com.learnfirebase.ecommerce.order.application.port.in.GetOrderUseCase;
 import com.learnfirebase.ecommerce.order.application.port.in.ListOrdersUseCase;
 import com.learnfirebase.ecommerce.order.application.port.in.PayOrderUseCase;
 import com.learnfirebase.ecommerce.order.application.port.out.InventoryReservationPort;
@@ -31,7 +32,7 @@ import com.learnfirebase.ecommerce.order.domain.exception.OrderDomainException;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseCase, CancelOrderUseCase, ListOrdersUseCase {
+public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseCase, CancelOrderUseCase, ListOrdersUseCase, GetOrderUseCase {
 
     private final OrderRepository orderRepository;
     private final LoadProductPort loadProductPort;
@@ -111,6 +112,13 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
             .totalElements(total)
             .totalPages(totalPages)
             .build();
+    }
+
+    @Override
+    public OrderDto getOrder(String orderId) {
+        Order order = orderRepository.findById(new OrderId(orderId))
+            .orElseThrow(() -> new OrderDomainException("Order not found"));
+        return toDto(order);
     }
 
     private OrderDto toDto(Order order) {

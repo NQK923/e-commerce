@@ -17,6 +17,7 @@ import com.learnfirebase.ecommerce.order.application.command.PayOrderCommand;
 import com.learnfirebase.ecommerce.order.application.dto.OrderDto;
 import com.learnfirebase.ecommerce.order.application.port.in.CancelOrderUseCase;
 import com.learnfirebase.ecommerce.order.application.port.in.CreateOrderUseCase;
+import com.learnfirebase.ecommerce.order.application.port.in.GetOrderUseCase;
 import com.learnfirebase.ecommerce.order.application.port.in.ListOrdersUseCase;
 import com.learnfirebase.ecommerce.order.application.port.in.PayOrderUseCase;
 
@@ -30,6 +31,7 @@ public class OrderController {
     private final PayOrderUseCase payOrderUseCase;
     private final CancelOrderUseCase cancelOrderUseCase;
     private final ListOrdersUseCase listOrdersUseCase;
+    private final GetOrderUseCase getOrderUseCase;
 
     @GetMapping
     public ResponseEntity<PageResponse<OrderDto>> list(
@@ -37,6 +39,11 @@ public class OrderController {
         @RequestParam(name = "size", defaultValue = "10") int size) {
         PageRequest pageRequest = PageRequest.builder().page(page).size(size).build();
         return ResponseEntity.ok(listOrdersUseCase.listOrders(pageRequest));
+    }
+
+    @GetMapping("/{orderId}")
+    public ResponseEntity<OrderDto> getOrder(@PathVariable String orderId) {
+        return ResponseEntity.ok(getOrderUseCase.getOrder(orderId));
     }
 
     @PostMapping
