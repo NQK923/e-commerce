@@ -14,7 +14,9 @@ import {
   Bell,
   Search,
   Store,
-  ShieldCheck
+  ShieldCheck,
+  BarChart3,
+  Flag
 } from 'lucide-react';
 import { Button } from '@/src/components/ui/button';
 import { useAuth } from '@/src/store/auth-store';
@@ -36,6 +38,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { label: 'Products', icon: Package, href: '/admin/products' },
     { label: 'Orders', icon: ShoppingCart, href: '/admin/orders' },
     { label: 'Sellers', icon: Store, href: '/admin/sellers' },
+    { label: 'Statistics', icon: BarChart3, href: '/admin/statistics' },
+    { label: 'Reports', icon: Flag, href: '/admin/reports' },
     { label: 'Settings', icon: Settings, href: '/admin/settings' },
   ];
 

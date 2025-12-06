@@ -45,6 +45,7 @@ function AdminContent() {
   const [loadingSellerRequests, setLoadingSellerRequests] = React.useState(false);
   const [selectedRequest, setSelectedRequest] = React.useState<SellerApplication | null>(null);
   const [totalRevenue, setTotalRevenue] = React.useState(0);
+  const [revenueGrowth, setRevenueGrowth] = React.useState(0);
 
   React.useEffect(() => {
     if (initializing || !isAuthenticated || !isAdmin) return;
@@ -65,11 +66,39 @@ function AdminContent() {
         setUsers(usersData.map(u => ({ ...u, status: "active", lastActive: "recently", orders: 0 })));
         setProducts(productsRes.items ?? []);
         setSellerRequests(requestsData ?? []);
-        // setSelectedRequest((requestsData ?? [])[0] ?? null);
         
-        // Calculate revenue from fetched orders (approximate real data)
-        const revenue = (ordersRes.items || []).reduce((acc, order) => acc + (order.total || 0), 0);
+        const orders = ordersRes.items || [];
+        const revenue = orders.reduce((acc, order) => acc + (order.total || 0), 0);
         setTotalRevenue(revenue);
+
+        // Calculate Growth (Current Month vs Last Month)
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+        
+        const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const lastMonth = lastMonthDate.getMonth();
+        const lastMonthYear = lastMonthDate.getFullYear();
+
+        const currentMonthRevenue = orders
+            .filter(o => {
+                const d = new Date(o.createdAt);
+                return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+            })
+            .reduce((acc, o) => acc + (o.total || 0), 0);
+
+        const lastMonthRevenue = orders
+            .filter(o => {
+                const d = new Date(o.createdAt);
+                return d.getMonth() === lastMonth && d.getFullYear() === lastMonthYear;
+            })
+            .reduce((acc, o) => acc + (o.total || 0), 0);
+
+        if (lastMonthRevenue === 0) {
+            setRevenueGrowth(currentMonthRevenue > 0 ? 100 : 0);
+        } else {
+            setRevenueGrowth(((currentMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100);
+        }
 
       } catch (error) {
         console.error("Failed to load dashboard data", error);
@@ -82,7 +111,6 @@ function AdminContent() {
 
     void loadData();
   }, [initializing, isAuthenticated, isAdmin]);
-
   const reviewApplication = async (id: string, approve: boolean) => {
     try {
       const updated = approve ? await sellerApi.approve(id) : await sellerApi.reject(id);
@@ -133,8 +161,9 @@ function AdminContent() {
                 <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg">
                     <DollarSign size={20} />
                 </div>
-                <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full flex items-center gap-1">
-                    <TrendingUp size={12} /> +12%
+                <span className={`text-xs font-medium px-2 py-1 rounded-full flex items-center gap-1 ${revenueGrowth >= 0 ? 'text-emerald-600 bg-emerald-50' : 'text-red-600 bg-red-50'}`}>
+                    <TrendingUp size={12} className={revenueGrowth < 0 ? "rotate-180" : ""} /> 
+                    {revenueGrowth >= 0 ? "+" : ""}{revenueGrowth.toFixed(1)}%
                 </span>
             </div>
             <p className="text-zinc-500 text-sm">Total Revenue</p>

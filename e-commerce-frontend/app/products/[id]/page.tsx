@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import React, { useEffect, useMemo, useState } from "react";
 import { productApi } from "@/src/api/productApi";
 import { ProductGallery } from "@/src/components/product/product-gallery";
+import { ReportProductDialog } from "@/src/components/product/report-product-dialog";
 import { Button } from "@/src/components/ui/button";
 import { Badge } from "@/src/components/ui/badge";
 import { Spinner } from "@/src/components/ui/spinner";
@@ -153,6 +154,10 @@ export default function ProductDetailPage() {
         <div className="mt-4 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
           <h3 className="text-lg font-semibold text-zinc-900">{t.product.description}</h3>
           <p className="mt-2 text-sm leading-relaxed text-zinc-700">{product.description}</p>
+        </div>
+
+        <div className="mt-2">
+             <ReportProductDialog productId={product.id} productName={product.name} />
         </div>
       </div>
     </div>
