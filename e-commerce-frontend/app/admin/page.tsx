@@ -1,6 +1,7 @@
 'use client';
 
 import React, { Suspense } from "react";
+import Link from "next/link";
 import { 
   Users, 
   Package2, 
@@ -177,10 +178,7 @@ function AdminContent() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        {/* Left Column - Main Activity */}
-        <div className="lg:col-span-2 space-y-8">
+      <div className="space-y-8">
             
             {/* Seller Requests Table (Priority) */}
             <section className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
@@ -189,7 +187,9 @@ function AdminContent() {
                         <h2 className="font-bold text-zinc-900">Seller Applications</h2>
                         <p className="text-sm text-zinc-500">Review and approve new store requests.</p>
                     </div>
-                    <Button variant="outline" size="sm">View All</Button>
+                    <Link href="/admin/sellers">
+                      <Button variant="outline" size="sm">View All</Button>
+                    </Link>
                 </div>
                 
                 {loadingSellerRequests ? (
@@ -226,7 +226,7 @@ function AdminContent() {
                                                 {req.status.toLowerCase()}
                                             </Badge>
                                         </td>
-                                        <td className="px-6 py-4 text-zinc-500 text-xs">{new Date(req.createdAt).toLocaleDateString()}</td>
+                                        <td className="px-6 py-4 text-zinc-500 text-xs">{req.createdAt ? new Date(req.createdAt).toLocaleDateString() : 'N/A'}</td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex justify-end gap-2">
                                                 {req.status === "PENDING" && (
@@ -266,7 +266,9 @@ function AdminContent() {
                         <h2 className="font-bold text-zinc-900">Recent Products</h2>
                         <p className="text-sm text-zinc-500">Newest additions to the catalog.</p>
                     </div>
-                    <Button variant="outline" size="sm">Manage Products</Button>
+                    <Link href="/admin/products">
+                      <Button variant="outline" size="sm">Manage Products</Button>
+                    </Link>
                 </div>
                  {loadingProducts ? (
                     <div className="p-8 text-center text-zinc-500">Loading...</div>
@@ -289,56 +291,6 @@ function AdminContent() {
                     </div>
                 )}
              </section>
-        </div>
-
-        {/* Right Column - Users & Activity */}
-        <div className="space-y-8">
-             {/* Quick Actions */}
-             <section className="bg-gradient-to-br from-emerald-800 to-emerald-900 rounded-xl p-6 text-white shadow-lg">
-                 <h3 className="font-bold text-lg mb-1">Admin Actions</h3>
-                 <p className="text-emerald-200 text-sm mb-6">Quick access to common tasks.</p>
-                 <div className="space-y-3">
-                    <button className="w-full bg-white/10 hover:bg-white/20 transition-colors p-3 rounded-lg text-left flex items-center gap-3 text-sm font-medium">
-                        <Users size={16} /> Manage User Roles
-                    </button>
-                    <button className="w-full bg-white/10 hover:bg-white/20 transition-colors p-3 rounded-lg text-left flex items-center gap-3 text-sm font-medium">
-                        <Store size={16} /> Review Seller Policies
-                    </button>
-                     <button className="w-full bg-white/10 hover:bg-white/20 transition-colors p-3 rounded-lg text-left flex items-center gap-3 text-sm font-medium">
-                        <Activity size={16} /> System Logs
-                    </button>
-                 </div>
-             </section>
-
-            {/* Recent Users */}
-            <section className="bg-white rounded-xl border border-zinc-200 shadow-sm">
-                 <div className="p-5 border-b border-zinc-100">
-                    <h3 className="font-bold text-zinc-900">New Users</h3>
-                </div>
-                <div className="p-2">
-                    {loadingUsers ? (
-                         <div className="p-4 text-center text-sm text-zinc-500">Loading...</div>
-                    ) : (
-                        users.slice(0, 5).map(user => (
-                            <div key={user.id} className="flex items-center gap-3 p-3 hover:bg-zinc-50 rounded-lg transition-colors">
-                                <div className="h-8 w-8 rounded-full bg-zinc-100 flex items-center justify-center text-xs font-bold text-zinc-500">
-                                    {user.displayName?.charAt(0) || user.email?.charAt(0) || "U"}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-zinc-900 truncate">{user.displayName || "Unnamed User"}</p>
-                                    <p className="text-xs text-zinc-500 truncate">{user.email}</p>
-                                </div>
-                                <div className={`h-2 w-2 rounded-full ${user.status === 'active' ? 'bg-emerald-500' : 'bg-zinc-300'}`}></div>
-                            </div>
-                        ))
-                    )}
-                </div>
-                <div className="p-3 border-t border-zinc-100">
-                    <Button variant="ghost" size="sm" className="w-full text-xs">View All Users</Button>
-                </div>
-            </section>
-        </div>
-
       </div>
       
       {/* Selected Request Modal/Panel could go here, simplified for now */}

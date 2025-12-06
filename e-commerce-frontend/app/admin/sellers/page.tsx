@@ -93,7 +93,7 @@ function SellersContent() {
                     </Badge>
                 </td>
                 <td className="px-6 py-4 text-zinc-500">
-                   {new Date(req.createdAt).toLocaleDateString()}
+                   {req.createdAt ? new Date(req.createdAt).toLocaleDateString() : 'N/A'}
                 </td>
                 <td className="px-6 py-4">
                    <div className="flex gap-2">

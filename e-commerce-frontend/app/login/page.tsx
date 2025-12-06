@@ -24,7 +24,11 @@ function LoginContent() {
   React.useEffect(() => {
     if (initializing) return;
     if (user) {
-      router.replace(next || "/");
+      if (user.roles?.includes("ADMIN")) {
+        router.replace("/admin");
+      } else {
+        router.replace(next || "/");
+      }
     }
   }, [initializing, next, router, user]);
 
@@ -32,13 +36,8 @@ function LoginContent() {
     event.preventDefault();
     setLoading(true);
     try {
-      const loggedInUser = await login(form);
+      await login(form);
       addToast(t.auth.logged_in_success, "success");
-      if (loggedInUser?.roles?.includes("ADMIN")) {
-        router.replace("/admin");
-      } else {
-        router.replace(next || "/");
-      }
     } catch (error) {
       const message = error instanceof Error ? error.message : t.common.error;
       addToast(message, "error");

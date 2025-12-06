@@ -6,9 +6,11 @@ import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
 import { Spinner } from "@/src/components/ui/spinner";
 import { User } from "@/src/types/auth";
-import { ShieldCheck, MoreHorizontal } from "lucide-react";
+import { ShieldCheck, MoreHorizontal, Trash2 } from "lucide-react";
+import { useToast } from "@/src/components/ui/toast-provider";
 
 function UsersContent() {
+  const { addToast } = useToast();
   const [users, setUsers] = React.useState<User[]>([]);
   const [loading, setLoading] = React.useState(true);
 
@@ -26,6 +28,14 @@ function UsersContent() {
     void loadUsers();
   }, []);
 
+  const handleDelete = async (userId: string) => {
+    if (confirm("Are you sure you want to delete this user?")) {
+        // Simulate API call
+        setUsers(users.filter(u => u.id !== userId));
+        addToast("User deleted successfully", "success");
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center">
@@ -41,7 +51,6 @@ function UsersContent() {
           <h1 className="text-2xl font-bold text-zinc-900">Users</h1>
           <p className="text-sm text-zinc-500">Manage all registered users.</p>
         </div>
-        <Button>Add User</Button>
       </div>
 
       <div className="rounded-xl border border-zinc-200 bg-white shadow-sm overflow-hidden">
@@ -81,9 +90,14 @@ function UsersContent() {
                   <Badge tone="success">Active</Badge>
                 </td>
                 <td className="px-6 py-4">
-                  <Button variant="ghost" size="icon">
-                    <MoreHorizontal size={16} />
-                  </Button>
+                  <div className="flex gap-2">
+                      <Button variant="ghost" size="icon" onClick={() => handleDelete(user.id)} className="text-red-600 hover:bg-red-50">
+                        <Trash2 size={16} />
+                      </Button>
+                      <Button variant="ghost" size="icon">
+                        <MoreHorizontal size={16} />
+                      </Button>
+                  </div>
                 </td>
               </tr>
             ))}

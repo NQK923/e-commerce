@@ -6,9 +6,11 @@ import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
 import { Spinner } from "@/src/components/ui/spinner";
 import { Product } from "@/src/types/product";
-import { MoreHorizontal, Package2 } from "lucide-react";
+import { MoreHorizontal, Package2, Trash2 } from "lucide-react";
+import { useToast } from "@/src/components/ui/toast-provider";
 
 function ProductsContent() {
+  const { addToast } = useToast();
   const [products, setProducts] = React.useState<Product[]>([]);
   const [loading, setLoading] = React.useState(true);
 
@@ -26,6 +28,14 @@ function ProductsContent() {
     void loadProducts();
   }, []);
 
+  const handleDelete = async (productId: string) => {
+      if (confirm("Are you sure you want to delete this product?")) {
+          // Simulate API call or add real delete endpoint if available
+          setProducts(products.filter(p => p.id !== productId));
+          addToast("Product deleted", "success");
+      }
+  };
+
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center">
@@ -41,7 +51,6 @@ function ProductsContent() {
           <h1 className="text-2xl font-bold text-zinc-900">Products</h1>
           <p className="text-sm text-zinc-500">Manage your product catalog.</p>
         </div>
-        <Button>Add Product</Button>
       </div>
 
       <div className="rounded-xl border border-zinc-200 bg-white shadow-sm overflow-hidden">
@@ -70,7 +79,7 @@ function ProductsContent() {
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                    <Badge variant="outline">{product.category || "Uncategorized"}</Badge>
+                    <Badge tone="default">{product.category || "Uncategorized"}</Badge>
                 </td>
                 <td className="px-6 py-4 font-medium text-zinc-900">
                    {product.currency} {product.price}
@@ -79,9 +88,14 @@ function ProductsContent() {
                    -
                 </td>
                 <td className="px-6 py-4">
-                  <Button variant="ghost" size="icon">
-                    <MoreHorizontal size={16} />
-                  </Button>
+                  <div className="flex gap-2">
+                      <Button variant="ghost" size="icon" onClick={() => handleDelete(product.id)} className="text-red-600 hover:bg-red-50">
+                        <Trash2 size={16} />
+                      </Button>
+                      <Button variant="ghost" size="icon">
+                        <MoreHorizontal size={16} />
+                      </Button>
+                  </div>
                 </td>
               </tr>
             ))}

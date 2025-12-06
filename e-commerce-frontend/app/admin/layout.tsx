@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   Users,
@@ -17,10 +17,18 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import { Button } from '@/src/components/ui/button';
+import { useAuth } from '@/src/store/auth-store';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = React.useState(true);
   const pathname = usePathname();
+  const router = useRouter();
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+    router.push('/login');
+  };
 
   const navItems = [
     { label: 'Dashboard', icon: LayoutDashboard, href: '/admin' },
@@ -71,7 +79,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </nav>
 
         <div className="p-4 border-t border-zinc-200">
-          <button className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors">
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+          >
             <LogOut size={20} />
             {sidebarOpen && <span className="font-medium">Sign Out</span>}
           </button>
