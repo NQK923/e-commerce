@@ -29,8 +29,6 @@ public class ReportController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public void createReport(@RequestBody CreateProductReportCommand command, @AuthenticationPrincipal Jwt jwt) {
-        // If user is authenticated, set userId. Reports can be anonymous if jwt is null?
-        // For now assume authenticated.
         String userId = jwt != null ? jwt.getSubject() : "anonymous";
         command.setUserId(userId);
         manageProductReportUseCase.createReport(command);

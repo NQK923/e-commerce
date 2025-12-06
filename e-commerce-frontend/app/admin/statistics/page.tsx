@@ -112,7 +112,7 @@ export default function StatisticsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-zinc-900">Statistics</h1>
-        <p className="text-sm text-zinc-500">Detailed analysis of your store's performance.</p>
+        <p className="text-sm text-zinc-500">Detailed analysis of your store&#39;s performance.</p>
       </div>
 
       {/* Charts Grid */}
