@@ -1,3 +1,0 @@
-ALTER TABLE seller_applications
-    ADD COLUMN IF NOT EXISTS avatar_url VARCHAR(1024),
-    ADD COLUMN IF NOT EXISTS cover_url VARCHAR(1024);
