@@ -15,11 +15,9 @@ import {
   Legend
 } from 'recharts';
 import { orderApi } from '@/src/api/orderApi';
-import { adminApi } from '@/src/api/adminApi';
 import { productApi } from '@/src/api/productApi';
 import { Spinner } from '@/src/components/ui/spinner';
 import { Order } from '@/src/types/order';
-import { User } from '@/src/types/auth';
 import { Product } from '@/src/types/product';
 
 // Colors for charts
