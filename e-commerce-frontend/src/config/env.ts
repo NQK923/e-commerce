@@ -3,6 +3,8 @@ export type AppConfig = {
   frontendBaseUrl: string;
   supabaseUrl?: string;
   supabaseAnonKey?: string;
+  supabaseProductBucket?: string;
+  supabaseSellerBucket?: string;
 };
 
 const apiBaseUrl =
@@ -11,12 +13,16 @@ const frontendBaseUrl =
   process.env.NEXT_PUBLIC_FRONTEND_BASE_URL?.replace(/\/+$/, "") ?? "http://localhost:3000";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseProductBucket = process.env.NEXT_PUBLIC_SUPABASE_PRODUCT_BUCKET || "product-images";
+const supabaseSellerBucket = process.env.NEXT_PUBLIC_SUPABASE_SELLER_BUCKET || "seller-assets";
 
 export const config: AppConfig = {
   apiBaseUrl,
   frontendBaseUrl,
   supabaseUrl,
   supabaseAnonKey,
+  supabaseProductBucket,
+  supabaseSellerBucket,
 };
 
 export const requireConfig = (): AppConfig => {

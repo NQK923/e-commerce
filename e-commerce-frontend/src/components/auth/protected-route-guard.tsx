@@ -27,14 +27,20 @@ export const ProtectedRouteGuard = () => {
     () => PROTECTED_ROUTES.some((route) => route.pattern.test(pathname ?? "")),
     [pathname],
   );
+  const isAdminRoute = useMemo(() => (pathname ?? "").startsWith("/admin"), [pathname]);
 
   useEffect(() => {
     if (!requiresAuth || initializing) return;
     if (!user) {
       const next = pathname + (searchParams?.toString() ? `?${searchParams.toString()}` : "");
       router.replace(`/login?next=${encodeURIComponent(next)}`);
+      return;
     }
-  }, [initializing, pathname, requiresAuth, router, searchParams, user]);
+
+    if (isAdminRoute && !user.roles?.includes("ADMIN")) {
+      router.replace("/");
+    }
+  }, [initializing, isAdminRoute, pathname, requiresAuth, router, searchParams, user]);
 
   return null;
 };

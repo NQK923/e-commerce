@@ -10,6 +10,7 @@ import { useToast } from "@/src/components/ui/toast-provider";
 import { useRequireAuth } from "@/src/hooks/use-require-auth";
 import { uploadToBucket } from "@/src/lib/storage";
 import { ProductVariantRequest } from "@/src/types/product";
+import { config } from "@/src/config/env";
 
 const CATEGORIES = [
   "Điện tử",
@@ -47,6 +48,13 @@ function NewProductContent() {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
 
+  React.useEffect(() => {
+    if (initializing) return;
+    if (user && !user.roles?.includes("SELLER")) {
+      router.replace("/seller/register?next=/seller/products/new");
+    }
+  }, [initializing, router, user]);
+
   const handleAddVariant = () => {
     if (!newVariant.sku || !newVariant.name || !newVariant.price) {
       addToast("Vui lòng nhập đầy đủ thông tin phân loại", "error");
@@ -76,7 +84,7 @@ function NewProductContent() {
     try {
       const uploaded: string[] = [];
       for (const file of selectedImages) {
-        const url = await uploadToBucket("ProductImages", file);
+        const url = await uploadToBucket(config.supabaseProductBucket, file);
         uploaded.push(url);
       }
 
@@ -110,6 +118,15 @@ function NewProductContent() {
       <div className="flex min-h-[60vh] items-center justify-center gap-3 text-sm text-zinc-600">
         <Spinner />
         Đang tải...
+      </div>
+    );
+  }
+
+  if (!user.roles?.includes("SELLER")) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center gap-3 text-sm text-zinc-600">
+        <Spinner />
+        Đang chuyển đến trang dành cho kênh người bán...
       </div>
     );
   }
@@ -178,12 +195,18 @@ function NewProductContent() {
                         accept="image/*"
                         multiple
                         disabled={uploading}
-                                  onChange={(e) => {
-                          const files = Array.from(e.target.files ?? []);
-                          if (!files.length) return;
-                          const previews = files.map((file) => URL.createObjectURL(file));
-                          setSelectedImages((prev) => [...prev, ...files]);
-                          setPreviewImages((prev) => [...prev, ...previews]);
+                                  onChange={(e) => {
+
+                          const files = Array.from(e.target.files ?? []);
+
+                          if (!files.length) return;
+
+                          const previews = files.map((file) => URL.createObjectURL(file));
+
+                          setSelectedImages((prev) => [...prev, ...files]);
+
+                          setPreviewImages((prev) => [...prev, ...previews]);
+
                           addToast("Đã chọn ảnh, nhấn Lưu để tải lên", "success");
                         }}
                       />

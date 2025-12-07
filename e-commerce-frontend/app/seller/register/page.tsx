@@ -13,6 +13,7 @@ import { sellerApi } from "@/src/api/sellerApi";
 import { ApiError } from "@/src/lib/api-client";
 import { uploadToBucket } from "@/src/lib/storage";
 import { SellerApplication } from "@/src/types/seller";
+import { config } from "@/src/config/env";
 
 type SellerForm = {
   storeName: string;
@@ -89,8 +90,8 @@ function SellerRegisterContent() {
     setLoading(true);
     try {
       const [avatarUrl, coverUrl] = await Promise.all([
-        avatarFile ? uploadToBucket("Seller", avatarFile) : Promise.resolve(undefined),
-        coverFile ? uploadToBucket("Seller", coverFile) : Promise.resolve(undefined),
+        avatarFile ? uploadToBucket(config.supabaseSellerBucket, avatarFile) : Promise.resolve(undefined),
+        coverFile ? uploadToBucket(config.supabaseSellerBucket, coverFile) : Promise.resolve(undefined),
       ]);
       const created = await sellerApi.submitApplication({
         userId: user?.id,
