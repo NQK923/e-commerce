@@ -35,6 +35,7 @@ function NewProductContent() {
     name: "",
     description: "",
     price: "",
+    quantity: "",
     currency: "VND",
     categoryId: CATEGORIES[0],
   });
@@ -43,7 +44,7 @@ function NewProductContent() {
   const [previewImages, setPreviewImages] = useState<string[]>([]);
   const [hasVariants, setHasVariants] = useState(false);
   const [variants, setVariants] = useState<ProductVariantRequest[]>([]);
-  const [newVariant, setNewVariant] = useState({ sku: "", name: "", price: "" });
+  const [newVariant, setNewVariant] = useState({ sku: "", name: "", price: "", quantity: "" });
 
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -56,12 +57,12 @@ function NewProductContent() {
   }, [initializing, router, user]);
 
   const handleAddVariant = () => {
-    if (!newVariant.sku || !newVariant.name || !newVariant.price) {
+    if (!newVariant.sku || !newVariant.name || !newVariant.price || !newVariant.quantity) {
       addToast("Vui lòng nhập đầy đủ thông tin phân loại", "error");
       return;
     }
-    setVariants([...variants, { ...newVariant, price: parseFloat(newVariant.price) }]);
-    setNewVariant({ sku: "", name: "", price: "" });
+    setVariants([...variants, { ...newVariant, price: parseFloat(newVariant.price), quantity: parseInt(newVariant.quantity) }]);
+    setNewVariant({ sku: "", name: "", price: "", quantity: "" });
   };
 
   const removeVariant = (index: number) => {
@@ -95,6 +96,7 @@ function NewProductContent() {
         description: form.description,
         price: parseFloat(form.price),
         currency: form.currency || "VND",
+        quantity: form.quantity ? parseInt(form.quantity) : 0,
         categoryId: form.categoryId || undefined,
         images: [
           { url: primaryImage, primary: true },
@@ -226,7 +228,7 @@ function NewProductContent() {
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm space-y-6">
           <h2 className="text-lg font-bold text-zinc-900">Thông tin bán hàng</h2>
           
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-3">
              <Input
                 label="Giá cơ bản (VND)"
                 type="number"
@@ -234,6 +236,16 @@ function NewProductContent() {
                 required
                 value={form.price}
                 onChange={(e) => setForm((prev) => ({ ...prev, price: e.target.value }))}
+                placeholder="0"
+             />
+             <Input
+                label="Số lượng kho"
+                type="number"
+                min="0"
+                required={!hasVariants}
+                disabled={hasVariants}
+                value={form.quantity}
+                onChange={(e) => setForm((prev) => ({ ...prev, quantity: e.target.value }))}
                 placeholder="0"
              />
              <Input
@@ -257,7 +269,7 @@ function NewProductContent() {
 
              {hasVariants && (
                <div className="rounded-lg border border-zinc-100 bg-zinc-50 p-4 space-y-4">
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-4 items-end">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-5 items-end">
                      <Input 
                         label="Tên phân loại (VD: Đỏ, Size L)" 
                         value={newVariant.name} 
@@ -274,6 +286,12 @@ function NewProductContent() {
                         value={newVariant.price} 
                         onChange={e => setNewVariant({...newVariant, price: e.target.value})} 
                      />
+                     <Input 
+                        label="Số lượng" 
+                        type="number"
+                        value={newVariant.quantity} 
+                        onChange={e => setNewVariant({...newVariant, quantity: e.target.value})} 
+                     />
                      <Button type="button" onClick={handleAddVariant} className="bg-white border border-zinc-300 text-zinc-700 hover:bg-zinc-50">Thêm</Button>
                   </div>
 
@@ -285,6 +303,7 @@ function NewProductContent() {
                                 <th className="px-4 py-3 font-medium">Tên phân loại</th>
                                 <th className="px-4 py-3 font-medium">SKU</th>
                                 <th className="px-4 py-3 font-medium">Giá</th>
+                                <th className="px-4 py-3 font-medium">Số lượng</th>
                                 <th className="px-4 py-3 font-medium">Hành động</th>
                              </tr>
                           </thead>
@@ -294,6 +313,7 @@ function NewProductContent() {
                                    <td className="px-4 py-3">{v.name}</td>
                                    <td className="px-4 py-3 text-zinc-500">{v.sku}</td>
                                    <td className="px-4 py-3 font-medium text-emerald-600">{v.price.toLocaleString()}</td>
+                                   <td className="px-4 py-3 text-zinc-600">{v.quantity}</td>
                                    <td className="px-4 py-3">
                                       <button type="button" onClick={() => removeVariant(idx)} className="text-red-600 hover:underline text-xs">Xóa</button>
                                    </td>

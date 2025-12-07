@@ -26,6 +26,7 @@ export type ProductVariantRequest = {
   sku: string;
   name: string;
   price: number;
+  quantity: number;
 };
 
 export type UpsertProductRequest = {
@@ -34,6 +35,7 @@ export type UpsertProductRequest = {
   description?: string;
   price: number;
   currency?: string;
+  quantity?: number;
   categoryId?: string;
   images: Array<{
     url: string;

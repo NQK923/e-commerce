@@ -11,8 +11,10 @@ export const uploadToBucket = async (bucket: string | undefined, file: File): Pr
   const { data, error } = await supabase.storage.from(bucketName).upload(path, file, {
     cacheControl: "3600",
     upsert: false,
+    contentType: file.type,
   });
   if (error) {
+    console.error("Supabase Storage Upload Error:", error);
     const message = error.message || "Upload failed";
     if (message.toLowerCase().includes("bucket")) {
       throw new Error(`Supabase bucket "${bucketName}" is missing or misconfigured`);

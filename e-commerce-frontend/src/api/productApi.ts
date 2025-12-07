@@ -42,11 +42,13 @@ export const productApi = {
         description: payload.description,
         price: payload.price.toString(),
         currency: payload.currency ?? "VND",
+        quantity: payload.quantity ?? 0,
         categoryId: payload.categoryId,
         variants: payload.variants?.map((v) => ({
           sku: v.sku,
           name: v.name,
           price: v.price.toString(),
+          quantity: v.quantity,
         })),
         images: payload.images?.map((img, idx: number) => ({
           url: img.url,

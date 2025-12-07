@@ -15,6 +15,7 @@ public class UpsertProductCommand {
     String price;
     String currency;
     String categoryId;
+    Integer quantity;
     @Singular
     List<VariantCommand> variants;
     @Singular
@@ -26,6 +27,7 @@ public class UpsertProductCommand {
         String sku;
         String name;
         String price;
+        Integer quantity;
     }
 
     @Value

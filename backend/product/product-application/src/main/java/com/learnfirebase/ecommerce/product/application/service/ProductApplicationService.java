@@ -25,6 +25,8 @@ import com.learnfirebase.ecommerce.product.domain.model.ProductVariant;
 
 import lombok.RequiredArgsConstructor;
 
+import com.learnfirebase.ecommerce.product.domain.event.ProductCreatedEvent;
+
 @RequiredArgsConstructor
 public class ProductApplicationService implements ManageProductUseCase, QueryProductUseCase {
     private final ProductRepository productRepository;
@@ -63,7 +65,17 @@ public class ProductApplicationService implements ManageProductUseCase, QueryPro
 
         Product saved = productRepository.save(product);
         productSearchIndexPort.index(saved);
-        eventPublisher.publish(new com.learnfirebase.ecommerce.common.domain.DomainEvent() {});
+
+        eventPublisher.publish(ProductCreatedEvent.builder()
+            .productId(saved.getId().getValue())
+            .initialStock(command.getQuantity())
+            .variants(command.getVariants() != null ? command.getVariants().stream()
+                .map(v -> ProductCreatedEvent.VariantInitialStock.builder()
+                    .sku(v.getSku())
+                    .quantity(v.getQuantity() != null ? v.getQuantity() : 0)
+                    .build())
+                .collect(Collectors.toList()) : java.util.Collections.emptyList())
+            .build());
         return toDto(saved);
     }
 

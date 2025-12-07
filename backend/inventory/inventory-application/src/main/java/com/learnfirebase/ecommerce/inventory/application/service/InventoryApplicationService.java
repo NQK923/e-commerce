@@ -16,8 +16,10 @@ import com.learnfirebase.ecommerce.inventory.domain.model.Warehouse;
 
 import lombok.RequiredArgsConstructor;
 
+import com.learnfirebase.ecommerce.inventory.application.port.in.QueryInventoryUseCase;
+
 @RequiredArgsConstructor
-public class InventoryApplicationService implements ManageInventoryUseCase {
+public class InventoryApplicationService implements ManageInventoryUseCase, QueryInventoryUseCase {
     private final InventoryRepository inventoryRepository;
     private final InventoryRedisScriptPort redisScriptPort;
     private final InventoryEventPublisher eventPublisher;
@@ -34,6 +36,17 @@ public class InventoryApplicationService implements ManageInventoryUseCase {
         redisScriptPort.executeAtomicReserve(saved.getId().getValue(), java.util.Map.of(command.getProductId(), command.getDelta()));
         eventPublisher.publish(new com.learnfirebase.ecommerce.common.domain.DomainEvent() {});
         return toDto(saved);
+    }
+
+    @Override
+    public InventoryDto getInventoryByProductId(String productId) {
+        // Since we only have a default inventory for now, we scan for it.
+        // Ideally we should have a lookup table or index by productId
+        // For now, we'll fetch the default inventory
+        Inventory inventory = inventoryRepository.findById(new InventoryId("DEFAULT_INVENTORY"))
+             .orElseThrow(() -> new InventoryDomainException("Default inventory not found"));
+        
+        return toDto(inventory);
     }
 
     private InventoryDto toDto(Inventory inventory) {

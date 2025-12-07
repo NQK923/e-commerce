@@ -93,7 +93,7 @@ export const ProductCard: React.FC<Props> = ({ product, onAddToCart }) => {
             </span>
           </div>
           <div className="text-xs text-zinc-500">
-            {Math.floor(Math.random() * 1000)} {t.product.sold}
+            123 {t.product.sold}
           </div>
         </div>
       </div>

@@ -16,6 +16,7 @@ public class ProductDto {
     String price;
     String currency;
     String categoryId;
+    Integer quantity;
     Instant createdAt;
     Instant updatedAt;
     @Singular
@@ -29,6 +30,7 @@ public class ProductDto {
         String sku;
         String name;
         String price;
+        Integer quantity;
     }
 
     @Value

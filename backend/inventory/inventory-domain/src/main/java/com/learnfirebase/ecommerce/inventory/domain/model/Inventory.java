@@ -23,9 +23,19 @@ public class Inventory extends AggregateRoot<InventoryId> {
     private List<InventoryItem> items = new ArrayList<>();
 
     public void adjust(String productId, int delta) {
-        items.stream()
+        var itemOptional = items.stream()
             .filter(item -> item.getProductId().equals(productId))
-            .findFirst()
-            .ifPresent(item -> item.setAvailable(item.getAvailable() + delta));
+            .findFirst();
+
+        if (itemOptional.isPresent()) {
+            InventoryItem item = itemOptional.get();
+            item.setAvailable(item.getAvailable() + delta);
+        } else {
+            items.add(InventoryItem.builder()
+                .productId(productId)
+                .available(delta)
+                .reserved(0)
+                .build());
+        }
     }
 }
