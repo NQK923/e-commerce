@@ -6,7 +6,13 @@ import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
 import { Spinner } from "@/src/components/ui/spinner";
 import { SellerApplication } from "@/src/types/seller";
-import { MoreHorizontal, Store, CheckCircle2, XCircle } from "lucide-react";
+import Image from "next/image";
+import {
+  Store,
+  CheckCircle2,
+  XCircle,
+  MoreHorizontal,
+} from "lucide-react";
 import { useToast } from "@/src/components/ui/toast-provider";
 
 function SellersContent() {
@@ -71,12 +77,23 @@ function SellersContent() {
           <tbody className="divide-y divide-zinc-100">
             {requests.map((req) => (
               <tr key={req.id} className="hover:bg-zinc-50/50">
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-zinc-100 flex items-center justify-center overflow-hidden">
-                       {req.avatarUrl ? <img src={req.avatarUrl} alt="" className="h-full w-full object-cover"/> : <Store size={16} className="text-zinc-400"/>}
-                    </div>
-                    <div>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 overflow-hidden rounded-full bg-zinc-100 relative">
+                        {req.avatarUrl ? (
+                          <Image
+                            src={req.avatarUrl}
+                            alt={req.storeName}
+                            fill
+                            className="object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-zinc-400">
+                            <Store size={20} />
+                          </div>
+                        )}
+                      </div>
+                      <div>
                       <div className="font-semibold text-zinc-900">{req.storeName}</div>
                       <div className="text-xs text-zinc-500">ID: {req.id.slice(0,8)}</div>
                     </div>

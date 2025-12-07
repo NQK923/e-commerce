@@ -6,7 +6,10 @@ import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
 import { Spinner } from "@/src/components/ui/spinner";
 import { User } from "@/src/types/auth";
-import { ShieldCheck, MoreHorizontal, Trash2 } from "lucide-react";
+import {
+  Trash2,
+  MoreHorizontal,
+} from "lucide-react";
 import { useToast } from "@/src/components/ui/toast-provider";
 
 function UsersContent() {

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   BarChart,
   Bar,
@@ -12,8 +12,6 @@ import {
   PieChart,
   Pie,
   Cell,
-  LineChart,
-  Line,
   Legend
 } from 'recharts';
 import { orderApi } from '@/src/api/orderApi';
@@ -30,20 +28,17 @@ const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'];
 export default function StatisticsPage() {
   const [loading, setLoading] = useState(true);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [ordersRes, usersRes, productsRes] = await Promise.all([
+        const [ordersRes, productsRes] = await Promise.all([
           orderApi.list(0, 100).catch(() => ({ items: [] })),
-          adminApi.users().catch(() => []),
           productApi.list({ size: 100 }).catch(() => ({ items: [] }))
         ]);
 
         setOrders(ordersRes.items || []);
-        setUsers(usersRes);
         setProducts(productsRes.items || []);
       } catch (error) {
         console.error("Error fetching stats data:", error);

@@ -2,6 +2,7 @@
 
 import React, { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { profileApi } from "@/src/api/profileApi";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
@@ -94,7 +95,7 @@ function ProfileContent() {
             <div className="flex flex-col items-center gap-4 text-center">
               <div className="relative h-24 w-24 overflow-hidden rounded-full border-2 border-emerald-50 bg-zinc-100">
                 {avatarUrl ? (
-                  <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                  <Image src={avatarUrl} alt="Avatar" fill className="object-cover" />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-zinc-300">
                     {displayName.charAt(0).toUpperCase() || "U"}

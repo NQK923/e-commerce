@@ -2,6 +2,7 @@
 
 import React, { Suspense, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { ArrowRight, CheckCircle2, ShieldCheck, Sparkles, Store, MessageCircle } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
@@ -318,13 +319,15 @@ function SellerRegisterContent() {
                   {existingApplication.avatarUrl && (
                     <div className="space-y-1">
                       <p className="text-xs font-semibold text-zinc-600">Avatar</p>
-                      <img src={existingApplication.avatarUrl} alt="Seller avatar" className="h-24 w-24 rounded-full object-cover border" />
+                      <Image src={existingApplication.avatarUrl} alt="Seller avatar" width={96} height={96} className="rounded-full object-cover border" />
                     </div>
                   )}
                   {existingApplication.coverUrl && (
                     <div className="space-y-1">
                       <p className="text-xs font-semibold text-zinc-600">Ảnh bìa</p>
-                      <img src={existingApplication.coverUrl} alt="Seller cover" className="h-24 w-full rounded-lg object-cover border" />
+                      <div className="relative h-24 w-full">
+                        <Image src={existingApplication.coverUrl} alt="Seller cover" fill className="rounded-lg object-cover border" />
+                      </div>
                     </div>
                   )}
                 </div>

@@ -36,7 +36,7 @@ export default function AddressesPage() {
             setUserProfile({ ...user, addresses: newAddresses });
         }
         addToast("Đã xóa địa chỉ", "success");
-    } catch (e) {
+    } catch {
         addToast("Xóa thất bại", "error");
     }
   };
@@ -58,7 +58,7 @@ export default function AddressesPage() {
         setAdding(false);
         setForm({ ...form, line1: "", line2: "", city: "", state: "", postalCode: "", fullName: user?.displayName || "" });
         addToast("Đã thêm địa chỉ", "success");
-    } catch (e) {
+    } catch {
         addToast("Thêm địa chỉ thất bại", "error");
     } finally {
         setLoading(false);

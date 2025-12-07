@@ -2,18 +2,17 @@
 
 import React, { Suspense } from "react";
 import Link from "next/link";
-import { 
-  Users, 
-  Package2, 
-  Store, 
-  CheckCircle2, 
-  Clock4, 
-  TrendingUp,
+import Image from "next/image";
+import {
   DollarSign,
-  Activity,
-  ShieldCheck
-} from "lucide-react";
-import { productApi } from "@/src/api/productApi";
+  Users,
+  ShieldCheck,
+  TrendingUp,
+  Store,
+  Package2,
+  CheckCircle2,
+  Clock4,
+} from "lucide-react";import { productApi } from "@/src/api/productApi";
 import { adminApi } from "@/src/api/adminApi";
 import { sellerApi } from "@/src/api/sellerApi";
 import { orderApi } from "@/src/api/orderApi";
@@ -40,7 +39,6 @@ function AdminContent() {
   const [users, setUsers] = React.useState<AdminUser[]>([]);
   const [products, setProducts] = React.useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = React.useState(false);
-  const [loadingUsers, setLoadingUsers] = React.useState(false);
   const [sellerRequests, setSellerRequests] = React.useState<SellerApplication[]>([]);
   const [loadingSellerRequests, setLoadingSellerRequests] = React.useState(false);
   const [selectedRequest, setSelectedRequest] = React.useState<SellerApplication | null>(null);
@@ -51,7 +49,6 @@ function AdminContent() {
     if (initializing || !isAuthenticated || !isAdmin) return;
     
     const loadData = async () => {
-      setLoadingUsers(true);
       setLoadingProducts(true);
       setLoadingSellerRequests(true);
       
@@ -103,7 +100,6 @@ function AdminContent() {
       } catch (error) {
         console.error("Failed to load dashboard data", error);
       } finally {
-        setLoadingUsers(false);
         setLoadingProducts(false);
         setLoadingSellerRequests(false);
       }
@@ -240,8 +236,8 @@ function AdminContent() {
                                     <tr key={req.id} className="hover:bg-zinc-50/50 transition-colors">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="h-8 w-8 rounded-full bg-zinc-100 flex items-center justify-center overflow-hidden">
-                                                    {req.avatarUrl ? <img src={req.avatarUrl} alt="" className="h-full w-full object-cover"/> : <Store size={14} className="text-zinc-400"/>}
+                                                <div className="h-8 w-8 rounded-full bg-zinc-100 flex items-center justify-center overflow-hidden relative">
+                                                    {req.avatarUrl ? <Image src={req.avatarUrl} alt="" fill className="object-cover"/> : <Store size={14} className="text-zinc-400"/>}
                                                 </div>
                                                 <div>
                                                     <p className="font-medium text-zinc-900">{req.storeName}</p>

@@ -35,48 +35,76 @@ public class ProductApplicationService implements ManageProductUseCase, QueryPro
 
     @Override
     public ProductDto execute(UpsertProductCommand command) {
-        ProductId productId = new ProductId(command.getId() != null ? command.getId() : UUID.randomUUID().toString());
-        Product product = productRepository.findById(productId).orElseGet(() -> Product.builder().id(productId).createdAt(Instant.now()).build());
+        System.out.println("DEBUG: Starting execute for product: " + command.getName());
+        try {
+            ProductId productId = new ProductId(command.getId() != null ? command.getId() : UUID.randomUUID().toString());
+            Product product = productRepository.findById(productId).orElseGet(() -> Product.builder().id(productId).createdAt(Instant.now()).build());
 
-        product = Product.builder()
-            .id(productId)
-            .name(command.getName())
-            .description(command.getDescription())
-            .price(Money.builder().amount(new BigDecimal(command.getPrice())).currency(command.getCurrency()).build())
-            .category(command.getCategoryId() != null ? Category.builder().id(command.getCategoryId()).name(command.getCategoryId()).build() : null)
-            .variants(command.getVariants() != null ? command.getVariants().stream()
-                .map(v -> ProductVariant.builder()
-                    .sku(v.getSku())
-                    .name(v.getName())
-                    .price(Money.builder().amount(new BigDecimal(v.getPrice())).currency(command.getCurrency()).build())
-                    .build())
-                .collect(Collectors.toList()) : java.util.Collections.emptyList())
-            .images(command.getImages() != null ? command.getImages().stream()
-                .map(img -> ProductImage.builder()
-                    .id(img.getId() != null ? new ProductImageId(img.getId()) : new ProductImageId(UUID.randomUUID().toString()))
-                    .url(img.getUrl())
-                    .sortOrder(img.getSortOrder())
-                    .primary(Boolean.TRUE.equals(img.getPrimaryImage()))
-                    .build())
-                .collect(Collectors.toList()) : java.util.Collections.emptyList())
-            .createdAt(product.getCreatedAt() != null ? product.getCreatedAt() : Instant.now())
-            .updatedAt(Instant.now())
-            .build();
+            String priceStr = command.getPrice();
+            if (priceStr == null || priceStr.trim().isEmpty()) {
+                throw new IllegalArgumentException("Product price is required");
+            }
 
-        Product saved = productRepository.save(product);
-        productSearchIndexPort.index(saved);
+            product = Product.builder()
+                .id(productId)
+                .name(command.getName())
+                .description(command.getDescription())
+                .price(Money.builder().amount(new BigDecimal(priceStr)).currency(command.getCurrency()).build())
+                .category(command.getCategoryId() != null ? Category.builder().id(command.getCategoryId()).name(command.getCategoryId()).build() : null)
+                .variants(command.getVariants() != null ? command.getVariants().stream()
+                    .map(v -> {
+                        String vPrice = v.getPrice();
+                        if (vPrice == null || vPrice.trim().isEmpty()) {
+                             throw new IllegalArgumentException("Variant price is required for SKU: " + v.getSku());
+                        }
+                        return ProductVariant.builder()
+                        .sku(v.getSku())
+                        .name(v.getName())
+                        .price(Money.builder().amount(new BigDecimal(vPrice)).currency(command.getCurrency()).build())
+                        .build();
+                    })
+                    .collect(Collectors.toList()) : java.util.Collections.emptyList())
+                .images(command.getImages() != null ? command.getImages().stream()
+                    .map(img -> ProductImage.builder()
+                        .id(img.getId() != null ? new ProductImageId(img.getId()) : new ProductImageId(UUID.randomUUID().toString()))
+                        .url(img.getUrl())
+                        .sortOrder(img.getSortOrder())
+                        .primary(Boolean.TRUE.equals(img.getPrimaryImage()))
+                        .build())
+                    .collect(Collectors.toList()) : java.util.Collections.emptyList())
+                .createdAt(product.getCreatedAt() != null ? product.getCreatedAt() : Instant.now())
+                .updatedAt(Instant.now())
+                .build();
 
-        eventPublisher.publish(ProductCreatedEvent.builder()
-            .productId(saved.getId().getValue())
-            .initialStock(command.getQuantity())
-            .variants(command.getVariants() != null ? command.getVariants().stream()
-                .map(v -> ProductCreatedEvent.VariantInitialStock.builder()
-                    .sku(v.getSku())
-                    .quantity(v.getQuantity() != null ? v.getQuantity() : 0)
-                    .build())
-                .collect(Collectors.toList()) : java.util.Collections.emptyList())
-            .build());
-        return toDto(saved);
+            System.out.println("DEBUG: Saving product to repository");
+            Product saved = productRepository.save(product);
+            System.out.println("DEBUG: Product saved. Indexing...");
+            
+            try {
+                productSearchIndexPort.index(saved);
+            } catch (Exception e) {
+                System.err.println("DEBUG: Search indexing failed: " + e.getMessage());
+                // Non-critical?
+            }
+
+            System.out.println("DEBUG: Publishing event");
+            eventPublisher.publish(ProductCreatedEvent.builder()
+                .productId(saved.getId().getValue())
+                .initialStock(command.getQuantity())
+                .variants(command.getVariants() != null ? command.getVariants().stream()
+                    .map(v -> ProductCreatedEvent.VariantInitialStock.builder()
+                        .sku(v.getSku())
+                        .quantity(v.getQuantity() != null ? v.getQuantity() : 0)
+                        .build())
+                    .collect(Collectors.toList()) : java.util.Collections.emptyList())
+                .build());
+            System.out.println("DEBUG: Event published. Returning DTO");
+            return toDto(saved);
+        } catch (Exception e) {
+            System.err.println("DEBUG: Error in execute: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     @Override

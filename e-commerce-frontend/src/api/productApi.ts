@@ -2,7 +2,23 @@ import { apiRequest } from "../lib/api-client";
 import { buildQueryString } from "../lib/query-string";
 import { PaginatedResponse } from "../types/common";
 import { Product, ProductListParams, UpsertProductRequest } from "../types/product";
-import { ProductImage } from "../types/product";
+
+export type Review = {
+  id: string;
+  productId: string;
+  userId: string;
+  userName: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+};
+
+export type CreateReviewRequest = {
+  userId: string;
+  userName: string;
+  rating: number;
+  comment: string;
+};
 
 type BackendPageResponse<T> = {
   content: T[];
@@ -56,5 +72,45 @@ export const productApi = {
           primaryImage: img.primary ?? idx === 0,
         })),
       },
+    }),
+  update: (id: string, payload: UpsertProductRequest) =>
+    apiRequest<Product>(`/api/products/${id}`, {
+      method: "POST",
+      body: {
+        name: payload.name,
+        description: payload.description,
+        price: payload.price.toString(),
+        currency: payload.currency ?? "VND",
+        quantity: payload.quantity ?? 0,
+        categoryId: payload.categoryId,
+        variants: payload.variants?.map((v) => ({
+          sku: v.sku,
+          name: v.name,
+          price: v.price.toString(),
+          quantity: v.quantity,
+        })),
+        images: payload.images?.map((img, idx: number) => ({
+          url: img.url,
+          sortOrder: idx,
+          primaryImage: img.primary ?? idx === 0,
+        })),
+      },
+    }),
+  
+  fetchReviews: (productId: string, page = 0, size = 10) =>
+    apiRequest<BackendPageResponse<Review>>(`/api/products/${productId}/reviews?page=${page}&size=${size}`).then(
+      (resp): PaginatedResponse<Review> => ({
+        items: resp?.content ?? [],
+        page: resp?.page ?? 0,
+        size: resp?.size ?? 0,
+        total: resp?.totalElements ?? 0,
+        totalPages: resp?.totalPages ?? 0,
+      })
+    ),
+
+  addReview: (productId: string, payload: CreateReviewRequest) =>
+    apiRequest<Review>(`/api/products/${productId}/reviews`, {
+      method: "POST",
+      body: payload,
     }),
 };

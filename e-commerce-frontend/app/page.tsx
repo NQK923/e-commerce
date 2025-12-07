@@ -2,19 +2,13 @@
 
 import Link from "next/link";
 import React from "react";
-import { 
-  Truck, 
-  ShieldCheck, 
-  Clock, 
-  ArrowRight, 
-  Smartphone, 
-  Shirt, 
-  Watch, 
-  Home as HomeIcon, 
-  ChevronRight,
-  Store
-} from "lucide-react";
-import { productApi } from "@/src/api/productApi";
+import {
+    ArrowRight,
+    ShieldCheck,
+    Truck,
+    Store,
+    ChevronRight, Smartphone, Shirt, HomeIcon, Clock,
+} from "lucide-react";import { productApi } from "@/src/api/productApi";
 import { ProductCard } from "@/src/components/product/product-card";
 import { Button } from "@/src/components/ui/button";
 import { Spinner } from "@/src/components/ui/spinner";

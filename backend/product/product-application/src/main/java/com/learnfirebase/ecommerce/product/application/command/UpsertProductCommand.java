@@ -2,40 +2,48 @@ package com.learnfirebase.ecommerce.product.application.command;
 
 import java.util.List;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.Singular;
-import lombok.Value;
 
-@Value
+@Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class UpsertProductCommand {
-    String id;
-    String name;
-    String description;
-    String price;
-    String currency;
-    String categoryId;
-    Integer quantity;
+    private String id;
+    private String name;
+    private String description;
+    private String price;
+    private String currency;
+    private String categoryId;
+    private Integer quantity;
     @Singular
-    List<VariantCommand> variants;
+    private List<VariantCommand> variants;
     @Singular
-    List<ImageCommand> images;
+    private List<ImageCommand> images;
 
-    @Value
+    @Data
     @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class VariantCommand {
-        String sku;
-        String name;
-        String price;
-        Integer quantity;
+        private String sku;
+        private String name;
+        private String price;
+        private Integer quantity;
     }
 
-    @Value
+    @Data
     @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class ImageCommand {
-        String id;
-        String url;
-        Integer sortOrder;
-        Boolean primaryImage;
+        private String id;
+        private String url;
+        private Integer sortOrder;
+        private Boolean primaryImage;
     }
 }

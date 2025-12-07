@@ -30,18 +30,13 @@ export const ReportProductDialog: React.FC<ReportProductDialogProps> = ({ produc
     e.preventDefault();
     setLoading(true);
     try {
-      // In a real scenario, this would call the API. 
-      // Since the backend endpoint might not exist yet, we can simulate success or try the call.
-      // await reportApi.create({ productId, reason, description });
-      
-      // Simulating API call for UI demonstration
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await reportApi.create({ productId, reason, description });
       
       addToast('Thank you for your report. We will investigate.', 'success');
       setIsOpen(false);
       setReason('FAKE');
       setDescription('');
-    } catch (error) {
+    } catch {
       addToast('Failed to submit report. Please try again.', 'error');
     } finally {
       setLoading(false);

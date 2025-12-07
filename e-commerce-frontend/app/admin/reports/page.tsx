@@ -14,22 +14,22 @@ function ReportsContent() {
   const [loading, setLoading] = useState(true);
   const { addToast } = useToast();
 
-  useEffect(() => {
-    loadReports();
-  }, []);
-
-  const loadReports = async () => {
+  const loadReports = React.useCallback(async () => {
     try {
       setLoading(true);
       const data = await reportApi.list();
       setReports(data);
-    } catch (error) {
-      console.error('Failed to load reports', error);
+    } catch (_error) {
+      console.error('Failed to load reports', _error);
       addToast('Failed to load reports', 'error');
     } finally {
       setLoading(false);
     }
-  };
+  }, [addToast]);
+
+  useEffect(() => {
+    loadReports();
+  }, [loadReports]);
 
   const handleAction = async (id: string, action: 'resolve' | 'reject') => {
     try {
