@@ -23,7 +23,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/reports")
 @RequiredArgsConstructor
-public class ReportController {
+public class ProductReportController {
     private final ManageProductReportUseCase manageProductReportUseCase;
 
     @PostMapping

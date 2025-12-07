@@ -5,9 +5,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.learnfirebase.ecommerce.product.application.command.CreateProductReportCommand;
 import com.learnfirebase.ecommerce.product.application.dto.ProductReportDto;
 import com.learnfirebase.ecommerce.product.application.port.in.ManageProductReportUseCase;
@@ -19,14 +16,12 @@ import com.learnfirebase.ecommerce.product.domain.model.ReportStatus;
 
 import lombok.RequiredArgsConstructor;
 
-@Service
 @RequiredArgsConstructor
 public class ProductReportApplicationService implements ManageProductReportUseCase {
 
     private final ProductReportRepository reportRepository;
 
     @Override
-    @Transactional
     public void createReport(CreateProductReportCommand command) {
         ProductReport report = ProductReport.builder()
                 .id(new ProductReportId(UUID.randomUUID().toString()))
@@ -43,7 +38,6 @@ public class ProductReportApplicationService implements ManageProductReportUseCa
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<ProductReportDto> listReports() {
         return reportRepository.findAll().stream()
                 .map(this::mapToDto)
@@ -51,7 +45,6 @@ public class ProductReportApplicationService implements ManageProductReportUseCa
     }
 
     @Override
-    @Transactional
     public void resolveReport(String reportId) {
         ProductReport report = reportRepository.findById(new ProductReportId(reportId))
                 .orElseThrow(() -> new RuntimeException("Report not found"));
@@ -60,7 +53,6 @@ public class ProductReportApplicationService implements ManageProductReportUseCa
     }
 
     @Override
-    @Transactional
     public void rejectReport(String reportId) {
         ProductReport report = reportRepository.findById(new ProductReportId(reportId))
                 .orElseThrow(() -> new RuntimeException("Report not found"));
