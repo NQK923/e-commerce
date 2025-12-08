@@ -52,16 +52,23 @@ public class ProductController {
 
     @PostMapping("/{id}")
     public ResponseEntity<ProductDto> update(@PathVariable("id") String id, @RequestBody UpsertProductCommand command) {
-        UpsertProductCommand merged = UpsertProductCommand.builder()
+        UpsertProductCommand.UpsertProductCommandBuilder builder = UpsertProductCommand.builder()
             .id(id)
             .name(command.getName())
             .description(command.getDescription())
             .price(command.getPrice())
             .currency(command.getCurrency())
             .categoryId(command.getCategoryId())
-            .variants(command.getVariants())
-            .images(command.getImages())
-            .build();
+            .quantity(command.getQuantity());
+
+        if (command.getVariants() != null) {
+            builder.variants(command.getVariants());
+        }
+        if (command.getImages() != null) {
+            builder.images(command.getImages());
+        }
+
+        UpsertProductCommand merged = builder.build();
         return ResponseEntity.ok(manageProductUseCase.execute(merged));
     }
     

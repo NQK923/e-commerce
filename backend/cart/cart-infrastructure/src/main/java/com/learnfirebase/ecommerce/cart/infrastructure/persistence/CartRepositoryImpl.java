@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.learnfirebase.ecommerce.cart.application.port.out.CartRepository;
 import com.learnfirebase.ecommerce.cart.domain.model.Cart;
@@ -20,6 +21,7 @@ public class CartRepositoryImpl implements CartRepository {
     private final CartJpaRepository cartJpaRepository;
 
     @Override
+    @Transactional
     public Cart save(Cart cart) {
         CartEntity entity = toEntity(cart);
         CartEntity saved = cartJpaRepository.save(entity);
@@ -27,6 +29,7 @@ public class CartRepositoryImpl implements CartRepository {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<Cart> findById(CartId id) {
         return cartJpaRepository.findById(id.getValue()).map(this::toDomain);
     }

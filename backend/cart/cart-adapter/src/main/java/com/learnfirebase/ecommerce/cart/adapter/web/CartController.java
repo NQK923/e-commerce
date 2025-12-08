@@ -51,7 +51,7 @@ public class CartController {
     }
 
     @PatchMapping("/items/{productId}")
-    public ResponseEntity<CartDto> updateItem(@PathVariable String productId, @RequestBody UpdateItemCommand command,
+    public ResponseEntity<CartDto> updateItem(@PathVariable("productId") String productId, @RequestBody UpdateItemCommand command,
         @RequestHeader(name = "Authorization", required = false) String authorization) {
         String cartId = command.getCartId() != null ? command.getCartId() : extractUserId(authorization);
         UpdateItemCommand effective = UpdateItemCommand.builder()
@@ -65,7 +65,7 @@ public class CartController {
     }
 
     @DeleteMapping("/items/{productId}")
-    public ResponseEntity<CartDto> removeItem(@PathVariable String productId,
+    public ResponseEntity<CartDto> removeItem(@PathVariable("productId") String productId,
         @RequestHeader(name = "Authorization", required = false) String authorization) {
         String cartId = extractUserId(authorization);
         RemoveItemCommand command = RemoveItemCommand.builder()

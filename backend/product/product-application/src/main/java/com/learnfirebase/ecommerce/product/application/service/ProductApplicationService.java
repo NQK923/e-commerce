@@ -2,6 +2,8 @@ package com.learnfirebase.ecommerce.product.application.service;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -38,12 +40,37 @@ public class ProductApplicationService implements ManageProductUseCase, QueryPro
         System.out.println("DEBUG: Starting execute for product: " + command.getName());
         try {
             ProductId productId = new ProductId(command.getId() != null ? command.getId() : UUID.randomUUID().toString());
-            Product product = productRepository.findById(productId).orElseGet(() -> Product.builder().id(productId).createdAt(Instant.now()).build());
+            Product existingProduct = productRepository.findById(productId).orElse(null);
 
             String priceStr = command.getPrice();
             if (priceStr == null || priceStr.trim().isEmpty()) {
                 throw new IllegalArgumentException("Product price is required");
             }
+
+            List<ProductVariant> variantsToUse = command.getVariants() != null ? command.getVariants().stream()
+                .map(v -> {
+                    String vPrice = v.getPrice();
+                    if (vPrice == null || vPrice.trim().isEmpty()) {
+                         throw new IllegalArgumentException("Variant price is required for SKU: " + v.getSku());
+                    }
+                    return ProductVariant.builder()
+                        .sku(v.getSku())
+                        .name(v.getName())
+                        .price(Money.builder().amount(new BigDecimal(vPrice)).currency(command.getCurrency()).build())
+                        .build();
+                })
+                .collect(Collectors.toList()) : (existingProduct != null ? existingProduct.getVariants() : Collections.emptyList());
+
+            List<ProductImage> imagesToUse = command.getImages() != null ? command.getImages().stream()
+                .map(img -> ProductImage.builder()
+                    .id(img.getId() != null ? new ProductImageId(img.getId()) : new ProductImageId(UUID.randomUUID().toString()))
+                    .url(img.getUrl())
+                    .sortOrder(img.getSortOrder())
+                    .primary(Boolean.TRUE.equals(img.getPrimaryImage()))
+                    .build())
+                .collect(Collectors.toList()) : (existingProduct != null ? existingProduct.getImages() : Collections.emptyList());
+
+            Product product = existingProduct != null ? existingProduct : Product.builder().id(productId).createdAt(Instant.now()).build();
 
             product = Product.builder()
                 .id(productId)
@@ -51,27 +78,8 @@ public class ProductApplicationService implements ManageProductUseCase, QueryPro
                 .description(command.getDescription())
                 .price(Money.builder().amount(new BigDecimal(priceStr)).currency(command.getCurrency()).build())
                 .category(command.getCategoryId() != null ? Category.builder().id(command.getCategoryId()).name(command.getCategoryId()).build() : null)
-                .variants(command.getVariants() != null ? command.getVariants().stream()
-                    .map(v -> {
-                        String vPrice = v.getPrice();
-                        if (vPrice == null || vPrice.trim().isEmpty()) {
-                             throw new IllegalArgumentException("Variant price is required for SKU: " + v.getSku());
-                        }
-                        return ProductVariant.builder()
-                        .sku(v.getSku())
-                        .name(v.getName())
-                        .price(Money.builder().amount(new BigDecimal(vPrice)).currency(command.getCurrency()).build())
-                        .build();
-                    })
-                    .collect(Collectors.toList()) : java.util.Collections.emptyList())
-                .images(command.getImages() != null ? command.getImages().stream()
-                    .map(img -> ProductImage.builder()
-                        .id(img.getId() != null ? new ProductImageId(img.getId()) : new ProductImageId(UUID.randomUUID().toString()))
-                        .url(img.getUrl())
-                        .sortOrder(img.getSortOrder())
-                        .primary(Boolean.TRUE.equals(img.getPrimaryImage()))
-                        .build())
-                    .collect(Collectors.toList()) : java.util.Collections.emptyList())
+                .variants(variantsToUse)
+                .images(imagesToUse)
                 .createdAt(product.getCreatedAt() != null ? product.getCreatedAt() : Instant.now())
                 .updatedAt(Instant.now())
                 .build();

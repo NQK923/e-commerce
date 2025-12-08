@@ -2,19 +2,25 @@ package com.learnfirebase.ecommerce.cart.application.command;
 
 import java.util.List;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.Singular;
-import lombok.Value;
 
-@Value
+@Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class MergeCartCommand {
     String cartId;
     @Singular
     List<MergeItem> items;
 
-    @Value
+    @Data
     @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class MergeItem {
         String productId;
         int quantity;
