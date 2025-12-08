@@ -29,8 +29,12 @@ export type Address = {
 };
 
 export type CreateOrderRequest = {
-  // Extend when checkout flow is implemented.
   userId?: string;
   currency?: string;
   address?: Address;
+  items: Array<{
+    productId: string;
+    quantity: number;
+    price: number;
+  }>;
 };

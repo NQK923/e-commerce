@@ -77,7 +77,13 @@ export default function ProductDetailPage() {
 
   const handleAdd = async () => {
     if (!product) return;
-    await addItem(product, quantity);
+    const available = product.stock ?? Number.POSITIVE_INFINITY;
+    if (available <= 0) {
+      addToast(t.common.out_of_stock ?? "Sản phẩm đã hết hàng", "error");
+      return;
+    }
+    const clamped = Math.min(quantity, available);
+    await addItem(product, clamped);
     addToast(`${product.name} ${t.product.added_to_cart}`, "success");
   };
 

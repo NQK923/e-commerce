@@ -19,6 +19,7 @@ type Props = {
 export const ProductCard: React.FC<Props> = ({ product, onAddToCart }) => {
   const { t } = useTranslation();
   const primaryImage = product.images.find((img) => img.primary) ?? product.images[0];
+  const outOfStock = product.stock !== undefined && product.stock <= 0;
 
   return (
     <Card className="group relative flex h-full flex-col overflow-hidden border-zinc-200 bg-white transition-all hover:shadow-lg">
@@ -57,13 +58,15 @@ export const ProductCard: React.FC<Props> = ({ product, onAddToCart }) => {
           <Button 
             size="sm" 
             className="w-full gap-2" 
+            disabled={outOfStock}
             onClick={(e) => {
               e.preventDefault();
+              if (outOfStock) return;
               onAddToCart?.(product);
             }}
           >
             <ShoppingCart size={16} />
-            {t.product.add_to_cart}
+            {outOfStock ? t.common.out_of_stock ?? "Out of stock" : t.product.add_to_cart}
           </Button>
           <Link href={`/products/${product.id}`} className="w-full">
              <Button variant="secondary" size="sm" className="w-full gap-2">

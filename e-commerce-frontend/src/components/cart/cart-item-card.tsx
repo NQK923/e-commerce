@@ -19,6 +19,7 @@ type Props = {
 export const CartItemCard: React.FC<Props> = ({ item, onQuantityChange, onRemove }) => {
   const { t } = useTranslation();
   const image = item.product.images.find((img) => img.primary) ?? item.product.images[0];
+  const maxQty = item.product.stock ?? 99;
   return (
     <div className="flex gap-4 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
       <div className="relative h-24 w-24 overflow-hidden rounded-lg bg-zinc-100">
@@ -46,7 +47,7 @@ export const CartItemCard: React.FC<Props> = ({ item, onQuantityChange, onRemove
           </Button>
         </div>
         <div className="flex items-center justify-between">
-          <QuantitySelector quantity={item.quantity} onChange={onQuantityChange} />
+          <QuantitySelector quantity={item.quantity} onChange={onQuantityChange} max={maxQty} />
           <div className="text-right">
             <div className="text-sm text-zinc-600">{t.cart.item_subtotal}</div>
             <div className="text-lg font-bold text-emerald-700">

@@ -102,6 +102,8 @@ public class CartApplicationService implements ManageCartUseCase {
     }
 
     private CartDto saveAndMap(Cart cart, String currencyHint) {
+        normalizeCurrency(cart, currencyHint != null ? currencyHint : cart.getItems().stream()
+            .findFirst().map(i -> i.getPrice().getCurrency()).orElse("USD"));
         Cart saved = cartRepository.save(cart);
         cartCachePort.cache(saved);
         String currency = currencyHint != null ? currencyHint
@@ -127,5 +129,22 @@ public class CartApplicationService implements ManageCartUseCase {
                     .build())
                 .collect(Collectors.toList()))
             .build();
+    }
+
+    /**
+     * Ensure all cart items share the same currency to avoid Money.add mismatches.
+     */
+    private void normalizeCurrency(Cart cart, String currency) {
+        if (currency == null) {
+            return;
+        }
+        cart.getItems().forEach(item -> {
+            if (item.getPrice() != null && !currency.equalsIgnoreCase(item.getPrice().getCurrency())) {
+                item.setPrice(Money.builder()
+                    .amount(item.getPrice().getAmount())
+                    .currency(currency)
+                    .build());
+            }
+        });
     }
 }

@@ -13,7 +13,7 @@ import { useTranslation } from "@/src/providers/language-provider";
 import { formatCurrency } from "@/src/utils/format";
 
 function CheckoutContent() {
-  const { isAuthenticated, initializing } = useRequireAuth();
+  const { user, isAuthenticated, initializing } = useRequireAuth();
   const router = useRouter();
   const { cart, loading, clearCart, refreshCart } = useCart();
   const { addToast } = useToast();
@@ -57,7 +57,16 @@ function CheckoutContent() {
     event.preventDefault();
     setSubmitting(true);
     try {
-      const order = await orderApi.create({ address });
+      const order = await orderApi.create({
+        userId: user?.id,
+        currency: cart.currency ?? "USD",
+        address,
+        items: cart.items.map((item) => ({
+          productId: item.product.id,
+          quantity: item.quantity,
+          price: item.unitPrice,
+        })),
+      });
       await clearCart();
       addToast(t.checkout.success, "success");
       router.replace(`/orders/${order.id}`);

@@ -5,6 +5,7 @@ import {cartApi} from "../api/cartApi";
 import {useAuth} from "./auth-store";
 import {AddToCartRequest, Cart, CartItem} from "../types/cart";
 import {Product} from "../types/product";
+import {useToast} from "../components/ui/toast-provider";
 
 type CartContextValue = {
   cart: Cart | null;
@@ -55,6 +56,7 @@ const persistLocalCart = (cart: Cart | null) => {
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, initializing } = useAuth();
+  const { addToast } = useToast();
   const [cart, setCart] = useState<Cart | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [serverCartUnavailable, setServerCartUnavailable] = useState<boolean>(false);
@@ -69,12 +71,25 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const addItemToLocal = useCallback(
     (product: Product, quantity = 1) => {
+      const available = product.stock ?? Number.POSITIVE_INFINITY;
+      if (available <= 0) {
+        addToast("Sản phẩm đã hết hàng", "error");
+        return;
+      }
       const existingItems = loadLocalCart()?.items ?? [];
       const found = existingItems.find((item) => item.product.id === product.id);
+      const nextQuantity = Math.min(
+        available,
+        found ? found.quantity + quantity : quantity,
+      );
+      if (nextQuantity <= 0) {
+        addToast("Số lượng không hợp lệ", "error");
+        return;
+      }
       const updatedItems = found
         ? existingItems.map((item) =>
             item.product.id === product.id
-              ? { ...item, quantity: item.quantity + quantity, subtotal: (item.quantity + quantity) * item.unitPrice }
+              ? { ...item, quantity: nextQuantity, subtotal: nextQuantity * item.unitPrice }
               : item,
           )
         : [
@@ -82,15 +97,15 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
             {
               id: product.id,
               product,
-              quantity,
+              quantity: nextQuantity,
               unitPrice: product.price,
-              subtotal: product.price * quantity,
+              subtotal: product.price * nextQuantity,
             },
           ];
       const nextCart = calculateTotals(updatedItems);
       setAndPersistLocal(nextCart);
     },
-    [setAndPersistLocal],
+    [addToast, setAndPersistLocal],
   );
 
   const refreshCart = useCallback(async () => {
@@ -129,9 +144,15 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setLoading(true);
       try {
+        const available = product.stock ?? Number.POSITIVE_INFINITY;
+        if (available <= 0) {
+          addToast("Sản phẩm đã hết hàng", "error");
+          return;
+        }
+        const desired = Math.min(quantity, available);
         const serverCart = await cartApi.addItem({
           productId: product.id,
-          quantity,
+          quantity: desired,
           price: product.price,
           currency: product.currency ?? "USD",
           cartId: serverCartId ?? undefined,
@@ -147,7 +168,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setLoading(false);
       }
     },
-    [addItemToLocal, serverCartId, useLocalCart],
+    [addItemToLocal, addToast, serverCartId, useLocalCart],
   );
 
   const updateQuantity = useCallback(
@@ -155,11 +176,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (useLocalCart) {
         const existingItems = loadLocalCart()?.items ?? [];
         const updatedItems = existingItems
-          .map((item) =>
-            item.id === itemId
-              ? { ...item, quantity, subtotal: item.unitPrice * quantity }
-              : item,
-          )
+          .map((item) => {
+            if (item.id !== itemId) return item;
+            const max = item.product.stock ?? quantity;
+            const clamped = Math.min(Math.max(quantity, 0), max);
+            return { ...item, quantity: clamped, subtotal: item.unitPrice * clamped };
+          })
           .filter((item) => item.quantity > 0);
         const nextCart = updatedItems.length ? calculateTotals(updatedItems) : null;
         setAndPersistLocal(nextCart);
@@ -168,7 +190,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setLoading(true);
       try {
-        const serverCart = await cartApi.updateItem({ itemId, quantity });
+        const currentItem = cart?.items.find((i) => i.id === itemId);
+        const max = currentItem?.product.stock ?? quantity;
+        const clamped = Math.min(Math.max(quantity, 0), max);
+        const serverCart = await cartApi.updateItem({ itemId, quantity: clamped });
         setCart(serverCart);
         setServerCartId(serverCart?.id ?? null);
       } catch (error) {

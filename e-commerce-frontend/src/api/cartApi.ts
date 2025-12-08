@@ -42,14 +42,19 @@ const toCart = (payload: CartResponse | unknown): Cart => {
       };
     }) ?? [];
   const subtotal = items.reduce((sum: number, i) => sum + i.subtotal, 0);
+  const discount = Number.parseFloat((data?.discountTotal ?? "0").toString());
+  const shipping = Number.parseFloat((data?.shippingEstimate ?? "0").toString());
+  const totalFromServer = Number.parseFloat((data?.total ?? subtotal + shipping - discount).toString());
+  const currency = data?.currency ?? items[0]?.product.currency;
+
   return {
     id: data?.id ?? "local",
     items,
     subtotal,
-    discountTotal: Number.parseFloat((data?.discountTotal ?? "0").toString()),
-    shippingEstimate: Number.parseFloat((data?.shippingEstimate ?? "0").toString()),
-    total: Number.parseFloat((data?.total ?? subtotal).toString()),
-    currency: data?.currency,
+    discountTotal: discount,
+    shippingEstimate: shipping,
+    total: totalFromServer || subtotal + shipping - discount,
+    currency,
   };
 };
 
@@ -70,6 +75,7 @@ const enrichCartProducts = async (cart: Cart): Promise<Cart> => {
             price,
             currency: detail.currency ?? item.product.currency ?? cart.currency,
             images: detail.images ?? [],
+            stock: detail.stock ?? item.product.stock,
           },
         };
       } catch {
@@ -81,11 +87,14 @@ const enrichCartProducts = async (cart: Cart): Promise<Cart> => {
   const subtotal = enrichedItems.reduce((sum, i) => sum + i.subtotal, 0);
   const currency = enrichedItems[0]?.product.currency ?? cart.currency;
 
+  const totalFromServer = cart.total ?? 0;
+  const recalculatedTotal = totalFromServer > 0 ? totalFromServer : subtotal;
+
   return {
     ...cart,
     items: enrichedItems,
     subtotal,
-    total: cart.total ?? subtotal,
+    total: recalculatedTotal,
     currency,
   };
 };

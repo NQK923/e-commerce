@@ -38,6 +38,9 @@ const mapOrder = (dto: BackendOrderDto): Order => {
     };
   });
 
+  const computedTotal = items.reduce((sum, item) => sum + item.subtotal, 0);
+  const totalAmount = Number(dto.totalAmount ?? computedTotal);
+
   return {
     id: dto.id,
     userId: dto.userId,
@@ -45,14 +48,25 @@ const mapOrder = (dto: BackendOrderDto): Order => {
     currency,
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
-    total: Number(dto.totalAmount ?? 0),
+    total: totalAmount || computedTotal,
     items,
   };
 };
 
 export const orderApi = {
   create: (payload: CreateOrderRequest) =>
-    apiRequest<BackendOrderDto>("/api/orders", { method: "POST", body: payload }).then(mapOrder),
+    apiRequest<BackendOrderDto>("/api/orders", {
+      method: "POST",
+      body: {
+        userId: payload.userId,
+        currency: payload.currency,
+        items: payload.items?.map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          price: item.price.toString(),
+        })),
+      },
+    }).then(mapOrder),
   list: (page = 0, size = 10) =>
     apiRequest<BackendPageResponse<BackendOrderDto>>(`/api/orders?page=${page}&size=${size}`).then(
       (resp): PaginatedResponse<Order> => ({
