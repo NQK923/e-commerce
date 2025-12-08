@@ -1,7 +1,13 @@
 'use client';
 
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import React, { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { 
+  Heart, Share2, ShieldCheck, Truck, RefreshCcw, 
+  Minus, Plus, ChevronRight, Home 
+} from "lucide-react";
+
 import { productApi } from "@/src/api/productApi";
 import { ProductGallery } from "@/src/components/product/product-gallery";
 import { ReportProductDialog } from "@/src/components/product/report-product-dialog";
@@ -9,11 +15,14 @@ import { ProductReviews } from "@/src/components/product/product-reviews";
 import { Button } from "@/src/components/ui/button";
 import { Badge } from "@/src/components/ui/badge";
 import { Spinner } from "@/src/components/ui/spinner";
+import { Card } from "@/src/components/ui/card";
 import { useCart } from "@/src/store/cart-store";
 import { useToast } from "@/src/components/ui/toast-provider";
 import { Product } from "@/src/types/product";
 import { formatCurrency } from "@/src/utils/format";
 import { useTranslation } from "@/src/providers/language-provider";
+
+// --- Components ---
 
 type CountdownProps = { endAt: string };
 const FlashSaleCountdown: React.FC<CountdownProps> = ({ endAt }) => {
@@ -27,32 +36,65 @@ const FlashSaleCountdown: React.FC<CountdownProps> = ({ endAt }) => {
     return () => clearInterval(timer);
   }, [endAt]);
 
-  if (remaining <= 0) return <span className="text-sm text-rose-600">{t.product.sale_ended}</span>;
+  if (remaining <= 0) return <span className="text-sm font-medium text-rose-600">{t.product.sale_ended}</span>;
 
   const hours = Math.floor(remaining / (1000 * 60 * 60));
   const minutes = Math.floor((remaining / (1000 * 60)) % 60);
   const seconds = Math.floor((remaining / 1000) % 60);
 
   return (
-    <div className="text-sm font-semibold text-amber-700">
-      {t.product.ends_in} {hours.toString().padStart(2, "0")}:{minutes.toString().padStart(2, "0")}:
-      {seconds.toString().padStart(2, "0")}
+    <div className="flex items-center gap-1 text-sm font-bold text-amber-600">
+      <span>{t.product.ends_in}</span>
+      <span className="rounded bg-amber-100 px-1">{hours.toString().padStart(2, "0")}</span>:
+      <span className="rounded bg-amber-100 px-1">{minutes.toString().padStart(2, "0")}</span>:
+      <span className="rounded bg-amber-100 px-1">{seconds.toString().padStart(2, "0")}</span>
     </div>
   );
 };
 
+const ProductCardSimple = ({ product }: { product: Product }) => {
+  return (
+    <Link href={`/products/${product.id}`} className="group block">
+      <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white transition hover:shadow-md">
+        <div className="relative aspect-square overflow-hidden bg-zinc-100">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img 
+            src={product.images[0]?.url || "https://placehold.co/400"} 
+            alt={product.name}
+            className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+          />
+        </div>
+        <div className="p-3">
+          <h3 className="line-clamp-2 text-sm font-medium text-zinc-900 group-hover:text-emerald-600">
+            {product.name}
+          </h3>
+          <div className="mt-2 font-bold text-red-600">
+            {formatCurrency(product.price, product.currency ?? "VND")}
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+};
+
+// --- Main Page Component ---
+
 export default function ProductDetailPage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const productId = params?.id;
   const { addItem } = useCart();
   const { addToast } = useToast();
   const { t } = useTranslation();
+  
   const [product, setProduct] = useState<Product | null>(null);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [selectedVariantIndex, setSelectedVariantIndex] = useState<number | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Load Main Product
   useEffect(() => {
     if (!productId) return;
     const load = async () => {
@@ -64,6 +106,17 @@ export default function ProductDetailPage() {
             setSelectedVariantIndex(0);
         }
         setError(null);
+        
+        // Fetch Related Products (Same Category)
+        if (detail.category) {
+            try {
+                const related = await productApi.list({ category: detail.category, size: 4 });
+                setRelatedProducts(related.items.filter(p => p.id !== detail.id));
+            } catch (e) {
+                console.error("Failed to load related products", e);
+            }
+        }
+
       } catch (err) {
         const message = err instanceof Error ? err.message : "Failed to load product";
         setError(message);
@@ -74,6 +127,7 @@ export default function ProductDetailPage() {
     void load();
   }, [productId]);
 
+  // Derived State for Display (Merging Base + Variant)
   const displayProduct = useMemo(() => {
       if (!product) return null;
       if (selectedVariantIndex !== null && product.variants && product.variants[selectedVariantIndex]) {
@@ -83,7 +137,6 @@ export default function ProductDetailPage() {
               price: v.price,
               stock: v.quantity,
               sku: v.sku,
-              // Keep original name or append variant name? Let's keep original name but maybe show variant name elsewhere
           };
       }
       return product;
@@ -108,11 +161,15 @@ export default function ProductDetailPage() {
     const available = displayProduct.stock ?? quantity;
     const clamped = Math.min(Math.max(quantity, 1), available);
     
-    // Note: Cart currently only supports adding by Product ID. 
-    // Variant support requires backend Cart update. 
-    // We add the base product for now.
+    // Note: Backend cart update needed for full variant support. Using base logic for now.
     await addItem(displayProduct, clamped);
     addToast(`${displayProduct.name} ${t.product.added_to_cart}`, "success");
+  };
+
+  const adjustQuantity = (delta: number) => {
+      if (!displayProduct) return;
+      const max = displayProduct.stock ?? 999;
+      setQuantity(prev => Math.min(Math.max(1, prev + delta), max));
   };
 
   if (loading) {
@@ -137,101 +194,204 @@ export default function ProductDetailPage() {
   }
 
   return (
-    <div className="mx-auto grid max-w-6xl gap-10 px-4 py-10 lg:grid-cols-2">
-      <ProductGallery images={displayProduct.images} name={displayProduct.name} />
-      <div className="flex flex-col gap-4">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h1 className="text-3xl font-bold text-zinc-900">{displayProduct.name}</h1>
-            <p className="mt-2 text-sm text-zinc-600">{displayProduct.shortDescription ?? displayProduct.description}</p>
-            {displayProduct.sku && <p className="text-xs text-zinc-500">{t.common.sku}: {displayProduct.sku}</p>}
+    <div className="bg-zinc-50/50 min-h-screen pb-20">
+      {/* Breadcrumbs */}
+      <div className="border-b border-zinc-200 bg-white">
+        <div className="mx-auto flex max-w-7xl items-center gap-2 px-4 py-3 text-sm text-zinc-500">
+            <Link href="/" className="flex items-center hover:text-emerald-600">
+                <Home size={14} className="mr-1"/> Trang chủ
+            </Link>
+            <ChevronRight size={14} />
+            <Link href={`/search?category=${product.category}`} className="hover:text-emerald-600">
+                {product.category || "Sản phẩm"}
+            </Link>
+            <ChevronRight size={14} />
+            <span className="truncate font-medium text-zinc-900 max-w-[200px]">{product.name}</span>
+        </div>
+      </div>
+
+      <div className="mx-auto max-w-7xl px-4 py-8">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+            
+          {/* Left Column: Gallery */}
+          <div className="lg:col-span-5">
+            <ProductGallery images={displayProduct.images} name={displayProduct.name} />
           </div>
-          {displayProduct.flashSaleEndAt && (
-            <div className="flex flex-col items-end gap-2 rounded-lg bg-amber-50 px-3 py-2 text-right">
-              <Badge tone="warning">{t.product.flash_sale}</Badge>
-              <FlashSaleCountdown endAt={displayProduct.flashSaleEndAt} />
+
+          {/* Right Column: Info & Actions */}
+          <div className="lg:col-span-7">
+             <div className="sticky top-24 space-y-6">
+                {/* Title & Price Card */}
+                <div className="rounded-2xl bg-white p-6 shadow-sm border border-zinc-200">
+                    <div className="flex items-start justify-between gap-4">
+                        <div>
+                            <h1 className="text-2xl font-bold text-zinc-900 sm:text-3xl">{displayProduct.name}</h1>
+                            <div className="mt-2 flex items-center gap-4 text-sm">
+                                <div className="flex items-center gap-1 text-amber-500">
+                                    <span>★</span>
+                                    <span className="font-bold text-zinc-900">{displayProduct.rating?.toFixed(1) || "5.0"}</span>
+                                </div>
+                                {displayProduct.sku && (
+                                    <>
+                                        <span className="text-zinc-300">|</span>
+                                        <span className="text-zinc-500">SKU: {displayProduct.sku}</span>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                        <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-red-500">
+                            <Heart size={24} />
+                        </Button>
+                    </div>
+
+                    <div className="mt-6 rounded-xl bg-zinc-50 p-4">
+                        <div className="flex items-end gap-3">
+                            <span className="text-3xl font-bold text-red-600">
+                                {formatCurrency(displayProduct.price, displayProduct.currency ?? "VND")}
+                            </span>
+                            {displayProduct.discountPercentage && displayProduct.discountPercentage > 0 && (
+                                <>
+                                    <span className="mb-1 text-sm text-zinc-400 line-through">
+                                        {formatCurrency(displayProduct.price * (1 + displayProduct.discountPercentage/100), displayProduct.currency ?? "VND")}
+                                    </span>
+                                    <Badge tone="danger" className="mb-1">-{displayProduct.discountPercentage}%</Badge>
+                                </>
+                            )}
+                        </div>
+                        {displayProduct.flashSaleEndAt && (
+                            <div className="mt-3 flex items-center gap-2 border-t border-zinc-200 pt-3">
+                                <Badge tone="warning">FLASH SALE</Badge>
+                                <FlashSaleCountdown endAt={displayProduct.flashSaleEndAt} />
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Variant Selection */}
+                    {product.variants && product.variants.length > 0 && (
+                        <div className="mt-6 space-y-3">
+                            <span className="text-sm font-medium text-zinc-900">Phân loại:</span>
+                            <div className="flex flex-wrap gap-2">
+                                {product.variants.map((v, idx) => (
+                                    <button
+                                        key={idx}
+                                        onClick={() => setSelectedVariantIndex(idx)}
+                                        className={`min-w-[4rem] rounded-lg border px-4 py-2 text-sm transition-all
+                                            ${selectedVariantIndex === idx 
+                                                ? 'border-emerald-600 bg-emerald-50 font-bold text-emerald-700 ring-1 ring-emerald-600' 
+                                                : 'border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300'
+                                            }
+                                        `}
+                                    >
+                                        {v.name}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Quantity & Actions */}
+                    <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-end">
+                        <div className="space-y-3">
+                             <span className="text-sm font-medium text-zinc-900">Số lượng:</span>
+                             <div className="flex items-center rounded-lg border border-zinc-200 bg-white w-fit">
+                                <button 
+                                    onClick={() => adjustQuantity(-1)}
+                                    disabled={quantity <= 1}
+                                    className="p-3 text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900 disabled:opacity-30"
+                                >
+                                    <Minus size={16} />
+                                </button>
+                                <input
+                                    type="number"
+                                    value={quantity}
+                                    readOnly
+                                    className="w-12 border-none bg-transparent p-0 text-center text-sm font-bold text-zinc-900 focus:ring-0"
+                                />
+                                <button 
+                                    onClick={() => adjustQuantity(1)}
+                                    disabled={!displayProduct.stock || quantity >= displayProduct.stock}
+                                    className="p-3 text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900 disabled:opacity-30"
+                                >
+                                    <Plus size={16} />
+                                </button>
+                             </div>
+                             <p className="text-xs text-zinc-500">
+                                {displayProduct.stock ? `${displayProduct.stock} sản phẩm có sẵn` : 'Hết hàng'}
+                             </p>
+                        </div>
+
+                        <div className="flex flex-1 gap-3">
+                            <Button 
+                                onClick={handleAdd} 
+                                disabled={outOfStock || saleEnded} 
+                                className="h-12 flex-1 bg-emerald-600 text-base font-semibold hover:bg-emerald-700 shadow-emerald-200 shadow-lg"
+                            >
+                                {saleEnded ? t.product.sale_ended : outOfStock ? t.common.out_of_stock : t.product.add_to_cart}
+                            </Button>
+                            <Button variant="outline" className="h-12 w-12 border-zinc-200 text-zinc-500 hover:bg-zinc-50 hover:text-emerald-600">
+                                <Share2 size={20} />
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Policy / Trust Badges */}
+                <div className="grid grid-cols-3 gap-4 rounded-xl border border-zinc-200 bg-white p-4 text-center shadow-sm">
+                    <div className="flex flex-col items-center gap-2">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                            <ShieldCheck size={20} />
+                        </div>
+                        <span className="text-xs font-medium text-zinc-600">Hàng chính hãng 100%</span>
+                    </div>
+                    <div className="flex flex-col items-center gap-2 border-l border-zinc-100">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                            <Truck size={20} />
+                        </div>
+                        <span className="text-xs font-medium text-zinc-600">Miễn phí vận chuyển</span>
+                    </div>
+                    <div className="flex flex-col items-center gap-2 border-l border-zinc-100">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                            <RefreshCcw size={20} />
+                        </div>
+                        <span className="text-xs font-medium text-zinc-600">Đổi trả trong 7 ngày</span>
+                    </div>
+                </div>
+             </div>
+          </div>
+        </div>
+
+        {/* Bottom Section: Full Description & Reviews */}
+        <div className="mt-10 grid gap-8 lg:grid-cols-12">
+            <div className="lg:col-span-12 space-y-8">
+                 <div className="rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm">
+                    <h3 className="mb-6 text-xl font-bold text-zinc-900 border-b border-zinc-100 pb-4">Mô tả chi tiết</h3>
+                    <div className="prose prose-sm max-w-none text-zinc-700">
+                        <p className="whitespace-pre-line leading-relaxed">{displayProduct.description}</p>
+                    </div>
+                 </div>
+
+                 <div className="rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm">
+                    <ProductReviews productId={displayProduct.id} />
+                 </div>
+                 
+                 <div className="flex justify-center">
+                    <ReportProductDialog productId={displayProduct.id} productName={displayProduct.name} />
+                 </div>
             </div>
-          )}
         </div>
 
-        <div className="flex items-center gap-3 text-2xl font-bold text-red-600">
-          {formatCurrency(displayProduct.price, displayProduct.currency ?? "USD")}
-          {displayProduct.discountPercentage !== undefined && (
-            <Badge tone="success">-{displayProduct.discountPercentage}%</Badge>
-          )}
-        </div>
-
-        {/* Variant Selection */}
-        {product.variants && product.variants.length > 0 && (
-            <div className="space-y-2">
-                <p className="text-sm font-medium text-zinc-900">Phân loại:</p>
-                <div className="flex flex-wrap gap-2">
-                    {product.variants.map((v, idx) => (
-                        <button
-                            key={v.sku || idx}
-                            onClick={() => setSelectedVariantIndex(idx)}
-                            className={`rounded-lg border px-4 py-2 text-sm font-medium transition-all
-                                ${selectedVariantIndex === idx 
-                                    ? 'border-emerald-600 bg-emerald-50 text-emerald-700' 
-                                    : 'border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50'
-                                }
-                            `}
-                        >
-                            {v.name}
-                        </button>
+        {/* Related Products */}
+        {relatedProducts.length > 0 && (
+            <div className="mt-12 border-t border-zinc-200 pt-10">
+                <h2 className="mb-6 text-2xl font-bold text-zinc-900">Sản phẩm tương tự</h2>
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4">
+                    {relatedProducts.map(p => (
+                        <ProductCardSimple key={p.id} product={p} />
                     ))}
                 </div>
             </div>
         )}
 
-        <div className="flex flex-wrap gap-3 text-sm text-zinc-700">
-          <span>
-            {t.product.availability}:{" "}
-            {displayProduct.stock !== undefined ? (displayProduct.stock > 0 ? t.common.in_stock : t.common.out_of_stock) : t.common.in_stock}
-          </span>
-          {displayProduct.rating !== undefined && <span>{t.product.rating}: {displayProduct.rating.toFixed(1)} / 5</span>}
-          {displayProduct.category && <span className="rounded-full bg-zinc-100 px-2 py-1">#{displayProduct.category}</span>}
-        </div>
-
-        <div className="flex items-center gap-4">
-          <input
-            type="number"
-            min={1}
-            max={displayProduct?.stock ?? undefined}
-            value={quantity}
-            onChange={(e) => {
-              const next = Math.max(1, Number(e.target.value));
-              if (displayProduct?.stock !== undefined) {
-                setQuantity(Math.min(next, displayProduct.stock));
-              } else {
-                setQuantity(next);
-              }
-            }}
-            className="w-24 rounded-lg border border-zinc-200 px-3 py-2 text-sm focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-600/10"
-          />
-          <Button onClick={handleAdd} disabled={outOfStock || saleEnded} className="bg-emerald-600 hover:bg-emerald-700">
-            {saleEnded ? t.product.sale_ended : t.product.add_to_cart}
-          </Button>
-        </div>
-
-        {saleEnded && (
-          <div className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">
-            Flash sale has ended for this product.
-          </div>
-        )}
-
-        <div className="mt-4 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
-          <h3 className="text-lg font-semibold text-zinc-900">{t.product.description}</h3>
-          <p className="mt-2 text-sm leading-relaxed text-zinc-700">{displayProduct.description}</p>
-        </div>
-
-        <div className="mt-2">
-             <ProductReviews productId={displayProduct.id} />
-        </div>
-
-        <div className="mt-2">
-             <ReportProductDialog productId={displayProduct.id} productName={displayProduct.name} />
-        </div>
       </div>
     </div>
   );

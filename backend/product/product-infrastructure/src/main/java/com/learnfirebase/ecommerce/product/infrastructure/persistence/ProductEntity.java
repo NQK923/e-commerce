@@ -30,6 +30,7 @@ public class ProductEntity {
     private String description;
     private String price;
     private String currency;
+    private Integer quantity;
     private String categoryId;
     private Instant createdAt;
     private Instant updatedAt;

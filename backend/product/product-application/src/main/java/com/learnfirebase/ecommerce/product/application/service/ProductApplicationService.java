@@ -57,6 +57,7 @@ public class ProductApplicationService implements ManageProductUseCase, QueryPro
                         .sku(v.getSku())
                         .name(v.getName())
                         .price(Money.builder().amount(new BigDecimal(vPrice)).currency(command.getCurrency()).build())
+                        .quantity(v.getQuantity())
                         .build();
                 })
                 .collect(Collectors.toList()) : (existingProduct != null ? existingProduct.getVariants() : Collections.emptyList());
@@ -77,6 +78,7 @@ public class ProductApplicationService implements ManageProductUseCase, QueryPro
                 .name(command.getName())
                 .description(command.getDescription())
                 .price(Money.builder().amount(new BigDecimal(priceStr)).currency(command.getCurrency()).build())
+                .stock(command.getQuantity())
                 .category(command.getCategoryId() != null ? Category.builder().id(command.getCategoryId()).name(command.getCategoryId()).build() : null)
                 .variants(variantsToUse)
                 .images(imagesToUse)
@@ -145,6 +147,7 @@ public class ProductApplicationService implements ManageProductUseCase, QueryPro
             .description(product.getDescription())
             .price(product.getPrice().getAmount().toPlainString())
             .currency(product.getPrice().getCurrency())
+            .quantity(product.getStock())
             .categoryId(product.getCategory() != null ? product.getCategory().getId() : null)
             .createdAt(product.getCreatedAt())
             .updatedAt(product.getUpdatedAt())
@@ -153,6 +156,7 @@ public class ProductApplicationService implements ManageProductUseCase, QueryPro
                     .sku(v.getSku())
                     .name(v.getName())
                     .price(v.getPrice().getAmount().toPlainString())
+                    .quantity(v.getQuantity())
                     .build())
                 .toList() : java.util.Collections.emptyList())
             .images(product.getImages() != null ? product.getImages().stream()

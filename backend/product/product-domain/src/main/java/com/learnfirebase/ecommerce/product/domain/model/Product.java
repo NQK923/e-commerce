@@ -22,6 +22,7 @@ public class Product extends AggregateRoot<ProductId> {
     private String name;
     private String description;
     private Money price;
+    private Integer stock;
     private Category category;
     private List<ProductVariant> variants;
     private List<ProductImage> images;

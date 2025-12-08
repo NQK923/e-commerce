@@ -31,11 +31,6 @@ export const ProductGallery: React.FC<Props> = ({ images, name }) => {
               className="object-cover"
               sizes="(max-width: 768px) 100vw, 50vw"
             />
-            {activeImage.primary && (
-              <div className="absolute left-3 top-3">
-                <Badge tone="success">Primary</Badge>
-              </div>
-            )}
           </>
         ) : (
           <div className="flex h-full items-center justify-center text-sm text-zinc-500">No image</div>
@@ -53,11 +48,6 @@ export const ProductGallery: React.FC<Props> = ({ images, name }) => {
             type="button"
           >
             <Image src={img.url} alt={img.altText ?? name} fill className="object-cover" sizes="80px" />
-            {img.primary && (
-              <span className="absolute bottom-1 left-1 rounded bg-black/70 px-1 text-[10px] text-white">
-                Primary
-              </span>
-            )}
           </button>
         ))}
       </div>

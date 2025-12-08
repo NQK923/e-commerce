@@ -11,4 +11,5 @@ public class ProductVariant {
     String sku;
     String name;
     Money price;
+    Integer quantity;
 }

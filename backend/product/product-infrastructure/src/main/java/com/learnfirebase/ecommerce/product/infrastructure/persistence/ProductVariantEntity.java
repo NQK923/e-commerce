@@ -22,6 +22,7 @@ public class ProductVariantEntity {
     private String sku;
     private String name;
     private String price;
+    private Integer quantity;
     private String currency;
 
     @ManyToOne(fetch = FetchType.LAZY)

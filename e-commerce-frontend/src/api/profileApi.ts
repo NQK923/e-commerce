@@ -10,5 +10,10 @@ export const profileApi = {
     apiRequest<UserAddress>("/api/users/me/addresses", { method: "POST", body: data }),
   deleteAddress: (addressId: string) =>
     apiRequest<void>(`/api/users/me/addresses/${addressId}`, { method: "DELETE" }),
+  
+  // Wishlist
+  getWishlist: () => apiRequest<string[]>("/api/users/me/wishlist").then(ids => ids || []),
+  addToWishlist: (productId: string) => apiRequest<void>(`/api/users/me/wishlist/${productId}`, { method: "POST" }),
+  removeFromWishlist: (productId: string) => apiRequest<void>(`/api/users/me/wishlist/${productId}`, { method: "DELETE" }),
 };
 
