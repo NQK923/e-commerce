@@ -1,7 +1,7 @@
 'use client';
 
 import React, { Suspense, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { productApi } from "@/src/api/productApi";
 import { Button } from "@/src/components/ui/button";
@@ -29,6 +29,9 @@ const CATEGORIES = [
 
 function NewProductContent() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const editingProductId = searchParams.get("productId");
+    const isEdit = Boolean(editingProductId);
     const {addToast} = useToast();
     const {user, initializing} = useRequireAuth("/login");
 
@@ -43,12 +46,14 @@ function NewProductContent() {
 
     const [selectedImages, setSelectedImages] = useState<File[]>([]);
     const [previewImages, setPreviewImages] = useState<string[]>([]);
+    const [existingImages, setExistingImages] = useState<string[]>([]);
     const [hasVariants, setHasVariants] = useState(false);
     const [variants, setVariants] = useState<ProductVariantRequest[]>([]);
     const [newVariant, setNewVariant] = useState({sku: "", name: "", price: "", quantity: ""});
 
     const [loading, setLoading] = useState(false);
     const [uploading, setUploading] = useState(false);
+    const [prefilling, setPrefilling] = useState(false);
 
     React.useEffect(() => {
         if (initializing) return;
@@ -56,6 +61,34 @@ function NewProductContent() {
             router.replace("/seller/register?next=/seller/products/new");
         }
     }, [initializing, router, user]);
+
+    React.useEffect(() => {
+        if (!editingProductId) return;
+        const load = async () => {
+            setPrefilling(true);
+            try {
+                const detail = await productApi.detail(editingProductId);
+                setForm({
+                    name: detail.name ?? "",
+                    description: detail.description ?? "",
+                    price: detail.price?.toString() ?? "",
+                    quantity: detail.stock?.toString() ?? "",
+                    currency: detail.currency ?? "VND",
+                    categoryId: detail.category ?? CATEGORIES[0],
+                });
+                const urls = detail.images?.map((img) => img.url) ?? [];
+                setExistingImages(urls);
+                setPreviewImages(urls);
+            } catch (error) {
+                console.error("Failed to load product for editing", error);
+                addToast("Không tải được sản phẩm để chỉnh sửa", "error");
+                router.back();
+            } finally {
+                setPrefilling(false);
+            }
+        };
+        void load();
+    }, [addToast, editingProductId, router]);
 
     const handleAddVariant = () => {
         if (!newVariant.sku || !newVariant.name || !newVariant.price || !newVariant.quantity) {
@@ -76,8 +109,14 @@ function NewProductContent() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!form.name || !form.price || selectedImages.length === 0) {
-            addToast("Vui lòng nhập tên, giá và hình ảnh sản phẩm", "error");
+        if (!form.name || !form.price) {
+            addToast("Vui lòng nhập tên và giá sản phẩm", "error");
+            return;
+        }
+        if (!isEdit && selectedImages.length === 0) {
+            addToast("Vui lòng thêm ít nhất 1 hình ảnh", "error");
+            setLoading(false);
+            setUploading(false);
             return;
         }
         if (hasVariants && variants.length === 0) {
@@ -86,8 +125,43 @@ function NewProductContent() {
         }
 
         setLoading(true);
-        setUploading(true);
+        setUploading(selectedImages.length > 0);
         try {
+            const uploaded: string[] = [];
+            if (selectedImages.length) {
+                addToast("Đang tải lên hình ảnh...", "info");
+                for (const file of selectedImages) {
+                    const url = await uploadToBucket(config.supabaseProductBucket, file);
+                    uploaded.push(url);
+                }
+            }
+            const allImages = [...(isEdit ? existingImages : []), ...uploaded];
+
+            if (!allImages.length) {
+                addToast("Vui lòng thêm ít nhất 1 hình ảnh", "error");
+                return;
+            }
+
+            if (isEdit && editingProductId) {
+                await productApi.update(editingProductId, {
+                    name: form.name,
+                    description: form.description,
+                    price: parseFloat(form.price),
+                    currency: form.currency || "VND",
+                    quantity: form.quantity ? parseInt(form.quantity) : 0,
+                    categoryId: form.categoryId || undefined,
+                    images: allImages.map((url, idx) => ({
+                        url,
+                        primary: idx === 0,
+                        sortOrder: idx,
+                    })),
+                    variants: hasVariants ? variants : undefined,
+                });
+                addToast("Đã cập nhật sản phẩm", "success");
+                router.replace("/seller/dashboard");
+                return;
+            }
+
             addToast("Đang tạo sản phẩm...", "info");
             const createdProduct = await productApi.create({
                 name: form.name,
@@ -104,15 +178,6 @@ function NewProductContent() {
                 throw new Error("Không nhận được ID sản phẩm sau khi tạo");
             }
 
-            addToast("Đang tải lên hình ảnh...", "info");
-            const uploaded: string[] = [];
-            for (const file of selectedImages) {
-                const url = await uploadToBucket(config.supabaseProductBucket, file);
-                uploaded.push(url);
-            }
-
-            const [primaryImage, ...galleryImages] = uploaded;
-
             addToast("Đang cập nhật hình ảnh sản phẩm...", "info");
             await productApi.update(createdProduct.id, {
                 name: form.name,
@@ -121,10 +186,11 @@ function NewProductContent() {
                 currency: form.currency || "VND",
                 quantity: form.quantity ? parseInt(form.quantity) : 0,
                 categoryId: form.categoryId || undefined,
-                images: [
-                    {url: primaryImage, primary: true},
-                    ...galleryImages.map((url, idx) => ({url, primary: false, sortOrder: idx + 1})),
-                ],
+                images: allImages.map((url, idx) => ({
+                    url,
+                    primary: idx === 0,
+                    sortOrder: idx,
+                })),
                 variants: hasVariants ? variants : undefined,
             });
 
@@ -140,7 +206,7 @@ function NewProductContent() {
         }
     };
 
-    if (initializing || !user) {
+    if (initializing || prefilling || !user) {
             return (
                 <div className="flex min-h-[60vh] items-center justify-center gap-3 text-sm text-zinc-600">
                     <Spinner/>
@@ -240,8 +306,8 @@ function NewProductContent() {
 
                                                 setPreviewImages((prev) => [...prev, ...previews]);
 
-                                                addToast("Đã chọn ảnh, nhấn Lưu để tải lên", "success");
-                                            }}
+                                            addToast("Đã chọn ảnh, nhấn Lưu để tải lên", "success");
+                                        }}
                                         />
                                     </label>
                                     {previewImages.map((url, idx) => (

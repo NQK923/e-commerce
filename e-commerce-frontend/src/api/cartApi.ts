@@ -1,5 +1,5 @@
 import { apiRequest } from "../lib/api-client";
-import { AddToCartRequest, Cart, UpdateCartItemRequest } from "../types/cart";
+import { AddToCartRequest, Cart, CartItem, UpdateCartItemRequest } from "../types/cart";
 import { Product } from "../types/product";
 import { productApi } from "./productApi";
 
@@ -27,11 +27,21 @@ type CartResponse = {
   currency?: string;
 };
 
+const parseNumber = (value: string | number | undefined | null, fallback = 0) => {
+  const num = Number.parseFloat((value ?? "").toString());
+  return Number.isFinite(num) ? num : fallback;
+};
+
+const clampQuantity = (quantity: number, stock?: number) => {
+  if (stock === undefined || stock === null) return Math.max(quantity, 0);
+  return Math.max(0, Math.min(quantity, stock));
+};
+
 const toCart = (payload: CartResponse | unknown): Cart => {
   const data = (payload as CartResponse) ?? {};
   const items =
     data?.items?.map((item) => {
-      const unitPrice = Number.parseFloat(item.price ?? "0");
+      const unitPrice = parseNumber(item.price, 0);
       const quantity = item.quantity ?? 0;
       return {
         id: item.productId,
@@ -42,10 +52,10 @@ const toCart = (payload: CartResponse | unknown): Cart => {
       };
     }) ?? [];
   const subtotal = items.reduce((sum: number, i) => sum + i.subtotal, 0);
-  const discount = Number.parseFloat((data?.discountTotal ?? "0").toString());
-  const shipping = Number.parseFloat((data?.shippingEstimate ?? "0").toString());
-  const totalFromServer = Number.parseFloat((data?.total ?? subtotal + shipping - discount).toString());
-  const currency = data?.currency ?? items[0]?.product.currency;
+  const discount = parseNumber(data?.discountTotal, 0);
+  const shipping = parseNumber(data?.shippingEstimate, 0);
+  const currency = data?.currency ?? items[0]?.product.currency ?? "USD";
+  const totalFromServer = parseNumber(data?.total, subtotal + shipping - discount);
 
   return {
     id: data?.id ?? "local",
@@ -59,40 +69,49 @@ const toCart = (payload: CartResponse | unknown): Cart => {
 };
 
 const enrichCartProducts = async (cart: Cart): Promise<Cart> => {
-  if (!cart.items.length) return cart;
+  if (!cart.items.length) return { ...cart, subtotal: 0, total: 0 };
 
   const enrichedItems = await Promise.all(
     cart.items.map(async (item) => {
       try {
         const detail = await productApi.detail(item.product.id);
-        const price = detail.price ?? item.unitPrice ?? 0;
+        const price = Number.isFinite(detail.price) ? detail.price : item.unitPrice ?? 0;
+        const stock = detail.stock ?? item.product.stock;
+        const quantity = clampQuantity(item.quantity, stock);
+        if (quantity <= 0) return null;
         return {
           ...item,
+          quantity,
           unitPrice: price,
-          subtotal: price * item.quantity,
+          subtotal: price * quantity,
           product: {
             ...detail,
             price,
-            currency: detail.currency ?? item.product.currency ?? cart.currency,
+            currency: detail.currency ?? item.product.currency ?? cart.currency ?? "USD",
             images: detail.images ?? [],
-            stock: detail.stock ?? item.product.stock,
+            stock,
           },
         };
       } catch {
-        return item;
+        const quantity = clampQuantity(item.quantity, item.product.stock);
+        if (quantity <= 0) return null;
+        const unitPrice = Number.isFinite(item.unitPrice) ? item.unitPrice : 0;
+        return { ...item, quantity, subtotal: unitPrice * quantity };
       }
     }),
   );
 
-  const subtotal = enrichedItems.reduce((sum, i) => sum + i.subtotal, 0);
-  const currency = enrichedItems[0]?.product.currency ?? cart.currency;
-
+  const filtered = enrichedItems.filter((i): i is CartItem => Boolean(i));
+  const subtotal = filtered.reduce((sum, i) => sum + i.subtotal, 0);
+  const currency = filtered[0]?.product.currency ?? cart.currency ?? "USD";
+  const discount = cart.discountTotal ?? 0;
+  const shipping = cart.shippingEstimate ?? 0;
   const totalFromServer = cart.total ?? 0;
-  const recalculatedTotal = totalFromServer > 0 ? totalFromServer : subtotal;
+  const recalculatedTotal = totalFromServer > 0 ? totalFromServer : subtotal + shipping - discount;
 
   return {
     ...cart,
-    items: enrichedItems,
+    items: filtered,
     subtotal,
     total: recalculatedTotal,
     currency,

@@ -73,7 +73,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     (product: Product, quantity = 1) => {
       const available = product.stock ?? Number.POSITIVE_INFINITY;
       if (available <= 0) {
-        addToast("Sản phẩm đã hết hàng", "error");
+        addToast("Product is out of stock", "error");
         return;
       }
       const existingItems = loadLocalCart()?.items ?? [];
@@ -83,7 +83,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         found ? found.quantity + quantity : quantity,
       );
       if (nextQuantity <= 0) {
-        addToast("Số lượng không hợp lệ", "error");
+        addToast("Quantity is not valid", "error");
         return;
       }
       const updatedItems = found
@@ -146,7 +146,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const available = product.stock ?? Number.POSITIVE_INFINITY;
         if (available <= 0) {
-          addToast("Sản phẩm đã hết hàng", "error");
+          addToast("Product is out of stock", "error");
           return;
         }
         const desired = Math.min(quantity, available);

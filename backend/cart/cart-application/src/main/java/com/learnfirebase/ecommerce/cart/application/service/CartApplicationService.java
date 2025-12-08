@@ -3,6 +3,7 @@ package com.learnfirebase.ecommerce.cart.application.service;
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -91,8 +92,7 @@ public class CartApplicationService implements ManageCartUseCase {
     @Override
     public CartDto get(String cartId) {
         Cart cart = getOrCreateCart(cartId);
-        String currency = cart.getItems().stream().findFirst().map(item -> item.getPrice().getCurrency()).orElse("USD");
-        return mapToDto(cart, currency);
+        return saveAndMap(cart, resolveCurrency(cart, null));
     }
 
     private Cart getOrCreateCart(String cartId) {
@@ -102,17 +102,24 @@ public class CartApplicationService implements ManageCartUseCase {
     }
 
     private CartDto saveAndMap(Cart cart, String currencyHint) {
-        normalizeCurrency(cart, currencyHint != null ? currencyHint : cart.getItems().stream()
-            .findFirst().map(i -> i.getPrice().getCurrency()).orElse("USD"));
+        String currency = resolveCurrency(cart, currencyHint);
+        normalizeCurrency(cart, currency);
         Cart saved = cartRepository.save(cart);
         cartCachePort.cache(saved);
-        String currency = currencyHint != null ? currencyHint
-            : saved.getItems().stream().findFirst().map(i -> i.getPrice().getCurrency()).orElse("USD");
         return mapToDto(saved, currency);
     }
 
+    private String resolveCurrency(Cart cart, String currencyHint) {
+        return Optional.ofNullable(currencyHint)
+            .orElseGet(() -> cart.getItems().stream()
+                .map(item -> Optional.ofNullable(item.getPrice()).map(Money::getCurrency).orElse(null))
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse("USD"));
+    }
+
     private CartDto mapToDto(Cart cart, String currency) {
-        Money total = cart.total(currency);
+        Money total = cart.total(Optional.ofNullable(currency).orElse("USD"));
         return CartDto.builder()
             .id(cart.getId().getValue())
             .currency(total.getCurrency())
@@ -139,7 +146,8 @@ public class CartApplicationService implements ManageCartUseCase {
             return;
         }
         cart.getItems().forEach(item -> {
-            if (item.getPrice() != null && !currency.equalsIgnoreCase(item.getPrice().getCurrency())) {
+            if (item.getPrice() != null && (item.getPrice().getCurrency() == null
+                || !currency.equalsIgnoreCase(item.getPrice().getCurrency()))) {
                 item.setPrice(Money.builder()
                     .amount(item.getPrice().getAmount())
                     .currency(currency)

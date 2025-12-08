@@ -9,12 +9,15 @@ import { Button } from "@/src/components/ui/button";
 import { Spinner } from "@/src/components/ui/spinner";
 import { useRequireAuth } from "@/src/hooks/use-require-auth";
 import { Product } from "@/src/types/product";
+import { useToast } from "@/src/components/ui/toast-provider";
 
 function SellerDashboardContent() {
   const { user, initializing } = useRequireAuth("/login");
   const router = useRouter();
   const [products, setProducts] = React.useState<Product[]>([]);
   const [loading, setLoading] = React.useState(false);
+  const [actionProductId, setActionProductId] = React.useState<string | null>(null);
+  const { addToast } = useToast();
 
   React.useEffect(() => {
     if (!user || !user.roles?.includes("SELLER")) return;
@@ -40,6 +43,37 @@ function SellerDashboardContent() {
   const totalProducts = products.length;
   const totalValue = products.reduce((sum, p) => sum + (p.price ?? 0), 0);
   const avgPrice = totalProducts ? Math.round((totalValue / totalProducts) * 100) / 100 : 0;
+
+  const handleEdit = (productId: string) => {
+    router.push(`/seller/products/new?productId=${productId}`);
+  };
+
+  const handleRemove = async (product: Product) => {
+    if (!confirm(`Gỡ sản phẩm "${product.name}"?`)) return;
+    setActionProductId(product.id);
+    try {
+      await productApi.update(product.id, {
+        name: product.name,
+        description: product.description,
+        price: product.price,
+        currency: product.currency ?? "VND",
+        quantity: 0,
+        categoryId: product.category,
+        images:
+          product.images?.map((img, idx) => ({
+            url: img.url,
+            primary: img.primary ?? idx === 0,
+          })) ?? [],
+      });
+      setProducts((prev) => prev.filter((p) => p.id !== product.id));
+      addToast("Đã gỡ sản phẩm khỏi danh sách", "success");
+    } catch (error) {
+      console.error("Failed to remove product", error);
+      addToast("Không gỡ được sản phẩm", "error");
+    } finally {
+      setActionProductId(null);
+    }
+  };
 
   if (initializing || !user) {
     return (
@@ -139,8 +173,23 @@ function SellerDashboardContent() {
                     <td className="px-4 py-3">{product.stock ?? "—"}</td>
                     <td className="px-4 py-3">
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline">Sửa</Button>
-                        <Button size="sm" variant="ghost" className="text-red-600 hover:text-red-700">Gỡ</Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleEdit(product.id)}
+                          disabled={actionProductId === product.id}
+                        >
+                          Sửa
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-red-600 hover:text-red-700"
+                          onClick={() => handleRemove(product)}
+                          disabled={actionProductId === product.id}
+                        >
+                          {actionProductId === product.id ? "Đang gỡ..." : "Gỡ"}
+                        </Button>
                       </div>
                     </td>
                   </tr>

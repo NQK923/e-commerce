@@ -75,14 +75,19 @@ export default function ProductDetailPage() {
     return new Date(product.flashSaleEndAt).getTime() <= Date.now();
   }, [product?.flashSaleEndAt]);
 
+  const outOfStock = useMemo(
+    () => (product?.stock !== undefined ? product.stock <= 0 : false),
+    [product?.stock],
+  );
+
   const handleAdd = async () => {
     if (!product) return;
-    const available = product.stock ?? Number.POSITIVE_INFINITY;
-    if (available <= 0) {
-      addToast(t.common.out_of_stock ?? "Sản phẩm đã hết hàng", "error");
+    if (outOfStock) {
+      addToast(t.common.out_of_stock ?? "Out of stock", "error");
       return;
     }
-    const clamped = Math.min(quantity, available);
+    const available = product.stock ?? quantity;
+    const clamped = Math.min(Math.max(quantity, 1), available);
     await addItem(product, clamped);
     addToast(`${product.name} ${t.product.added_to_cart}`, "success");
   };
@@ -134,7 +139,10 @@ export default function ProductDetailPage() {
         </div>
 
         <div className="flex flex-wrap gap-3 text-sm text-zinc-700">
-          <span>{t.product.availability}: {product.stock && product.stock > 0 ? t.common.in_stock : t.common.out_of_stock}</span>
+          <span>
+            {t.product.availability}:{" "}
+            {product.stock !== undefined ? (product.stock > 0 ? t.common.in_stock : t.common.out_of_stock) : t.common.in_stock}
+          </span>
           {product.rating !== undefined && <span>{t.product.rating}: {product.rating.toFixed(1)} / 5</span>}
           {product.category && <span className="rounded-full bg-zinc-100 px-2 py-1">#{product.category}</span>}
         </div>
@@ -143,11 +151,19 @@ export default function ProductDetailPage() {
           <input
             type="number"
             min={1}
+            max={product?.stock ?? undefined}
             value={quantity}
-            onChange={(e) => setQuantity(Math.max(1, Number(e.target.value)))}
+            onChange={(e) => {
+              const next = Math.max(1, Number(e.target.value));
+              if (product?.stock !== undefined) {
+                setQuantity(Math.min(next, product.stock));
+              } else {
+                setQuantity(next);
+              }
+            }}
             className="w-24 rounded-lg border border-zinc-200 px-3 py-2 text-sm focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-600/10"
           />
-          <Button onClick={handleAdd} disabled={(product.stock !== undefined && product.stock <= 0) || saleEnded} className="bg-emerald-600 hover:bg-emerald-700">
+          <Button onClick={handleAdd} disabled={outOfStock || saleEnded} className="bg-emerald-600 hover:bg-emerald-700">
             {saleEnded ? t.product.sale_ended : t.product.add_to_cart}
           </Button>
         </div>
