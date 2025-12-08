@@ -79,6 +79,11 @@ function NewProductContent() {
                 const urls = detail.images?.map((img) => img.url) ?? [];
                 setExistingImages(urls);
                 setPreviewImages(urls);
+
+                if (detail.variants && detail.variants.length > 0) {
+                    setHasVariants(true);
+                    setVariants(detail.variants);
+                }
             } catch (error) {
                 console.error("Failed to load product for editing", error);
                 addToast("Không tải được sản phẩm để chỉnh sửa", "error");

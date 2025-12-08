@@ -33,11 +33,11 @@ function OrdersContent() {
   }, [loadOrders, page]);
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-7xl px-4 py-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-900">Orders</h1>
-          <p className="text-sm text-zinc-500">Track and manage customer orders.</p>
+          <h1 className="text-2xl font-bold text-zinc-900">Quản lý đơn hàng</h1>
+          <p className="text-sm text-zinc-500">Xem và quản lý các đơn hàng của khách hàng.</p>
         </div>
       </div>
 
@@ -51,12 +51,12 @@ function OrdersContent() {
                 <table className="w-full text-left text-sm">
                   <thead className="bg-zinc-50 text-zinc-500 font-medium">
                     <tr>
-                      <th className="px-6 py-4">Order ID</th>
-                      <th className="px-6 py-4">Customer</th>
-                      <th className="px-6 py-4">Status</th>
-                      <th className="px-6 py-4">Date</th>
-                      <th className="px-6 py-4 text-right">Total</th>
-                      <th className="px-6 py-4">Actions</th>
+                      <th className="px-6 py-4">Mã đơn</th>
+                      <th className="px-6 py-4">Khách hàng</th>
+                      <th className="px-6 py-4">Trạng thái</th>
+                      <th className="px-6 py-4">Ngày tạo</th>
+                      <th className="px-6 py-4 text-right">Tổng tiền</th>
+                      <th className="px-6 py-4">Hành động</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-100">
@@ -74,13 +74,13 @@ function OrdersContent() {
                             </Badge>
                         </td>
                         <td className="px-6 py-4 text-zinc-500">
-                           {new Date(order.createdAt).toLocaleDateString()}
+                           {new Date(order.createdAt).toLocaleDateString('vi-VN')}
                         </td>
                         <td className="px-6 py-4 text-right font-medium">
-                           {order.currency ?? "USD"} {order.total.toLocaleString()}
+                           {order.currency ?? "VND"} {order.total.toLocaleString()}
                         </td>
                         <td className="px-6 py-4">
-                          <Link href={`/orders/${order.id}`}>
+                          <Link href={`/seller/orders/${order.id}`}>
                             <Button variant="ghost" size="icon">
                                 <MoreHorizontal size={16} />
                             </Button>
@@ -92,7 +92,7 @@ function OrdersContent() {
                         <tr>
                             <td colSpan={6} className="text-center py-12 flex flex-col items-center gap-2 text-zinc-500">
                                 <ShoppingCart size={24} className="opacity-20" />
-                                <span>No orders found.</span>
+                                <span>Không có đơn hàng nào.</span>
                             </td>
                         </tr>
                     )}
@@ -100,7 +100,7 @@ function OrdersContent() {
                 </table>
                 <div className="flex items-center justify-between border-t border-zinc-200 px-6 py-4">
                     <p className="text-sm text-zinc-500">
-                        Page {page + 1} of {totalPages || 1}
+                        Trang {page + 1} / {totalPages || 1}
                     </p>
                     <div className="flex gap-2">
                         <Button
@@ -109,7 +109,7 @@ function OrdersContent() {
                             disabled={page === 0}
                             onClick={() => setPage((p) => Math.max(0, p - 1))}
                         >
-                            <ChevronLeft size={16} /> Previous
+                            <ChevronLeft size={16} /> Trước
                         </Button>
                         <Button
                             variant="outline"
@@ -117,7 +117,7 @@ function OrdersContent() {
                             disabled={page >= totalPages - 1}
                             onClick={() => setPage((p) => p + 1)}
                         >
-                            Next <ChevronRight size={16} />
+                            Sau <ChevronRight size={16} />
                         </Button>
                     </div>
                 </div>

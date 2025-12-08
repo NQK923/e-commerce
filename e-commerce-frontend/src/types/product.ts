@@ -20,6 +20,7 @@ export type Product = {
   flashSaleEndAt?: string;
   discountPercentage?: number;
   images: ProductImage[];
+  variants?: ProductVariantRequest[];
 };
 
 export type ProductVariantRequest = {

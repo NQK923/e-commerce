@@ -47,6 +47,12 @@ type BackendProductDto = {
     altText?: string;
     primaryImage?: boolean;
   }>;
+  variants?: Array<{
+    sku: string;
+    name: string;
+    price: string;
+    quantity: number;
+  }>;
 };
 
 const mapProduct = (dto: BackendProductDto): Product => {
@@ -71,6 +77,12 @@ const mapProduct = (dto: BackendProductDto): Product => {
         altText: img.altText,
         primary: img.primaryImage ?? idx === 0,
       })) ?? [],
+    variants: dto.variants?.map((v) => ({
+      sku: v.sku,
+      name: v.name,
+      price: Number.parseFloat(v.price),
+      quantity: v.quantity,
+    })),
   };
 };
 

@@ -48,6 +48,7 @@ export default function ProductDetailPage() {
   const { addToast } = useToast();
   const { t } = useTranslation();
   const [product, setProduct] = useState<Product | null>(null);
+  const [selectedVariantIndex, setSelectedVariantIndex] = useState<number | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -59,6 +60,9 @@ export default function ProductDetailPage() {
       try {
         const detail = await productApi.detail(productId);
         setProduct(detail);
+        if (detail.variants && detail.variants.length > 0) {
+            setSelectedVariantIndex(0);
+        }
         setError(null);
       } catch (err) {
         const message = err instanceof Error ? err.message : "Failed to load product";
@@ -70,26 +74,45 @@ export default function ProductDetailPage() {
     void load();
   }, [productId]);
 
+  const displayProduct = useMemo(() => {
+      if (!product) return null;
+      if (selectedVariantIndex !== null && product.variants && product.variants[selectedVariantIndex]) {
+          const v = product.variants[selectedVariantIndex];
+          return {
+              ...product,
+              price: v.price,
+              stock: v.quantity,
+              sku: v.sku,
+              // Keep original name or append variant name? Let's keep original name but maybe show variant name elsewhere
+          };
+      }
+      return product;
+  }, [product, selectedVariantIndex]);
+
   const saleEnded = useMemo(() => {
-    if (!product?.flashSaleEndAt) return false;
-    return new Date(product.flashSaleEndAt).getTime() <= Date.now();
-  }, [product?.flashSaleEndAt]);
+    if (!displayProduct?.flashSaleEndAt) return false;
+    return new Date(displayProduct.flashSaleEndAt).getTime() <= Date.now();
+  }, [displayProduct?.flashSaleEndAt]);
 
   const outOfStock = useMemo(
-    () => (product?.stock !== undefined ? product.stock <= 0 : false),
-    [product?.stock],
+    () => (displayProduct?.stock !== undefined ? displayProduct.stock <= 0 : false),
+    [displayProduct?.stock],
   );
 
   const handleAdd = async () => {
-    if (!product) return;
+    if (!displayProduct) return;
     if (outOfStock) {
       addToast(t.common.out_of_stock ?? "Out of stock", "error");
       return;
     }
-    const available = product.stock ?? quantity;
+    const available = displayProduct.stock ?? quantity;
     const clamped = Math.min(Math.max(quantity, 1), available);
-    await addItem(product, clamped);
-    addToast(`${product.name} ${t.product.added_to_cart}`, "success");
+    
+    // Note: Cart currently only supports adding by Product ID. 
+    // Variant support requires backend Cart update. 
+    // We add the base product for now.
+    await addItem(displayProduct, clamped);
+    addToast(`${displayProduct.name} ${t.product.added_to_cart}`, "success");
   };
 
   if (loading) {
@@ -101,7 +124,7 @@ export default function ProductDetailPage() {
     );
   }
 
-  if (error || !product) {
+  if (error || !displayProduct || !product) {
     return (
       <div className="mx-auto flex max-w-3xl flex-col items-center gap-3 px-4 py-10 text-center">
         <p className="text-lg font-semibold text-zinc-900">{t.product.load_failed}</p>
@@ -115,48 +138,71 @@ export default function ProductDetailPage() {
 
   return (
     <div className="mx-auto grid max-w-6xl gap-10 px-4 py-10 lg:grid-cols-2">
-      <ProductGallery images={product.images} name={product.name} />
+      <ProductGallery images={displayProduct.images} name={displayProduct.name} />
       <div className="flex flex-col gap-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-3xl font-bold text-zinc-900">{product.name}</h1>
-            <p className="mt-2 text-sm text-zinc-600">{product.shortDescription ?? product.description}</p>
-            {product.sku && <p className="text-xs text-zinc-500">{t.common.sku}: {product.sku}</p>}
+            <h1 className="text-3xl font-bold text-zinc-900">{displayProduct.name}</h1>
+            <p className="mt-2 text-sm text-zinc-600">{displayProduct.shortDescription ?? displayProduct.description}</p>
+            {displayProduct.sku && <p className="text-xs text-zinc-500">{t.common.sku}: {displayProduct.sku}</p>}
           </div>
-          {product.flashSaleEndAt && (
+          {displayProduct.flashSaleEndAt && (
             <div className="flex flex-col items-end gap-2 rounded-lg bg-amber-50 px-3 py-2 text-right">
               <Badge tone="warning">{t.product.flash_sale}</Badge>
-              <FlashSaleCountdown endAt={product.flashSaleEndAt} />
+              <FlashSaleCountdown endAt={displayProduct.flashSaleEndAt} />
             </div>
           )}
         </div>
 
         <div className="flex items-center gap-3 text-2xl font-bold text-red-600">
-          {formatCurrency(product.price, product.currency ?? "USD")}
-          {product.discountPercentage !== undefined && (
-            <Badge tone="success">-{product.discountPercentage}%</Badge>
+          {formatCurrency(displayProduct.price, displayProduct.currency ?? "USD")}
+          {displayProduct.discountPercentage !== undefined && (
+            <Badge tone="success">-{displayProduct.discountPercentage}%</Badge>
           )}
         </div>
+
+        {/* Variant Selection */}
+        {product.variants && product.variants.length > 0 && (
+            <div className="space-y-2">
+                <p className="text-sm font-medium text-zinc-900">Phân loại:</p>
+                <div className="flex flex-wrap gap-2">
+                    {product.variants.map((v, idx) => (
+                        <button
+                            key={v.sku || idx}
+                            onClick={() => setSelectedVariantIndex(idx)}
+                            className={`rounded-lg border px-4 py-2 text-sm font-medium transition-all
+                                ${selectedVariantIndex === idx 
+                                    ? 'border-emerald-600 bg-emerald-50 text-emerald-700' 
+                                    : 'border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50'
+                                }
+                            `}
+                        >
+                            {v.name}
+                        </button>
+                    ))}
+                </div>
+            </div>
+        )}
 
         <div className="flex flex-wrap gap-3 text-sm text-zinc-700">
           <span>
             {t.product.availability}:{" "}
-            {product.stock !== undefined ? (product.stock > 0 ? t.common.in_stock : t.common.out_of_stock) : t.common.in_stock}
+            {displayProduct.stock !== undefined ? (displayProduct.stock > 0 ? t.common.in_stock : t.common.out_of_stock) : t.common.in_stock}
           </span>
-          {product.rating !== undefined && <span>{t.product.rating}: {product.rating.toFixed(1)} / 5</span>}
-          {product.category && <span className="rounded-full bg-zinc-100 px-2 py-1">#{product.category}</span>}
+          {displayProduct.rating !== undefined && <span>{t.product.rating}: {displayProduct.rating.toFixed(1)} / 5</span>}
+          {displayProduct.category && <span className="rounded-full bg-zinc-100 px-2 py-1">#{displayProduct.category}</span>}
         </div>
 
         <div className="flex items-center gap-4">
           <input
             type="number"
             min={1}
-            max={product?.stock ?? undefined}
+            max={displayProduct?.stock ?? undefined}
             value={quantity}
             onChange={(e) => {
               const next = Math.max(1, Number(e.target.value));
-              if (product?.stock !== undefined) {
-                setQuantity(Math.min(next, product.stock));
+              if (displayProduct?.stock !== undefined) {
+                setQuantity(Math.min(next, displayProduct.stock));
               } else {
                 setQuantity(next);
               }
@@ -176,15 +222,15 @@ export default function ProductDetailPage() {
 
         <div className="mt-4 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
           <h3 className="text-lg font-semibold text-zinc-900">{t.product.description}</h3>
-          <p className="mt-2 text-sm leading-relaxed text-zinc-700">{product.description}</p>
+          <p className="mt-2 text-sm leading-relaxed text-zinc-700">{displayProduct.description}</p>
         </div>
 
         <div className="mt-2">
-             <ProductReviews productId={product.id} />
+             <ProductReviews productId={displayProduct.id} />
         </div>
 
         <div className="mt-2">
-             <ReportProductDialog productId={product.id} productName={product.name} />
+             <ReportProductDialog productId={displayProduct.id} productName={displayProduct.name} />
         </div>
       </div>
     </div>
