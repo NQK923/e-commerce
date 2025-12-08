@@ -33,7 +33,7 @@ export default function StatisticsPage() {
       try {
         const [ordersRes, productsRes] = await Promise.all([
           orderApi.list(0, 100).catch(() => ({ items: [] })),
-          productApi.list({ size: 100 }).catch(() => ({ items: [] }))
+          productApi.list({ size: 100, includeOutOfStock: true }).catch(() => ({ items: [] }))
         ]);
 
         setOrders(ordersRes.items || []);

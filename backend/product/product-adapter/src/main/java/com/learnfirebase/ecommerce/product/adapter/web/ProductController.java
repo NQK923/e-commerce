@@ -1,5 +1,7 @@
 package com.learnfirebase.ecommerce.product.adapter.web;
 
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,12 +33,24 @@ public class ProductController {
     @GetMapping
     public ResponseEntity<PageResponse<ProductDto>> list(
         @RequestParam(name = "page", defaultValue = "0") int page,
-        @RequestParam(name = "size", defaultValue = "8") int size) {
+        @RequestParam(name = "size", defaultValue = "8") int size,
+        @RequestParam(name = "includeOutOfStock", defaultValue = "false") boolean includeOutOfStock) {
         PageRequest pageRequest = PageRequest.builder().page(page).size(size).build();
         PageResponse<ProductDto> products = queryProductUseCase.listProducts(pageRequest);
         // Enrich with inventory (simplified for MVP, ideally should be batched)
-        products.getContent().forEach(this::enrichWithInventory);
-        return ResponseEntity.ok(products);
+        List<ProductDto> enriched = products.getContent().stream()
+            .map(this::enrichWithInventory)
+            .filter(p -> includeOutOfStock || p.getQuantity() == null || p.getQuantity() > 0)
+            .toList();
+
+        PageResponse<ProductDto> response = PageResponse.<ProductDto>builder()
+            .content(enriched)
+            .page(products.getPage())
+            .size(products.getSize())
+            .totalElements(products.getTotalElements())
+            .totalPages(products.getTotalPages())
+            .build();
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")

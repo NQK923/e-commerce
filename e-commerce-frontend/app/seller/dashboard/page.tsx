@@ -24,7 +24,7 @@ function SellerDashboardContent() {
     const load = async () => {
       setLoading(true);
       try {
-        const res = await productApi.list({ page: 0, size: 12 });
+        const res = await productApi.list({ page: 0, size: 12, includeOutOfStock: true });
         setProducts(res.items ?? []);
       } finally {
         setLoading(false);

@@ -55,7 +55,7 @@ function AdminContent() {
       try {
         const [usersData, productsRes, requestsData, ordersRes] = await Promise.all([
             adminApi.users().catch(() => []),
-            productApi.list({ page: 0, size: 5 }).catch(() => ({ items: [] })),
+            productApi.list({ page: 0, size: 5, includeOutOfStock: true }).catch(() => ({ items: [] })),
             sellerApi.listApplications().catch(() => []),
             orderApi.list(0, 100).catch(() => ({ items: [], total: 0 }))
         ]);

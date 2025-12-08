@@ -13,7 +13,6 @@ public class ProductReviewService {
     private final ProductReviewRepositoryPort reviewRepository;
 
     public ProductReviewDto createReview(CreateReviewCommand command) {
-        // Ideally verify purchase here by calling Order module (omitted for MVP)
         if (reviewRepository.hasReviewed(command.getProductId(), command.getUserId())) {
             throw new IllegalArgumentException("User has already reviewed this product");
         }

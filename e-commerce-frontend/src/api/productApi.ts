@@ -84,6 +84,7 @@ export const productApi = {
       page: params.page,
       size: params.size,
       sort: params.sort,
+      includeOutOfStock: params.includeOutOfStock,
     });
     return apiRequest<BackendPageResponse<BackendProductDto>>(`/api/products${query}`).then(
       (resp): PaginatedResponse<Product> => ({
