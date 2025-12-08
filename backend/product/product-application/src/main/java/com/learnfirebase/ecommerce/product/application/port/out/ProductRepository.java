@@ -13,4 +13,6 @@ public interface ProductRepository {
     Optional<Product> findById(ProductId id);
 
     PageResponse<Product> findAll(PageRequest pageRequest);
+
+    void incrementSoldCount(ProductId id, int quantity);
 }

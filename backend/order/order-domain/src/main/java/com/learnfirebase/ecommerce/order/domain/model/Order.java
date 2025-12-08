@@ -46,7 +46,13 @@ public class Order extends AggregateRoot<OrderId> {
     public void pay() {
         ensureState(OrderStatus.CONFIRMED);
         this.status = OrderStatus.PAID;
-        registerEvent(new OrderPaid(id.getValue(), Instant.now()));
+        List<OrderPaid.Item> eventItems = items.stream()
+            .map(i -> OrderPaid.Item.builder()
+                .productId(i.getProductId().getValue())
+                .quantity(i.getQuantity())
+                .build())
+            .toList();
+        registerEvent(new OrderPaid(id.getValue(), Instant.now(), eventItems));
     }
 
     public void cancel(String reason) {

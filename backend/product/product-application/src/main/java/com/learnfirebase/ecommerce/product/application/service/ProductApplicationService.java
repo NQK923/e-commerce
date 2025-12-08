@@ -29,11 +29,26 @@ import lombok.RequiredArgsConstructor;
 
 import com.learnfirebase.ecommerce.product.domain.event.ProductCreatedEvent;
 
+import com.learnfirebase.ecommerce.order.domain.event.OrderPaid;
+
 @RequiredArgsConstructor
 public class ProductApplicationService implements ManageProductUseCase, QueryProductUseCase {
     private final ProductRepository productRepository;
     private final ProductSearchIndexPort productSearchIndexPort;
     private final ProductEventPublisher eventPublisher;
+
+    public void handleOrderPaid(List<OrderPaid.Item> items) {
+        if (items == null || items.isEmpty()) return;
+        for (OrderPaid.Item item : items) {
+            if (item.getProductId() != null && item.getQuantity() > 0) {
+                try {
+                    productRepository.incrementSoldCount(new ProductId(item.getProductId()), item.getQuantity());
+                } catch (Exception e) {
+                    System.err.println("Failed to increment sold count for product " + item.getProductId() + ": " + e.getMessage());
+                }
+            }
+        }
+    }
 
     @Override
     public ProductDto execute(UpsertProductCommand command) {

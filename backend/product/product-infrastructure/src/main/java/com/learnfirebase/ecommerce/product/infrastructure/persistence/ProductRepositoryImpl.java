@@ -53,6 +53,11 @@ public class ProductRepositoryImpl implements ProductRepository {
             .build();
     }
 
+    @Override
+    public void incrementSoldCount(ProductId id, int quantity) {
+        productJpaRepository.incrementSoldCount(id.getValue(), quantity);
+    }
+
     private ProductEntity toEntity(Product product) {
         ProductEntity entity = ProductEntity.builder()
             .id(product.getId().getValue())
