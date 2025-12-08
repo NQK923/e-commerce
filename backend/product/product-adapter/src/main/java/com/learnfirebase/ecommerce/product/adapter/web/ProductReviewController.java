@@ -22,20 +22,16 @@ import lombok.RequiredArgsConstructor;
 public class ProductReviewController {
     private final ProductReviewService reviewService;
 
-    @PostMapping("/{id}/reviews")
-    public ResponseEntity<ProductReviewDto> createReview(
-            @PathVariable String id,
-            @RequestBody CreateReviewCommand command) {
-        // Ensure the productId in command matches path
-        command.setProductId(id);
+    @PostMapping("/{productId}/reviews")
+    public ResponseEntity<ProductReviewDto> createReview(@PathVariable("productId") String productId, @RequestBody CreateReviewCommand command) {
         return ResponseEntity.ok(reviewService.createReview(command));
     }
 
-    @GetMapping("/{id}/reviews")
+    @GetMapping("/{productId}/reviews")
     public ResponseEntity<PageResponse<ProductReviewDto>> getReviews(
-            @PathVariable String id,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(reviewService.getProductReviews(id, page, size));
+        @PathVariable("productId") String productId,
+        @RequestParam(name = "page", defaultValue = "0") int page,
+        @RequestParam(name = "size", defaultValue = "10") int size) {
+        return ResponseEntity.ok(reviewService.getProductReviews(productId, page, size));
     }
 }

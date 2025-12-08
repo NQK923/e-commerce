@@ -6,6 +6,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.learnfirebase.ecommerce.common.application.pagination.PageRequest;
 import com.learnfirebase.ecommerce.common.application.pagination.PageResponse;
@@ -33,11 +34,13 @@ public class ProductRepositoryImpl implements ProductRepository {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<Product> findById(ProductId id) {
         return productJpaRepository.findById(id.getValue()).map(this::toDomain);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PageResponse<Product> findAll(PageRequest pageRequest) {
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(pageRequest.getPage(), pageRequest.getSize());
         org.springframework.data.domain.Page<ProductEntity> page = productJpaRepository.findAll(pageable);

@@ -40,7 +40,7 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ProductDto> getById(@PathVariable String id) {
+    public ResponseEntity<ProductDto> getById(@PathVariable("id") String id) {
         ProductDto product = queryProductUseCase.getProduct(id);
         return ResponseEntity.ok(enrichWithInventory(product));
     }
@@ -51,7 +51,7 @@ public class ProductController {
     }
 
     @PostMapping("/{id}")
-    public ResponseEntity<ProductDto> update(@PathVariable String id, @RequestBody UpsertProductCommand command) {
+    public ResponseEntity<ProductDto> update(@PathVariable("id") String id, @RequestBody UpsertProductCommand command) {
         UpsertProductCommand merged = UpsertProductCommand.builder()
             .id(id)
             .name(command.getName())

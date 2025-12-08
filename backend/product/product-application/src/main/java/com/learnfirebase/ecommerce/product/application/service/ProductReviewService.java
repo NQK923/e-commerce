@@ -1,7 +1,5 @@
 package com.learnfirebase.ecommerce.product.application.service;
 
-import org.springframework.stereotype.Service;
-
 import com.learnfirebase.ecommerce.common.application.pagination.PageRequest;
 import com.learnfirebase.ecommerce.common.application.pagination.PageResponse;
 import com.learnfirebase.ecommerce.product.application.command.CreateReviewCommand;
@@ -10,7 +8,6 @@ import com.learnfirebase.ecommerce.product.application.port.out.ProductReviewRep
 
 import lombok.RequiredArgsConstructor;
 
-@Service
 @RequiredArgsConstructor
 public class ProductReviewService {
     private final ProductReviewRepositoryPort reviewRepository;

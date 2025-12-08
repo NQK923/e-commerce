@@ -41,14 +41,12 @@ public class ProductReportController {
     }
 
     @PostMapping("/{id}/resolve")
-    @PreAuthorize("hasRole('ADMIN')")
-    public void resolveReport(@PathVariable String id) {
+    public void resolveReport(@PathVariable("id") String id) {
         manageProductReportUseCase.resolveReport(id);
     }
 
     @PostMapping("/{id}/reject")
-    @PreAuthorize("hasRole('ADMIN')")
-    public void rejectReport(@PathVariable String id) {
+    public void rejectReport(@PathVariable("id") String id) {
         manageProductReportUseCase.rejectReport(id);
     }
 }
