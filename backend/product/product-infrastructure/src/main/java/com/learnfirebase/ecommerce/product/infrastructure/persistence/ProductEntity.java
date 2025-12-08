@@ -31,6 +31,8 @@ public class ProductEntity {
     private String price;
     private String currency;
     private Integer quantity;
+    @Column(name = "sold_count")
+    private Integer soldCount;
     private String categoryId;
     private Instant createdAt;
     private Instant updatedAt;

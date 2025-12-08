@@ -17,6 +17,7 @@ public class ProductDto {
     String currency;
     String categoryId;
     Integer quantity;
+    Integer soldCount;
     Instant createdAt;
     Instant updatedAt;
     @Singular

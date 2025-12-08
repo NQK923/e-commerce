@@ -231,6 +231,12 @@ export default function ProductDetailPage() {
                                     <span>★</span>
                                     <span className="font-bold text-zinc-900">{displayProduct.rating?.toFixed(1) || "5.0"}</span>
                                 </div>
+                                {displayProduct.soldCount !== undefined && displayProduct.soldCount >= 0 && (
+                                    <>
+                                        <span className="text-zinc-300">|</span>
+                                        <span className="text-zinc-500">Đã bán {displayProduct.soldCount}</span>
+                                    </>
+                                )}
                                 {displayProduct.sku && (
                                     <>
                                         <span className="text-zinc-300">|</span>

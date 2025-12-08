@@ -14,6 +14,7 @@ export type Product = {
   currency?: string;
   sku?: string;
   stock?: number;
+  soldCount?: number;
   rating?: number;
   category?: string;
   flashSaleStartAt?: string;

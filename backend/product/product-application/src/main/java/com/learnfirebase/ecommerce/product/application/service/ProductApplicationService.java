@@ -148,6 +148,7 @@ public class ProductApplicationService implements ManageProductUseCase, QueryPro
             .price(product.getPrice().getAmount().toPlainString())
             .currency(product.getPrice().getCurrency())
             .quantity(product.getStock())
+            .soldCount(product.getSoldCount() != null ? product.getSoldCount() : 0)
             .categoryId(product.getCategory() != null ? product.getCategory().getId() : null)
             .createdAt(product.getCreatedAt())
             .updatedAt(product.getUpdatedAt())

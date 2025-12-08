@@ -36,6 +36,7 @@ type BackendProductDto = {
   currency?: string;
   sku?: string;
   quantity?: number;
+  soldCount?: number;
   rating?: number;
   categoryId?: string;
   flashSaleStartAt?: string;
@@ -65,6 +66,7 @@ const mapProduct = (dto: BackendProductDto): Product => {
     currency: dto.currency ?? "VND",
     sku: dto.sku,
     stock: dto.quantity,
+    soldCount: dto.soldCount,
     rating: dto.rating,
     category: dto.categoryId,
     flashSaleStartAt: dto.flashSaleStartAt,
