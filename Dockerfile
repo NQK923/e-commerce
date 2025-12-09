@@ -1,5 +1,3 @@
-# syntax=docker/dockerfile:1.7
-
 ARG BOOT_JAR=backend/bootstrap/build/libs/bootstrap-0.0.1-SNAPSHOT.jar
 
 FROM gradle:8.10.2-jdk17-alpine AS builder

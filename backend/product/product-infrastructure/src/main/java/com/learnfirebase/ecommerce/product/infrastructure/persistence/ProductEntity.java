@@ -1,5 +1,6 @@
 package com.learnfirebase.ecommerce.product.infrastructure.persistence;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
@@ -28,7 +29,7 @@ public class ProductEntity {
     private String id;
     private String name;
     private String description;
-    private String price;
+    private BigDecimal price;
     private String currency;
     private Integer quantity;
     @Column(name = "sold_count")

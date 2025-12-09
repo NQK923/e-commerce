@@ -1,5 +1,7 @@
 package com.learnfirebase.ecommerce.product.infrastructure.persistence;
 
+import java.math.BigDecimal;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
@@ -21,7 +23,7 @@ public class ProductVariantEntity {
     @Id
     private String sku;
     private String name;
-    private String price;
+    private BigDecimal price;
     private Integer quantity;
     private String currency;
 

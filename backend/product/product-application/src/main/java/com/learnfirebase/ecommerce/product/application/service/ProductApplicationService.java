@@ -27,9 +27,9 @@ import com.learnfirebase.ecommerce.product.domain.model.ProductVariant;
 
 import lombok.RequiredArgsConstructor;
 
-import com.learnfirebase.ecommerce.product.domain.event.ProductCreatedEvent;
-
+import com.learnfirebase.ecommerce.product.application.dto.ProductSearchQuery;
 import com.learnfirebase.ecommerce.product.application.dto.SoldItemDto;
+import com.learnfirebase.ecommerce.product.domain.event.ProductCreatedEvent;
 
 @RequiredArgsConstructor
 public class ProductApplicationService implements ManageProductUseCase, QueryProductUseCase {
@@ -48,6 +48,18 @@ public class ProductApplicationService implements ManageProductUseCase, QueryPro
                 }
             }
         }
+    }
+
+    @Override
+    public PageResponse<ProductDto> searchProducts(ProductSearchQuery query, PageRequest pageRequest) {
+        PageResponse<Product> page = productRepository.search(query, pageRequest);
+        return PageResponse.<ProductDto>builder()
+            .content(page.getContent().stream().map(this::toDto).toList())
+            .totalElements(page.getTotalElements())
+            .totalPages(page.getTotalPages())
+            .page(page.getPage())
+            .size(page.getSize())
+            .build();
     }
 
     @Override

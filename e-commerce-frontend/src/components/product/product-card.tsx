@@ -5,7 +5,7 @@ import Link from "next/link";
 import React from "react";
 import { ShoppingCart, Eye } from "lucide-react";
 import { Product } from "../../types/product";
-import { formatCurrency } from "../../utils/format";
+import { formatCurrency, formatNumber } from "../../utils/format";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
@@ -96,7 +96,7 @@ export const ProductCard: React.FC<Props> = ({ product, onAddToCart }) => {
             </span>
           </div>
           <div className="text-xs text-zinc-500">
-            123 {t.product.sold}
+            {formatNumber(product.soldCount)} {t.product.sold}
           </div>
         </div>
       </div>

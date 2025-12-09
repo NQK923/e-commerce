@@ -1,5 +1,6 @@
 package com.learnfirebase.ecommerce.product.adapter.web;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
@@ -15,6 +16,7 @@ import com.learnfirebase.ecommerce.common.application.pagination.PageRequest;
 import com.learnfirebase.ecommerce.common.application.pagination.PageResponse;
 import com.learnfirebase.ecommerce.product.application.command.UpsertProductCommand;
 import com.learnfirebase.ecommerce.product.application.dto.ProductDto;
+import com.learnfirebase.ecommerce.product.application.dto.ProductSearchQuery;
 import com.learnfirebase.ecommerce.product.application.port.in.ManageProductUseCase;
 import com.learnfirebase.ecommerce.product.application.port.in.QueryProductUseCase;
 import com.learnfirebase.ecommerce.inventory.application.port.in.QueryInventoryUseCase;
@@ -34,9 +36,23 @@ public class ProductController {
     public ResponseEntity<PageResponse<ProductDto>> list(
         @RequestParam(name = "page", defaultValue = "0") int page,
         @RequestParam(name = "size", defaultValue = "8") int size,
+        @RequestParam(name = "search", required = false) String search,
+        @RequestParam(name = "category", required = false) String category,
+        @RequestParam(name = "minPrice", required = false) BigDecimal minPrice,
+        @RequestParam(name = "maxPrice", required = false) BigDecimal maxPrice,
+        @RequestParam(name = "sort", required = false) String sort,
         @RequestParam(name = "includeOutOfStock", defaultValue = "false") boolean includeOutOfStock) {
-        PageRequest pageRequest = PageRequest.builder().page(page).size(size).build();
-        PageResponse<ProductDto> products = queryProductUseCase.listProducts(pageRequest);
+        
+        PageRequest pageRequest = PageRequest.builder().page(page).size(size).sort(sort).build();
+        ProductSearchQuery query = ProductSearchQuery.builder()
+            .search(search)
+            .category(category)
+            .minPrice(minPrice)
+            .maxPrice(maxPrice)
+            .build();
+            
+        PageResponse<ProductDto> products = queryProductUseCase.searchProducts(query, pageRequest);
+        
         // Enrich with inventory (simplified for MVP, ideally should be batched)
         List<ProductDto> enriched = products.getContent().stream()
             .map(this::enrichWithInventory)

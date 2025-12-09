@@ -1,13 +1,15 @@
-package com.learnfirebase.ecommerce.product.infrastructure.persistence;
-
 import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.List;
+import java.util.ArrayList;
 
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.jpa.domain.Specification;
 
+import com.learnfirebase.ecommerce.product.application.dto.ProductSearchQuery;
 import com.learnfirebase.ecommerce.common.application.pagination.PageRequest;
 import com.learnfirebase.ecommerce.common.application.pagination.PageResponse;
 import com.learnfirebase.ecommerce.common.domain.valueobject.Money;
@@ -18,6 +20,8 @@ import com.learnfirebase.ecommerce.product.domain.model.ProductId;
 import com.learnfirebase.ecommerce.product.domain.model.ProductImage;
 import com.learnfirebase.ecommerce.product.domain.model.ProductImageId;
 import com.learnfirebase.ecommerce.product.domain.model.ProductVariant;
+
+import jakarta.persistence.criteria.Predicate;
 
 import lombok.RequiredArgsConstructor;
 
@@ -44,18 +48,74 @@ public class ProductRepositoryImpl implements ProductRepository {
     public PageResponse<Product> findAll(PageRequest pageRequest) {
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(pageRequest.getPage(), pageRequest.getSize());
         org.springframework.data.domain.Page<ProductEntity> page = productJpaRepository.findAll(pageable);
-        return PageResponse.<Product>builder()
-            .content(page.getContent().stream().map(this::toDomain).toList())
-            .totalElements(page.getTotalElements())
-            .totalPages(page.getTotalPages())
-            .page(pageRequest.getPage())
-            .size(pageRequest.getSize())
-            .build();
+        return toPageResponse(page);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<Product> search(ProductSearchQuery query, PageRequest pageRequest) {
+        Specification<ProductEntity> spec = (root, criteriaQuery, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (query.getSearch() != null && !query.getSearch().trim().isEmpty()) {
+                String likePattern = "%" + query.getSearch().trim().toLowerCase() + "%";
+                predicates.add(criteriaBuilder.or(
+                    criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), likePattern),
+                    criteriaBuilder.like(criteriaBuilder.lower(root.get("description")), likePattern)
+                ));
+            }
+
+            if (query.getCategory() != null && !query.getCategory().trim().isEmpty()) {
+                 predicates.add(criteriaBuilder.equal(root.get("categoryId"), query.getCategory()));
+            }
+
+            if (query.getMinPrice() != null) {
+                predicates.add(criteriaBuilder.ge(
+                    root.get("price"), 
+                    query.getMinPrice()
+                ));
+            }
+
+            if (query.getMaxPrice() != null) {
+                predicates.add(criteriaBuilder.le(
+                    root.get("price"), 
+                    query.getMaxPrice()
+                ));
+            }
+
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+
+        org.springframework.data.domain.Sort sort = org.springframework.data.domain.Sort.unsorted();
+        if (pageRequest.getSort() != null) {
+            String[] parts = pageRequest.getSort().split(",");
+            if (parts.length == 2) {
+                if (parts[1].equalsIgnoreCase("desc")) {
+                    sort = org.springframework.data.domain.Sort.by(parts[0]).descending();
+                } else {
+                    sort = org.springframework.data.domain.Sort.by(parts[0]).ascending();
+                }
+            }
+        }
+        
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(pageRequest.getPage(), pageRequest.getSize(), sort);
+        org.springframework.data.domain.Page<ProductEntity> page = productJpaRepository.findAll(spec, pageable);
+        return toPageResponse(page);
     }
 
     @Override
     public void incrementSoldCount(ProductId id, int quantity) {
         productJpaRepository.incrementSoldCount(id.getValue(), quantity);
+    }
+    
+    private PageResponse<Product> toPageResponse(org.springframework.data.domain.Page<ProductEntity> page) {
+        return PageResponse.<Product>builder()
+            .content(page.getContent().stream().map(this::toDomain).toList())
+            .totalElements(page.getTotalElements())
+            .totalPages(page.getTotalPages())
+            .page(page.getNumber())
+            .size(page.getSize())
+            .build();
     }
 
     private ProductEntity toEntity(Product product) {
@@ -63,7 +123,7 @@ public class ProductRepositoryImpl implements ProductRepository {
             .id(product.getId().getValue())
             .name(product.getName())
             .description(product.getDescription())
-            .price(product.getPrice().getAmount().toPlainString())
+            .price(product.getPrice().getAmount())
             .currency(product.getPrice().getCurrency())
             .quantity(product.getStock())
             .soldCount(product.getSoldCount())
@@ -75,7 +135,7 @@ public class ProductRepositoryImpl implements ProductRepository {
             .map(v -> ProductVariantEntity.builder()
                 .sku(v.getSku() != null ? v.getSku() : UUID.randomUUID().toString())
                 .name(v.getName())
-                .price(v.getPrice().getAmount().toPlainString())
+                .price(v.getPrice().getAmount())
                 .currency(v.getPrice().getCurrency())
                 .quantity(v.getQuantity())
                 .product(entity)
@@ -98,7 +158,7 @@ public class ProductRepositoryImpl implements ProductRepository {
             .id(new ProductId(entity.getId()))
             .name(entity.getName())
             .description(entity.getDescription())
-            .price(Money.builder().amount(new BigDecimal(entity.getPrice())).currency(entity.getCurrency()).build())
+            .price(Money.builder().amount(entity.getPrice()).currency(entity.getCurrency()).build())
             .stock(entity.getQuantity())
             .soldCount(entity.getSoldCount())
             .category(entity.getCategoryId() != null ? Category.builder().id(entity.getCategoryId()).name(entity.getCategoryId()).build() : null)
@@ -106,7 +166,7 @@ public class ProductRepositoryImpl implements ProductRepository {
                 .map(v -> ProductVariant.builder()
                     .sku(v.getSku())
                     .name(v.getName())
-                    .price(Money.builder().amount(new BigDecimal(v.getPrice())).currency(v.getCurrency()).build())
+                    .price(Money.builder().amount(v.getPrice()).currency(v.getCurrency()).build())
                     .quantity(v.getQuantity())
                     .build())
                 .collect(Collectors.toList()) : java.util.Collections.emptyList())
