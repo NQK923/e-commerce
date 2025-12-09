@@ -29,7 +29,7 @@ import lombok.RequiredArgsConstructor;
 
 import com.learnfirebase.ecommerce.product.domain.event.ProductCreatedEvent;
 
-import com.learnfirebase.ecommerce.order.domain.event.OrderPaid;
+import com.learnfirebase.ecommerce.product.application.dto.SoldItemDto;
 
 @RequiredArgsConstructor
 public class ProductApplicationService implements ManageProductUseCase, QueryProductUseCase {
@@ -37,9 +37,9 @@ public class ProductApplicationService implements ManageProductUseCase, QueryPro
     private final ProductSearchIndexPort productSearchIndexPort;
     private final ProductEventPublisher eventPublisher;
 
-    public void handleOrderPaid(List<OrderPaid.Item> items) {
+    public void handleOrderPaid(List<SoldItemDto> items) {
         if (items == null || items.isEmpty()) return;
-        for (OrderPaid.Item item : items) {
+        for (SoldItemDto item : items) {
             if (item.getProductId() != null && item.getQuantity() > 0) {
                 try {
                     productRepository.incrementSoldCount(new ProductId(item.getProductId()), item.getQuantity());

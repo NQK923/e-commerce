@@ -5,6 +5,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import com.learnfirebase.ecommerce.order.domain.event.OrderPaid;
+import com.learnfirebase.ecommerce.product.application.dto.SoldItemDto;
 import com.learnfirebase.ecommerce.product.application.service.ProductApplicationService;
 
 import lombok.RequiredArgsConstructor;
@@ -21,7 +22,13 @@ public class ProductOrderEventListener {
     public void handleOrderPaid(OrderPaid event) {
         log.info("Received OrderPaid event for order: {}", event.getOrderId());
         if (event.getItems() != null && !event.getItems().isEmpty()) {
-            productApplicationService.handleOrderPaid(event.getItems());
+            var soldItems = event.getItems().stream()
+                .map(item -> SoldItemDto.builder()
+                    .productId(item.getProductId())
+                    .quantity(item.getQuantity())
+                    .build())
+                .toList();
+            productApplicationService.handleOrderPaid(soldItems);
         } else {
             log.warn("OrderPaid event has no items for order: {}", event.getOrderId());
         }
