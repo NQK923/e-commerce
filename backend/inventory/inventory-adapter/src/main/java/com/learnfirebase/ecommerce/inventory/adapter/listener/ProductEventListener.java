@@ -19,19 +19,24 @@ public class ProductEventListener {
 
     @EventListener
     public void handle(ProductCreatedEvent event) {
-        log.info("Received ProductCreatedEvent for product: {}", event.getProductId());
+        log.info("Received ProductCreatedEvent for product: {}, initialStock: {}, variants: {}", 
+            event.getProductId(), event.getInitialStock(), event.getVariants() != null ? event.getVariants().size() : "null");
         
         if (event.getInitialStock() != null && event.getInitialStock() > 0) {
+            log.info("Adjusting inventory for main product: {}, delta: {}", event.getProductId(), event.getInitialStock());
             manageInventoryUseCase.execute(AdjustInventoryCommand.builder()
                 .inventoryId(DEFAULT_INVENTORY_ID)
                 .productId(event.getProductId())
                 .delta(event.getInitialStock())
                 .build());
+        } else {
+            log.info("Skipping main product inventory adjustment. InitialStock is null or <= 0");
         }
 
         if (event.getVariants() != null) {
             for (ProductCreatedEvent.VariantInitialStock variant : event.getVariants()) {
                 if (variant.getQuantity() > 0) {
+                    log.info("Adjusting inventory for variant: {}, delta: {}", variant.getSku(), variant.getQuantity());
                     manageInventoryUseCase.execute(AdjustInventoryCommand.builder()
                         .inventoryId(DEFAULT_INVENTORY_ID)
                         .productId(variant.getSku())

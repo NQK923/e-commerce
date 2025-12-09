@@ -92,7 +92,8 @@ public class ProductController {
             Integer totalStock = inventory.getItems().stream()
                 .filter(item -> item.getProductId().equals(product.getId()))
                 .map(InventoryDto.ItemDto::getAvailable)
-                .findFirst().orElse(0);
+                .findFirst()
+                .orElse(product.getQuantity() != null ? product.getQuantity() : 0);
 
             // Create a NEW ProductDto builder based on existing one (Dto is immutable)
             return ProductDto.builder()
@@ -114,7 +115,8 @@ public class ProductController {
                         .quantity(inventory.getItems().stream()
                             .filter(item -> item.getProductId().equals(v.getSku()))
                             .map(InventoryDto.ItemDto::getAvailable)
-                            .findFirst().orElse(0))
+                            .findFirst()
+                            .orElse(v.getQuantity() != null ? v.getQuantity() : 0))
                         .build()
                 ).toList())
                 .build();

@@ -48,7 +48,7 @@ public class Order extends AggregateRoot<OrderId> {
         this.status = OrderStatus.PAID;
         List<OrderPaid.Item> eventItems = items.stream()
             .map(i -> OrderPaid.Item.builder()
-                .productId(i.getProductId().getValue())
+                .productId(i.getProductId())
                 .quantity(i.getQuantity())
                 .build())
             .toList();

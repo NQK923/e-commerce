@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { 
   Package2, ShoppingBag, TrendingUp, Wallet, Plus, Sparkles, 
-  AlertTriangle, ArrowUpRight, Calendar
+  Calendar
 } from "lucide-react";
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
@@ -71,10 +71,6 @@ function SellerDashboardContent() {
   const totalRevenue = useMemo(() => orders.reduce((sum, o) => sum + (o.total || 0), 0), [orders]);
   // Use totalElements from API if we had it, but for now use loaded length + '...' if full
   const totalOrdersDisplay = orders.length >= 50 ? "50+" : orders.length;
-
-  const lowStockProducts = useMemo(() => 
-    products.filter(p => (p.stock ?? 0) < 5).slice(0, 5), 
-  [products]);
 
   const chartData = useMemo(() => {
     const groups: Record<string, number> = {};
@@ -196,9 +192,9 @@ function SellerDashboardContent() {
         </Card>
       </section>
 
-      <div className="grid gap-8 lg:grid-cols-3">
+      <div className="space-y-8">
         {/* Main Chart Section */}
-        <section className="lg:col-span-2 space-y-6">
+        <section className="space-y-6">
           <Card className="p-6">
             <div className="mb-6 flex items-center justify-between">
               <div>
@@ -298,45 +294,6 @@ function SellerDashboardContent() {
           </Card>
         </section>
 
-        {/* Side Panel */}
-        <section className="space-y-6">
-          {/* Low Stock Alert */}
-          <Card className="overflow-hidden border-amber-200 bg-amber-50">
-            <div className="border-b border-amber-100 p-4">
-              <div className="flex items-center gap-2 font-bold text-amber-900">
-                <AlertTriangle size={18} />
-                Cảnh báo tồn kho thấp
-              </div>
-            </div>
-            <div className="divide-y divide-amber-100/50 p-0">
-              {lowStockProducts.map(p => (
-                <div key={p.id} className="flex items-center justify-between p-4 hover:bg-amber-100/50">
-                  <div className="overflow-hidden">
-                    <p className="truncate font-medium text-amber-900">{p.name}</p>
-                    <p className="text-xs text-amber-700">Còn lại: {p.stock}</p>
-                  </div>
-                  <Button size="icon" variant="ghost" className="h-8 w-8 text-amber-900 hover:bg-amber-200" onClick={() => handleEdit(p.id)}>
-                    <ArrowUpRight size={16} />
-                  </Button>
-                </div>
-              ))}
-              {!lowStockProducts.length && (
-                <div className="p-4 text-center text-sm text-amber-800">Tất cả sản phẩm đều đủ hàng.</div>
-              )}
-            </div>
-          </Card>
-
-           {/* Quick Stats or Tips */}
-           <Card className="p-6 bg-gradient-to-br from-indigo-500 to-purple-600 text-white border-0">
-              <h3 className="font-bold text-lg mb-2">Mẹo bán hàng</h3>
-              <p className="text-indigo-100 text-sm mb-4">
-                Cập nhật hình ảnh sản phẩm thường xuyên giúp tăng 30% tỷ lệ chuyển đổi.
-              </p>
-              <Button variant="secondary" className="w-full bg-white/10 hover:bg-white/20 text-white border-0">
-                Xem hướng dẫn
-              </Button>
-           </Card>
-        </section>
       </div>
 
       {/* Products Table (Existing) */}

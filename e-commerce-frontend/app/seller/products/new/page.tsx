@@ -129,6 +129,10 @@ function NewProductContent() {
             return;
         }
 
+        const baseQuantity = form.quantity ? parseInt(form.quantity, 10) : 0;
+        const variantsQuantity = hasVariants ? variants.reduce((sum, v) => sum + (v.quantity || 0), 0) : 0;
+        const totalQuantity = hasVariants ? variantsQuantity : baseQuantity;
+
         setLoading(true);
         setUploading(selectedImages.length > 0);
         try {
@@ -153,7 +157,7 @@ function NewProductContent() {
                     description: form.description,
                     price: parseFloat(form.price),
                     currency: form.currency || "VND",
-                    quantity: form.quantity ? parseInt(form.quantity) : 0,
+                    quantity: totalQuantity,
                     categoryId: form.categoryId || undefined,
                     images: allImages.map((url, idx) => ({
                         url,
@@ -173,7 +177,7 @@ function NewProductContent() {
                 description: form.description,
                 price: parseFloat(form.price),
                 currency: form.currency || "VND",
-                quantity: form.quantity ? parseInt(form.quantity) : 0,
+                quantity: totalQuantity,
                 categoryId: form.categoryId || undefined,
                 images: [],
                 variants: hasVariants ? variants : undefined,
@@ -189,7 +193,7 @@ function NewProductContent() {
                 description: form.description,
                 price: parseFloat(form.price),
                 currency: form.currency || "VND",
-                quantity: form.quantity ? parseInt(form.quantity) : 0,
+                quantity: totalQuantity,
                 categoryId: form.categoryId || undefined,
                 images: allImages.map((url, idx) => ({
                     url,

@@ -19,6 +19,8 @@ function ProfileContent() {
 
   const [displayName, setDisplayName] = useState(user?.displayName ?? "");
   const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl ?? "");
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -27,8 +29,18 @@ function ProfileContent() {
     if (user) {
       setDisplayName(user.displayName || "");
       setAvatarUrl(user.avatarUrl || "");
+      setAvatarFile(null);
+      setAvatarPreview(null);
     }
   }, [user]);
+
+  useEffect(() => {
+    return () => {
+      if (avatarPreview) {
+        URL.revokeObjectURL(avatarPreview);
+      }
+    };
+  }, [avatarPreview]);
 
   if (initializing || !isAuthenticated) {
     return (
@@ -51,31 +63,39 @@ function ProfileContent() {
     event.preventDefault();
     setLoading(true);
     try {
-      const updated = await profileApi.update({ displayName, avatarUrl });
+      setUploading(Boolean(avatarFile));
+
+      let finalAvatarUrl = avatarUrl;
+      if (avatarFile) {
+        finalAvatarUrl = await uploadToBucket("Avatars", avatarFile);
+      }
+
+      const updated = await profileApi.update({ displayName, avatarUrl: finalAvatarUrl });
       setUserProfile(updated);
+      setAvatarUrl(updated.avatarUrl || finalAvatarUrl);
+      setAvatarFile(null);
+      if (avatarPreview) {
+        URL.revokeObjectURL(avatarPreview);
+        setAvatarPreview(null);
+      }
       addToast("Cập nhật thành công", "success");
       setIsEditing(false);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Cập nhật thất bại";
       addToast(message, "error");
     } finally {
+      setUploading(false);
       setLoading(false);
     }
   };
 
-  const handleAvatarUpload = async (file?: File) => {
+  const handleAvatarSelect = (file?: File) => {
     if (!file) return;
-    setUploading(true);
-    try {
-      const publicUrl = await uploadToBucket("Avatars", file);
-      setAvatarUrl(publicUrl);
-      addToast("Đã tải ảnh lên", "success");
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Tải ảnh thất bại";
-      addToast(message, "error");
-    } finally {
-      setUploading(false);
+    if (avatarPreview) {
+      URL.revokeObjectURL(avatarPreview);
     }
+    setAvatarFile(file);
+    setAvatarPreview(URL.createObjectURL(file));
   };
 
   return (
@@ -94,8 +114,8 @@ function ProfileContent() {
           <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
             <div className="flex flex-col items-center gap-4 text-center">
               <div className="relative h-24 w-24 overflow-hidden rounded-full border-2 border-emerald-50 bg-zinc-100">
-                {avatarUrl ? (
-                  <Image src={avatarUrl} alt="Avatar" fill className="object-cover" />
+                {avatarPreview || avatarUrl ? (
+                  <Image src={avatarPreview || avatarUrl} alt="Avatar" fill className="object-cover" />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-zinc-300">
                     {displayName.charAt(0).toUpperCase() || "U"}
@@ -109,8 +129,8 @@ function ProfileContent() {
                           type="file"
                           className="hidden"
                           accept="image/*"
-                          onChange={(e) => handleAvatarUpload(e.target.files?.[0])}
-                          disabled={uploading}
+                          onChange={(e) => handleAvatarSelect(e.target.files?.[0])}
+                          disabled={uploading || loading}
                         />
                      </label>
                   </div>
@@ -146,7 +166,7 @@ function ProfileContent() {
                     onChange={(e) => setDisplayName(e.target.value)}
                     required
                   />
-                 <Button type="submit" disabled={loading} className="w-full bg-emerald-600 hover:bg-emerald-700">
+                 <Button type="submit" disabled={loading || uploading} className="w-full bg-emerald-600 hover:bg-emerald-700">
                     {loading ? "Đang lưu..." : "Lưu thay đổi"}
                   </Button>
               </form>
@@ -199,7 +219,7 @@ function ProfileContent() {
                  <p className="text-sm text-zinc-500 mt-1">Quản lý sản phẩm và gian hàng của bạn.</p>
                </div>
                <span className="mt-4 text-sm font-medium text-emerald-600 group-hover:underline">Truy cập &rarr;</span>
-            </Link>
+             </Link>
         </div>
       </div>
     </div>
