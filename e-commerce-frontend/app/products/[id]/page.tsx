@@ -5,7 +5,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { 
   Heart, Share2, ShieldCheck, Truck, RefreshCcw, 
-  Minus, Plus, ChevronRight, Home 
+  Minus, Plus, ChevronRight, Home, MessageSquare 
 } from "lucide-react";
 
 import { productApi } from "@/src/api/productApi";
@@ -17,6 +17,7 @@ import { Badge } from "@/src/components/ui/badge";
 import { Spinner } from "@/src/components/ui/spinner";
 import { Card } from "@/src/components/ui/card";
 import { useCart } from "@/src/store/cart-store";
+import { useAuth } from "@/src/store/auth-store";
 import { useToast } from "@/src/components/ui/toast-provider";
 import { Product } from "@/src/types/product";
 import { formatCurrency } from "@/src/utils/format";
@@ -84,6 +85,7 @@ export default function ProductDetailPage() {
   const router = useRouter();
   const productId = params?.id;
   const { addItem } = useCart();
+  const { user } = useAuth();
   const { addToast } = useToast();
   const { t } = useTranslation();
   
@@ -334,6 +336,15 @@ export default function ProductDetailPage() {
                             >
                                 {saleEnded ? t.product.sale_ended : outOfStock ? t.common.out_of_stock : t.product.add_to_cart}
                             </Button>
+                            
+                            {displayProduct.sellerId && displayProduct.sellerId !== user?.id && (
+                                <Link href={`/chat?userId=${displayProduct.sellerId}`} passHref>
+                                    <Button variant="outline" className="h-12 border-emerald-200 text-emerald-700 hover:bg-emerald-50" title="Chat với người bán">
+                                        <MessageSquare size={20} className="mr-2" /> Chat
+                                    </Button>
+                                </Link>
+                            )}
+
                             <Button variant="outline" className="h-12 w-12 border-zinc-200 text-zinc-500 hover:bg-zinc-50 hover:text-emerald-600">
                                 <Share2 size={20} />
                             </Button>

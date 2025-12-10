@@ -17,6 +17,7 @@ export type Product = {
   soldCount?: number;
   rating?: number;
   category?: string;
+  sellerId?: string;
   flashSaleStartAt?: string;
   flashSaleEndAt?: string;
   discountPercentage?: number;

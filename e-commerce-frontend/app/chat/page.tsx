@@ -4,12 +4,16 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   ArrowRight,
+  Check,
   CheckCheck,
   Loader2,
-  MessagesSquare,
-  Radio,
+  MessageSquare,
+  MoreVertical,
+  Phone,
+  Search,
   Send,
-  UserCircle,
+  User,
+  Video,
 } from "lucide-react";
 import { useChat } from "@/src/store/chat-store";
 import { useAuth } from "@/src/store/auth-store";
@@ -18,11 +22,27 @@ import { ChatMessage, ConversationSummary } from "@/src/types/chat";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
 import { useToast } from "@/src/components/ui/toast-provider";
+import { Avatar, AvatarFallback, AvatarImage } from "@/src/components/ui/avatar";
 
 const formatTime = (value?: string) => {
   if (!value) return "";
   const date = new Date(value);
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+};
+
+const formatDateGroup = (dateStr: string) => {
+  const date = new Date(dateStr);
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  if (date.toDateString() === today.toDateString()) {
+    return "Hôm nay";
+  } else if (date.toDateString() === yesterday.toDateString()) {
+    return "Hôm qua";
+  } else {
+    return date.toLocaleDateString("vi-VN", { day: "numeric", month: "long" });
+  }
 };
 
 const getOtherParticipant = (conversation: ConversationSummary | undefined, currentUserId?: string) =>
@@ -33,24 +53,28 @@ const MessageBubble: React.FC<{
   isMine: boolean;
 }> = ({ message, isMine }) => {
   return (
-    <div className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
+    <div className={`flex w-full ${isMine ? "justify-end" : "justify-start"} mb-2`}>
       <div
-        className={`max-w-[75%] rounded-2xl px-4 py-2 text-sm shadow-sm ${
+        className={`relative max-w-[75%] px-4 py-2 text-sm shadow-sm ${
           isMine
-            ? "bg-emerald-600 text-white rounded-br-md"
-            : "bg-white text-zinc-900 border border-zinc-100 rounded-bl-md"
+            ? "bg-emerald-600 text-white rounded-2xl rounded-tr-sm"
+            : "bg-white text-zinc-900 border border-zinc-100 rounded-2xl rounded-tl-sm"
         }`}
       >
-        <p className="whitespace-pre-wrap break-words">{message.content}</p>
+        <p className="whitespace-pre-wrap break-words leading-relaxed">{message.content}</p>
         <div
-          className={`mt-1 flex items-center gap-1 text-[11px] ${
-            isMine ? "text-emerald-50" : "text-zinc-500"
+          className={`mt-1 flex items-center justify-end gap-1 text-[10px] ${
+            isMine ? "text-emerald-100" : "text-zinc-400"
           }`}
         >
           <span>{formatTime(message.sentAt)}</span>
-          {isMine && message.status && (
-            <span className="flex items-center gap-0.5">
-              <CheckCheck size={14} /> {message.status.toLowerCase()}
+          {isMine && (
+            <span className="ml-1">
+              {message.status === "READ" ? (
+                <CheckCheck size={14} className="text-blue-200" />
+              ) : (
+                <Check size={14} className="text-emerald-200" />
+              )}
             </span>
           )}
         </div>
@@ -67,32 +91,64 @@ const ConversationItem: React.FC<{
 }> = ({ conversation, active, onSelect, currentUserId }) => {
   const other = getOtherParticipant(conversation, currentUserId);
   const last = conversation.lastMessage;
+  const isSeller = other?.role === "SELLER";
+
   return (
     <button
       onClick={onSelect}
-      className={`flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
+      className={`group flex w-full items-center gap-3 rounded-xl p-3 text-left transition-all ${
         active
-          ? "border-emerald-500/60 bg-emerald-50/70 shadow-sm"
-          : "border-transparent bg-white hover:border-emerald-100 hover:bg-emerald-50/40"
+          ? "bg-emerald-50 shadow-sm ring-1 ring-emerald-200"
+          : "hover:bg-zinc-50"
       }`}
     >
-      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
-        <UserCircle size={22} />
+      <div className="relative">
+        <Avatar className="h-12 w-12 border border-zinc-100">
+          <AvatarImage src={other?.avatarUrl} />
+          <AvatarFallback className={active ? "bg-emerald-200 text-emerald-800" : "bg-zinc-100 text-zinc-600"}>
+            {other?.displayName?.charAt(0).toUpperCase() || <User size={20} />}
+          </AvatarFallback>
+        </Avatar>
+        {active && (
+          <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-white" />
+        )}
       </div>
+
       <div className="flex-1 overflow-hidden">
         <div className="flex items-center justify-between">
-          <p className="font-semibold text-sm text-zinc-900 truncate">
-            {other?.displayName || other?.id || "Người dùng"}
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-zinc-900 truncate">
+              {other?.displayName || other?.id || "Người dùng"}
+            </span>
+            {isSeller && (
+              <span className="rounded bg-orange-100 px-1.5 py-0.5 text-[10px] font-bold text-orange-700 uppercase tracking-wide">
+                Seller
+              </span>
+            )}
+          </div>
+          {last && (
+            <span className="text-[10px] text-zinc-400 whitespace-nowrap">
+              {formatTime(last.sentAt)}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center justify-between gap-2 mt-0.5">
+          <p className={`truncate text-sm ${conversation.unreadCount ? "font-medium text-zinc-900" : "text-zinc-500"}`}>
+            {last ? (
+              <>
+                {last.senderId === currentUserId && "Bạn: "}
+                {last.content}
+              </>
+            ) : (
+              <span className="italic text-zinc-400">Chưa có tin nhắn</span>
+            )}
           </p>
           {conversation.unreadCount ? (
-            <span className="rounded-full bg-emerald-600 px-2 py-0.5 text-[11px] font-semibold text-white">
+            <span className="flex h-5 w-5 min-w-[1.25rem] items-center justify-center rounded-full bg-emerald-600 text-[10px] font-bold text-white shadow-sm">
               {conversation.unreadCount}
             </span>
           ) : null}
         </div>
-        <p className="text-xs text-zinc-500 truncate">
-          {last ? `${last.senderId === currentUserId ? "Bạn: " : ""}${last.content}` : "Chưa có tin nhắn"}
-        </p>
       </div>
     </button>
   );
@@ -118,10 +174,12 @@ export default function ChatPage() {
   const [draft, setDraft] = useState("");
   const [composeTarget, setComposeTarget] = useState(() => searchParams.get("userId") ?? "");
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (activeConversationId) return;
-    if (conversations.length > 0) {
+    // Auto-select first conversation if available, otherwise stay on empty or compose
+    if (conversations.length > 0 && !composeTarget) {
       setActiveConversationId(conversations[0].id);
     } else if (composeTarget) {
       setActiveConversationId(`temp:${composeTarget}`);
@@ -136,9 +194,23 @@ export default function ChatPage() {
   const derivedConversationKey = activeConversationId ?? (composeTarget ? `temp:${composeTarget}` : null);
   const messages = getMessagesForConversation(derivedConversationKey);
 
+  // Group messages by date
+  const groupedMessages = useMemo(() => {
+    const groups: { [date: string]: ChatMessage[] } = {};
+    messages.forEach((msg) => {
+      const dateKey = new Date(msg.sentAt).toDateString();
+      if (!groups[dateKey]) groups[dateKey] = [];
+      groups[dateKey].push(msg);
+    });
+    return groups;
+  }, [messages]);
+
+  // Scroll to bottom on new messages
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages.length, loadingMessages]);
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages.length, loadingMessages, activeConversationId]);
 
   const filteredConversations = conversations.filter((conversation) => {
     const other = getOtherParticipant(conversation, user?.id);
@@ -152,6 +224,11 @@ export default function ChatPage() {
   const handleSend = async () => {
     const content = draft.trim();
     if (!content) return;
+
+    if (connectionStatus !== 'connected') {
+        addToast("Chưa kết nối đến máy chủ chat. Vui lòng đợi.", "error");
+        return;
+    }
 
     const receiverId =
       getOtherParticipant(activeConversation, user?.id)?.id || composeTarget || undefined;
@@ -173,167 +250,196 @@ export default function ChatPage() {
     }
   };
 
+  const otherParticipant = getOtherParticipant(activeConversation, user?.id);
+  const isSeller = otherParticipant?.role === "SELLER";
+
   if (initializing || !isAuthenticated) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center gap-2 text-sm text-zinc-600">
-        <Loader2 className="h-5 w-5 animate-spin" />
-        Đang tải...
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-zinc-500">
+        <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+        <p className="text-sm font-medium">Đang tải dữ liệu chat...</p>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm uppercase tracking-[0.2em] text-emerald-700">Chat trực tiếp</p>
-          <h1 className="text-3xl font-bold text-zinc-900">Tin nhắn 1-1</h1>
-          <p className="text-sm text-zinc-600">
-            Kết nối giữa người mua và người bán theo thời gian thực.
-          </p>
-        </div>
-        <div
-          className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${
-            connectionStatus === "connected"
-              ? "bg-emerald-100 text-emerald-700"
-              : connectionStatus === "connecting"
-                ? "bg-amber-100 text-amber-700"
-                : "bg-rose-100 text-rose-700"
-          }`}
-        >
-          <Radio className={`h-4 w-4 ${connectionStatus === "connected" ? "animate-pulse" : ""}`} />
-          {connectionStatus === "connected"
-            ? "Đã kết nối"
-            : connectionStatus === "connecting"
-              ? "Đang kết nối..."
-              : "Mất kết nối"}
-        </div>
-      </div>
+    <div className="container mx-auto max-w-7xl px-4 py-6 md:py-8 h-[calc(100vh-80px)] min-h-[600px]">
+      <div className="grid h-full grid-cols-1 overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xl lg:grid-cols-[360px_1fr]">
+        
+        {/* Sidebar - List Conversations */}
+        <div className={`flex flex-col border-r border-zinc-100 bg-white ${activeConversationId ? 'hidden lg:flex' : 'flex'}`}>
+          <div className="p-4 border-b border-zinc-50">
+             <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-zinc-800">Tin nhắn</h2>
+                <div className={`h-2.5 w-2.5 rounded-full ${connectionStatus === 'connected' ? 'bg-emerald-500' : 'bg-red-400'}`} title={connectionStatus} />
+             </div>
+             
+             <div className="relative mb-3">
+               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
+               <Input 
+                 className="pl-9 bg-zinc-50 border-zinc-100 focus-visible:ring-emerald-500" 
+                 placeholder="Tìm kiếm cuộc trò chuyện..." 
+                 value={filter}
+                 onChange={(e) => setFilter(e.target.value)}
+               />
+             </div>
 
-      <div className="grid h-[70vh] grid-cols-1 gap-4 rounded-3xl border border-zinc-200 bg-white shadow-md shadow-emerald-50/50 md:grid-cols-[320px_1fr]">
-        <div className="flex flex-col border-b md:border-b-0 md:border-r border-zinc-100 bg-gradient-to-b from-emerald-50/70 to-white rounded-t-3xl md:rounded-tr-none md:rounded-l-3xl">
-          <div className="p-4 pb-2">
-            <div className="flex items-center gap-2 text-sm font-semibold text-emerald-900">
-              <MessagesSquare size={16} />
-              Hội thoại
-            </div>
-            <div className="mt-3 space-y-3">
-              <Input
-                placeholder="Tìm người dùng..."
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-              />
-              <div className="flex gap-2">
+             {/* Temp Input for starting new chat (if needed) */}
+             <div className="flex gap-2">
                 <Input
-                  placeholder="Nhập ID người dùng để bắt đầu"
-                  value={composeTarget}
-                  onChange={(e) => {
-                    setComposeTarget(e.target.value);
-                    if (e.target.value) {
-                      setActiveConversationId(`temp:${e.target.value}`);
-                    }
-                  }}
+                    className="text-xs h-9 bg-zinc-50 border-zinc-100"
+                    placeholder="ID người dùng mới..."
+                    value={composeTarget}
+                    onChange={(e) => {
+                        setComposeTarget(e.target.value);
+                        if (e.target.value) setActiveConversationId(`temp:${e.target.value}`);
+                    }}
                 />
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    if (!composeTarget.trim()) {
-                      addToast("Nhập ID người nhận", "error");
-                      return;
-                    }
-                    setActiveConversationId(`temp:${composeTarget.trim()}`);
-                  }}
-                >
-                  <ArrowRight size={16} />
-                </Button>
-              </div>
-            </div>
+             </div>
           </div>
-          <div className="flex-1 overflow-y-auto space-y-2 px-4 pb-4">
-            {loadingConversations && (
-              <div className="flex items-center gap-2 rounded-xl border border-emerald-100 bg-white p-3 text-sm text-zinc-600 shadow-sm">
-                <Loader2 className="h-4 w-4 animate-spin text-emerald-600" />
-                Đang tải danh sách...
-              </div>
-            )}
-            {!loadingConversations && filteredConversations.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-zinc-200 bg-white p-4 text-sm text-zinc-500">
-                Chưa có hội thoại nào
-              </div>
+
+          <div className="flex-1 overflow-y-auto p-3 space-y-1">
+            {loadingConversations && filteredConversations.length === 0 ? (
+               <div className="flex flex-col items-center justify-center py-8 text-zinc-400">
+                  <Loader2 className="h-6 w-6 animate-spin mb-2" />
+                  <span className="text-xs">Đang đồng bộ...</span>
+               </div>
+            ) : filteredConversations.length === 0 ? (
+                <div className="text-center py-10 text-zinc-500 text-sm">
+                    Không tìm thấy cuộc trò chuyện nào.
+                </div>
             ) : (
-              filteredConversations.map((conversation) => (
-                <ConversationItem
-                  key={conversation.id}
-                  conversation={conversation}
-                  active={conversation.id === activeConversationId}
-                  currentUserId={user?.id}
-                  onSelect={() => {
-                    setComposeTarget("");
-                    setActiveConversationId(conversation.id);
-                  }}
-                />
-              ))
+                filteredConversations.map((conv) => (
+                    <ConversationItem
+                        key={conv.id}
+                        conversation={conv}
+                        active={conv.id === activeConversationId}
+                        currentUserId={user?.id}
+                        onSelect={() => {
+                            setComposeTarget("");
+                            setActiveConversationId(conv.id);
+                        }}
+                    />
+                ))
             )}
           </div>
         </div>
 
-        <div className="flex flex-col rounded-b-3xl md:rounded-bl-none md:rounded-r-3xl">
-          <div className="flex items-center justify-between border-b border-zinc-100 px-4 py-3">
-            <div>
-              <p className="text-sm text-zinc-500">Đang trò chuyện với</p>
-              <p className="text-lg font-semibold text-zinc-900">
-                {getOtherParticipant(activeConversation, user?.id)?.displayName ||
-                  getOtherParticipant(activeConversation, user?.id)?.id ||
-                  (composeTarget ? `Người dùng ${composeTarget}` : "Chưa chọn người nhận")}
-              </p>
-            </div>
-            <div className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-              {connectionStatus === "connected" ? "Online" : "Đang xử lý..."}
-            </div>
-          </div>
+        {/* Chat Window */}
+        <div className={`flex flex-col bg-zinc-50/50 ${!activeConversationId && !composeTarget ? 'hidden lg:flex' : 'flex'}`}>
+          {activeConversationId || composeTarget ? (
+             <>
+               {/* Chat Header */}
+               <div className="flex items-center justify-between border-b border-zinc-100 bg-white px-6 py-3 shadow-sm z-10">
+                 <div className="flex items-center gap-3">
+                   <Button variant="ghost" size="icon" className="lg:hidden -ml-2" onClick={() => setActiveConversationId(null)}>
+                      <ArrowRight className="rotate-180" size={20} />
+                   </Button>
+                   <Avatar className="h-10 w-10 border border-zinc-100">
+                     <AvatarImage src={otherParticipant?.avatarUrl} />
+                     <AvatarFallback>{otherParticipant?.displayName?.charAt(0) || <User size={20} />}</AvatarFallback>
+                   </Avatar>
+                   <div>
+                     <div className="flex items-center gap-2">
+                       <h3 className="font-bold text-zinc-900">
+                         {otherParticipant?.displayName || otherParticipant?.id || (composeTarget ? `User ${composeTarget}` : "Unknown")}
+                       </h3>
+                       {isSeller && (
+                         <span className="rounded bg-orange-100 px-1.5 py-0.5 text-[10px] font-bold text-orange-700">SELLER</span>
+                       )}
+                     </div>
+                     <p className="text-xs text-zinc-500 flex items-center gap-1">
+                        {connectionStatus === 'connected' ? <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"/> : null}
+                        {connectionStatus === 'connected' ? 'Đang hoạt động' : 'Ngoại tuyến'}
+                     </p>
+                   </div>
+                 </div>
+                 <div className="flex items-center gap-1 text-zinc-400">
+                    <Button variant="ghost" size="icon" disabled><Phone size={18} /></Button>
+                    <Button variant="ghost" size="icon" disabled><Video size={18} /></Button>
+                    <Button variant="ghost" size="icon" disabled><MoreVertical size={18} /></Button>
+                 </div>
+               </div>
 
-          <div className="flex-1 space-y-2 overflow-y-auto bg-emerald-50/40 px-4 py-4">
-            {loadingMessages ? (
-              <div className="flex h-full items-center justify-center gap-2 text-sm text-zinc-600">
-                <Loader2 className="h-4 w-4 animate-spin text-emerald-600" />
-                Đang tải tin nhắn...
-              </div>
-            ) : messages.length === 0 ? (
-              <div className="flex h-full items-center justify-center text-sm text-zinc-500">
-                Hãy gửi tin nhắn đầu tiên của bạn.
-              </div>
-            ) : (
-              messages.map((message) => (
-                <MessageBubble
-                  key={message.id}
-                  message={message}
-                  isMine={message.senderId === user?.id}
-                />
-              ))
-            )}
-            <div ref={messagesEndRef} />
-          </div>
+               {/* Messages List */}
+               <div 
+                  ref={scrollContainerRef}
+                  className="flex-1 overflow-y-auto px-4 py-6 bg-[#f0f2f5]" /* Facebook messenger-like bg */
+                >
+                  {loadingMessages && messages.length === 0 ? (
+                      <div className="flex h-full items-center justify-center">
+                          <Loader2 className="h-6 w-6 animate-spin text-emerald-600" />
+                      </div>
+                  ) : (
+                    <>
+                       {/* Welcome / Encryption Notice */}
+                       <div className="mb-6 text-center">
+                          <span className="inline-block rounded-lg bg-amber-50 px-3 py-1.5 text-[10px] text-amber-700 border border-amber-100 shadow-sm">
+                             🔒 Tin nhắn được bảo mật đầu cuối.
+                          </span>
+                       </div>
 
-          <div className="border-t border-zinc-100 bg-white px-4 py-3">
-            <div className="flex items-center gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2 shadow-inner">
-              <Input
-                placeholder="Nhập tin nhắn..."
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    void handleSend();
-                  }
-                }}
-                className="flex-1 border-none bg-transparent focus-visible:ring-0"
-              />
-              <Button onClick={handleSend} disabled={!draft.trim()}>
-                <Send size={16} className="mr-2" />
-                Gửi
-              </Button>
+                       {Object.entries(groupedMessages).map(([dateLabel, msgs]) => (
+                           <div key={dateLabel}>
+                               <div className="sticky top-0 z-0 my-4 flex justify-center">
+                                   <span className="rounded-full bg-zinc-200/80 px-3 py-1 text-xs font-medium text-zinc-600 shadow-sm backdrop-blur-sm">
+                                       {formatDateGroup(dateLabel)}
+                                   </span>
+                               </div>
+                               {msgs.map((msg) => (
+                                   <MessageBubble key={msg.id} message={msg} isMine={msg.senderId === user?.id} />
+                               ))}
+                           </div>
+                       ))}
+                       <div ref={messagesEndRef} className="h-1" />
+                    </>
+                  )}
+               </div>
+
+               {/* Input Area */}
+               <div className="border-t border-zinc-200 bg-white p-4">
+                  <div className="flex items-end gap-2 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-2 shadow-sm focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500/50 transition-all">
+                     <Input 
+                        placeholder="Nhập tin nhắn..." 
+                        className="flex-1 border-none bg-transparent p-0 focus-visible:ring-0 min-h-[24px] max-h-[120px] resize-none"
+                        value={draft}
+                        onChange={(e) => setDraft(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter" && !e.shiftKey) {
+                                e.preventDefault();
+                                void handleSend();
+                            }
+                        }}
+                        autoComplete="off"
+                     />
+                     <Button 
+                        onClick={handleSend} 
+                        size="icon" 
+                        disabled={!draft.trim() || connectionStatus !== 'connected'}
+                        className={`h-8 w-8 rounded-full transition-all ${draft.trim() ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-zinc-200 text-zinc-400'}`}
+                     >
+                        <Send size={14} />
+                     </Button>
+                  </div>
+                  {connectionStatus !== 'connected' && (
+                      <p className="mt-2 text-center text-xs text-red-500">
+                          Mất kết nối máy chủ. Đang thử lại...
+                      </p>
+                  )}
+               </div>
+             </>
+          ) : (
+            /* Empty State */
+            <div className="flex h-full flex-col items-center justify-center p-8 text-center bg-white">
+                <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-emerald-50 text-emerald-200">
+                    <MessageSquare size={48} className="text-emerald-500" />
+                </div>
+                <h3 className="text-xl font-bold text-zinc-900">Chào mừng đến với E-Com Chat</h3>
+                <p className="mt-2 max-w-sm text-sm text-zinc-500">
+                    Chọn một cuộc hội thoại từ danh sách bên trái hoặc bắt đầu cuộc trò chuyện mới để kết nối với người bán.
+                </p>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

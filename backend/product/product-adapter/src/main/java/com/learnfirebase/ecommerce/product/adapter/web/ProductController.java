@@ -1,6 +1,7 @@
 package com.learnfirebase.ecommerce.product.adapter.web;
 
 import java.math.BigDecimal;
+import java.security.Principal;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
@@ -76,12 +77,15 @@ public class ProductController {
     }
 
     @PostMapping
-    public ResponseEntity<ProductDto> create(@RequestBody UpsertProductCommand command) {
+    public ResponseEntity<ProductDto> create(@RequestBody UpsertProductCommand command, Principal principal) {
+        if (principal != null) {
+            command.setSellerId(principal.getName());
+        }
         return ResponseEntity.ok(manageProductUseCase.execute(command));
     }
 
     @PostMapping("/{id}")
-    public ResponseEntity<ProductDto> update(@PathVariable("id") String id, @RequestBody UpsertProductCommand command) {
+    public ResponseEntity<ProductDto> update(@PathVariable("id") String id, @RequestBody UpsertProductCommand command, Principal principal) {
         UpsertProductCommand.UpsertProductCommandBuilder builder = UpsertProductCommand.builder()
             .id(id)
             .name(command.getName())
@@ -90,6 +94,10 @@ public class ProductController {
             .currency(command.getCurrency())
             .categoryId(command.getCategoryId())
             .quantity(command.getQuantity());
+
+        if (principal != null) {
+            builder.sellerId(principal.getName());
+        }
 
         if (command.getVariants() != null) {
             builder.variants(command.getVariants());
@@ -122,6 +130,7 @@ public class ProductController {
                 .createdAt(product.getCreatedAt())
                 .updatedAt(product.getUpdatedAt())
                 .quantity(totalStock)
+                .sellerId(product.getSellerId())
                 .images(product.getImages())
                 .variants(product.getVariants().stream().map(v -> 
                     ProductDto.VariantDto.builder()

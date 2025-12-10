@@ -16,6 +16,7 @@ public class ProductDto {
     String price;
     String currency;
     String categoryId;
+    String sellerId;
     Integer quantity;
     Integer soldCount;
     Instant createdAt;

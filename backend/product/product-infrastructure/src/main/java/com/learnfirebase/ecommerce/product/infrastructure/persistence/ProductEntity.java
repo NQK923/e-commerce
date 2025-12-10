@@ -35,6 +35,8 @@ public class ProductEntity {
     @Column(name = "sold_count")
     private Integer soldCount;
     private String categoryId;
+    @Column(name = "seller_id")
+    private String sellerId;
     private Instant createdAt;
     private Instant updatedAt;
 

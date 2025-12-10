@@ -19,6 +19,7 @@ public class UpsertProductCommand {
     private String price;
     private String currency;
     private String categoryId;
+    private String sellerId;
     private Integer quantity;
     @Singular
     private List<VariantCommand> variants;
