@@ -1,4 +1,5 @@
-import java.math.BigDecimal;
+package com.learnfirebase.ecommerce.product.infrastructure.persistence;
+
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;

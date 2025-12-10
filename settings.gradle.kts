@@ -66,6 +66,12 @@ listOf(
     "cart:cart-adapter",
     "cart:cart-infrastructure",
 
+    // chat
+    "chat:chat-domain",
+    "chat:chat-application",
+    "chat:chat-adapter",
+    "chat:chat-infrastructure",
+
     // bootstrap
     "bootstrap",
 ).forEach { includeModule(it) }

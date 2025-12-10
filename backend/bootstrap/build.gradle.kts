@@ -36,6 +36,9 @@ dependencies {
     implementation(project(":cart:cart-adapter"))
     implementation(project(":cart:cart-infrastructure"))
 
+    implementation(project(":chat:chat-adapter"))
+    implementation(project(":chat:chat-infrastructure"))
+
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14")
@@ -44,4 +47,3 @@ dependencies {
     implementation("org.flywaydb:flyway-database-postgresql")
     runtimeOnly("org.postgresql:postgresql")
 }
-
