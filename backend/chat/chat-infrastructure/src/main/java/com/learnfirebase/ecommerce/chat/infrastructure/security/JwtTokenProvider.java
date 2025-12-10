@@ -1,25 +1,26 @@
 package com.learnfirebase.ecommerce.chat.infrastructure.security;
 
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.jwt.JwtException;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import org.springframework.stereotype.Component;
 
 @Component
 public class JwtTokenProvider {
 
-    private final JwtDecoder jwtDecoder;
-
-    public JwtTokenProvider(JwtDecoder jwtDecoder) {
-        this.jwtDecoder = jwtDecoder;
-    }
-
+    /**
+     * Identity module issues simple Base64 tokens: userId:email:access.
+     * Decode and extract userId; reject malformed tokens.
+     */
     public String validateAndGetUserId(String token) {
         try {
-            Jwt jwt = jwtDecoder.decode(token);
-            return jwt.getSubject();
-        } catch (JwtException ex) {
-            throw new IllegalArgumentException("Invalid JWT token", ex);
+            String decoded = new String(Base64.getDecoder().decode(token), StandardCharsets.UTF_8);
+            String[] parts = decoded.split(":");
+            if (parts.length < 1 || parts[0].isBlank()) {
+                throw new IllegalArgumentException("Token missing user id");
+            }
+            return parts[0];
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException("Invalid token", ex);
         }
     }
 }

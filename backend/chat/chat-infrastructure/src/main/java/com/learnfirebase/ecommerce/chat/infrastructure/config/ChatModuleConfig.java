@@ -3,6 +3,10 @@ package com.learnfirebase.ecommerce.chat.infrastructure.config;
 import com.learnfirebase.ecommerce.chat.application.port.out.MessageDeliveryPort;
 import com.learnfirebase.ecommerce.chat.application.port.out.NotificationEventPort;
 import com.learnfirebase.ecommerce.chat.application.port.out.PresencePort;
+import com.learnfirebase.ecommerce.chat.application.port.in.GetConversationsUseCase;
+import com.learnfirebase.ecommerce.chat.application.port.in.GetMessagesUseCase;
+import com.learnfirebase.ecommerce.chat.application.port.in.MarkConversationReadUseCase;
+import com.learnfirebase.ecommerce.chat.application.service.ChatQueryService;
 import com.learnfirebase.ecommerce.chat.application.service.SendMessageService;
 import com.learnfirebase.ecommerce.chat.application.usecase.SendMessageUseCase;
 import com.learnfirebase.ecommerce.chat.domain.repository.ConversationRepository;
@@ -34,5 +38,26 @@ public class ChatModuleConfig {
                 presencePort,
                 notificationEventPort
         );
+    }
+
+    @Bean
+    public ChatQueryService chatQueryService(ConversationRepository conversationRepository,
+                                             MessageRepository messageRepository) {
+        return new ChatQueryService(conversationRepository, messageRepository);
+    }
+
+    @Bean
+    public GetConversationsUseCase getConversationsUseCase(ChatQueryService chatQueryService) {
+        return chatQueryService;
+    }
+
+    @Bean
+    public GetMessagesUseCase getMessagesUseCase(ChatQueryService chatQueryService) {
+        return chatQueryService;
+    }
+
+    @Bean
+    public MarkConversationReadUseCase markConversationReadUseCase(ChatQueryService chatQueryService) {
+        return chatQueryService;
     }
 }

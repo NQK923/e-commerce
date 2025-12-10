@@ -36,4 +36,16 @@ public class Message {
                 .status(MessageStatus.DELIVERED)
                 .build();
     }
+
+    public Message read() {
+        return Message.builder()
+                .id(id)
+                .conversationId(conversationId)
+                .senderId(senderId)
+                .receiverId(receiverId)
+                .content(content)
+                .sentAt(sentAt)
+                .status(MessageStatus.READ)
+                .build();
+    }
 }

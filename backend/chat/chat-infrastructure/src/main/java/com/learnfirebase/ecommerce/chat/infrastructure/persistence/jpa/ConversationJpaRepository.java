@@ -8,4 +8,7 @@ public interface ConversationJpaRepository extends JpaRepository<ConversationJpa
 
     @Query("select c from ConversationJpaEntity c where :userA member of c.participantIds and :userB member of c.participantIds")
     Optional<ConversationJpaEntity> findByParticipants(String userA, String userB);
+
+    @Query("select c from ConversationJpaEntity c where :participantId member of c.participantIds")
+    java.util.List<ConversationJpaEntity> findByParticipant(String participantId);
 }

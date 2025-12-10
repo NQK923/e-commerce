@@ -32,6 +32,15 @@ public class ConversationRepositoryAdapter implements ConversationRepository {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public java.util.List<Conversation> findByParticipant(ParticipantId participantId) {
+        return conversationJpaRepository.findByParticipant(participantId.getValue())
+                .stream()
+                .map(this::toDomain)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public Conversation save(Conversation conversation) {
         ConversationJpaEntity entity = toEntity(conversation);
         ConversationJpaEntity saved = conversationJpaRepository.save(entity);

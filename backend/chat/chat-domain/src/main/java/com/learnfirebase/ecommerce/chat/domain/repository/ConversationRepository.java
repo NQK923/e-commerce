@@ -10,5 +10,7 @@ public interface ConversationRepository {
 
     Optional<Conversation> findByParticipants(ParticipantId buyerId, ParticipantId sellerId);
 
+    java.util.List<Conversation> findByParticipant(ParticipantId participantId);
+
     Conversation save(Conversation conversation);
 }

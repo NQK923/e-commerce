@@ -32,8 +32,3 @@ public class ConversationJpaEntity {
 
     private Instant createdAt;
 }
-    @ElementCollection
-    private Set<String> participantIds;
-
-    private Instant createdAt;
-}
