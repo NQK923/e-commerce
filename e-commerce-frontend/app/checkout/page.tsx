@@ -1,7 +1,7 @@
 'use client';
 
-import { useRouter } from "next/navigation";
-import React, { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import React, { Suspense, useEffect, useMemo, useState } from "react";
 import { orderApi } from "@/src/api/orderApi";
 import { CartSummary } from "@/src/components/cart/cart-summary";
 import { Input } from "@/src/components/ui/input";
@@ -15,6 +15,7 @@ import { formatCurrency } from "@/src/utils/format";
 function CheckoutContent() {
   const { user, isAuthenticated, initializing } = useRequireAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { cart, loading, clearCart, refreshCart } = useCart();
   const { addToast } = useToast();
   const { t } = useTranslation();
@@ -35,7 +36,24 @@ function CheckoutContent() {
     }
   }, [initializing, isAuthenticated, refreshCart]);
 
-  if (initializing || loading || !isAuthenticated) {
+  const selectedParam = searchParams.get("selected");
+  const selectedIds = useMemo(
+    () => new Set((selectedParam ?? "").split(",").filter(Boolean)),
+    [selectedParam],
+  );
+
+  const filteredCart = useMemo(() => {
+    if (!cart) return cart;
+    if (!selectedIds.size) return cart;
+    const items = cart.items.filter((i) => selectedIds.has(i.id));
+    const subtotal = items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0);
+    const discount = cart.discountTotal ?? 0;
+    const shipping = cart.shippingEstimate ?? 0;
+    const total = subtotal + shipping - discount;
+    return { ...cart, items, subtotal, total };
+  }, [cart, selectedIds]);
+
+  if (initializing || (loading && !cart) || !isAuthenticated) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center gap-3 text-sm text-zinc-600">
         <Spinner />
@@ -44,7 +62,7 @@ function CheckoutContent() {
     );
   }
 
-  if (!cart || cart.items.length === 0) {
+  if (!filteredCart || filteredCart.items.length === 0) {
     return (
       <div className="mx-auto flex max-w-3xl flex-col items-center gap-3 px-4 py-10 text-center">
         <p className="text-lg font-semibold text-zinc-900">{t.cart.empty}</p>
@@ -59,10 +77,10 @@ function CheckoutContent() {
     try {
       const order = await orderApi.create({
         userId: user?.id,
-        currency: cart.currency ?? "USD",
+        currency: filteredCart.currency ?? "USD",
         address,
         paymentMethod: "COD", // Placeholder as no UI for payment method yet
-        items: cart.items.map((item) => ({
+        items: filteredCart.items.map((item) => ({
           productId: item.product.id,
           quantity: item.quantity,
           price: item.unitPrice,
@@ -134,11 +152,11 @@ function CheckoutContent() {
               disabled={submitting}
               className="rounded-lg bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60 shadow-md w-full"
             >
-              {submitting ? t.checkout.processing : `${t.checkout.place_order} - ${formatCurrency(cart.total, cart.currency)}`}
+              {submitting ? t.checkout.processing : `${t.checkout.place_order} - ${formatCurrency(filteredCart.total, filteredCart.currency)}`}
             </button>
         </form>
       </div>
-      <CartSummary cart={cart} actionLabel={t.checkout.place_order} />
+      <CartSummary cart={filteredCart} actionLabel={t.checkout.place_order} />
     </div>
   );
 }

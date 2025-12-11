@@ -64,6 +64,13 @@ const parseItemId = (itemId: string) => {
     return { productId: itemId, variantSku: undefined };
 };
 
+const resolveVariantInfo = (product: Product, variantSku?: string) => {
+  const variant = variantSku ? product.variants?.find((v) => v.sku === variantSku) : undefined;
+  const price = variant?.price ?? product.price ?? 0;
+  const stock = variant?.quantity ?? product.stock;
+  return { price, stock };
+};
+
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, initializing } = useAuth();
   const { addToast } = useToast();
@@ -81,7 +88,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const addItemToLocal = useCallback(
     (product: Product, quantity = 1, variantSku?: string) => {
-      const available = product.stock ?? Number.POSITIVE_INFINITY;
+      const { price: unitPrice, stock } = resolveVariantInfo(product, variantSku);
+      const available = stock ?? Number.POSITIVE_INFINITY;
       if (available <= 0) {
         addToast("Product is out of stock", "error");
         return;
@@ -102,18 +110,24 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const updatedItems = found
         ? existingItems.map((item) =>
             (item.product.id === product.id && item.variantSku === variantSku)
-              ? { ...item, quantity: nextQuantity, subtotal: nextQuantity * item.unitPrice }
+              ? { 
+                  ...item, 
+                  quantity: nextQuantity, 
+                  unitPrice, 
+                  subtotal: nextQuantity * unitPrice,
+                  product: { ...item.product, price: unitPrice },
+                }
               : item,
           )
         : [
             ...existingItems,
             {
               id: itemId,
-              product,
+              product: { ...product, price: unitPrice },
               variantSku,
               quantity: nextQuantity,
-              unitPrice: product.price,
-              subtotal: product.price * nextQuantity,
+              unitPrice,
+              subtotal: unitPrice * nextQuantity,
             },
           ];
       const nextCart = calculateTotals(updatedItems);
@@ -158,7 +172,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setLoading(true);
       try {
-        const available = product.stock ?? Number.POSITIVE_INFINITY;
+        const { price: unitPrice, stock } = resolveVariantInfo(product, variantSku);
+        const available = stock ?? Number.POSITIVE_INFINITY;
         if (available <= 0) {
           addToast("Product is out of stock", "error");
           return;
@@ -168,7 +183,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           productId: product.id,
           variantSku,
           quantity: desired,
-          price: product.price,
+          price: unitPrice,
           currency: product.currency ?? "USD",
           cartId: serverCartId ?? undefined,
         });
@@ -206,14 +221,19 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(true);
       try {
         const currentItem = cart?.items.find((i) => i.id === itemId);
-        const max = currentItem?.product.stock ?? quantity;
+        const { price: unitPrice, stock: variantStock } = currentItem
+          ? resolveVariantInfo(currentItem.product, variantSku ?? currentItem.variantSku)
+          : { price: 0, stock: undefined };
+        const max = variantStock ?? currentItem?.product.stock ?? quantity;
         const clamped = Math.min(Math.max(quantity, 0), max);
         const { productId, variantSku } = parseItemId(itemId);
         
         const serverCart = await cartApi.updateItem({ 
             itemId: productId, 
             variantSku,
-            quantity: clamped 
+            quantity: clamped,
+            price: unitPrice,
+            currency: currentItem?.product.currency ?? cart?.currency ?? "USD",
         });
         setCart(serverCart);
         setServerCartId(serverCart?.id ?? null);
@@ -277,22 +297,67 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // If sku is same, do nothing
       if (item.variantSku === newVariantSku) return;
 
+      const { price: unitPrice, stock } = resolveVariantInfo(item.product, newVariantSku);
+      const targetId = newVariantSku ? `${item.product.id}:${newVariantSku}` : item.product.id;
+
+      if (useLocalCart) {
+        const existingItems = loadLocalCart()?.items ?? [];
+        const filtered = existingItems.filter((i) => i.id !== itemId);
+        const target = filtered.find((i) => i.id === targetId);
+        const available = stock ?? Number.POSITIVE_INFINITY;
+        const desiredQty = Math.min(item.quantity + (target?.quantity ?? 0), available);
+        const updated = target
+          ? filtered.map((i) =>
+              i.id === targetId
+                ? {
+                    ...i,
+                    quantity: desiredQty,
+                    variantSku: newVariantSku,
+                    unitPrice,
+                    subtotal: unitPrice * desiredQty,
+                    product: { ...i.product, price: unitPrice },
+                  }
+                : i,
+            )
+          : [
+              ...filtered,
+              {
+                ...item,
+                id: targetId,
+                variantSku: newVariantSku,
+                quantity: desiredQty,
+                unitPrice,
+                subtotal: unitPrice * desiredQty,
+                product: { ...item.product, price: unitPrice },
+              },
+            ];
+        const nextCart = calculateTotals(updated);
+        setAndPersistLocal(nextCart);
+        return;
+      }
+
       setLoading(true);
       try {
-        // 1. Remove old item
-        await removeItem(itemId);
-
-        // 2. Add new item (with same quantity)
-        // Note: We use addItem internal logic which handles merging if new variant already exists
-        await addItem(item.product, item.quantity, newVariantSku);
+        const { productId } = parseItemId(itemId);
+        const serverCart = await cartApi.updateItem({
+          itemId: productId,
+          variantSku: newVariantSku,
+          quantity: item.quantity,
+          price: unitPrice,
+          currency: item.product.currency ?? cart?.currency ?? "USD",
+        });
+        setCart(serverCart);
+        setServerCartId(serverCart?.id ?? null);
+        addToast("Updated", "success");
       } catch (error) {
         console.error("Failed to change variant", error);
         addToast("Failed to update variant", "error");
+        setServerCartUnavailable(true);
       } finally {
         setLoading(false);
       }
     },
-    [addItem, cart?.items, removeItem, addToast],
+    [addToast, cart, setAndPersistLocal, useLocalCart],
   );
 
   const clearCart = useCallback(async () => {

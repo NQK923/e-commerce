@@ -32,10 +32,11 @@ public class CartApplicationService implements ManageCartUseCase {
     @Override
     public CartDto addItem(AddItemCommand command) {
         Cart cart = getOrCreateCart(command.getCartId());
-        Money money = Money.builder()
-            .amount(parsePrice(command.getPrice()))
-            .currency(Optional.ofNullable(command.getCurrency()).orElse("USD"))
-            .build();
+        Money money = Optional.ofNullable(buildMoneyOrNull(command.getPrice(), command.getCurrency()))
+            .orElse(Money.builder()
+                .amount(parsePrice(command.getPrice()))
+                .currency(Optional.ofNullable(command.getCurrency()).orElse("USD"))
+                .build());
         cart.addItem(CartItem.builder()
             .productId(command.getProductId())
             .variantSku(command.getVariantSku())
@@ -48,12 +49,9 @@ public class CartApplicationService implements ManageCartUseCase {
     @Override
     public CartDto updateItem(UpdateItemCommand command) {
         Cart cart = getOrCreateCart(command.getCartId());
-        Money money = Money.builder()
-            .amount(parsePrice(command.getPrice()))
-            .currency(Optional.ofNullable(command.getCurrency()).orElse("USD"))
-            .build();
+        Money money = buildMoneyOrNull(command.getPrice(), command.getCurrency());
         cart.updateQuantity(command.getProductId(), command.getVariantSku(), command.getQuantity(), money);
-        return saveAndMap(cart, money.getCurrency());
+        return saveAndMap(cart, money != null ? money.getCurrency() : null);
     }
 
     @Override
@@ -93,6 +91,16 @@ public class CartApplicationService implements ManageCartUseCase {
         } catch (NumberFormatException e) {
             return BigDecimal.ZERO;
         }
+    }
+
+    private Money buildMoneyOrNull(String price, String currency) {
+        if (price == null || price.trim().isEmpty()) {
+            return null;
+        }
+        return Money.builder()
+            .amount(parsePrice(price))
+            .currency(Optional.ofNullable(currency).orElse("USD"))
+            .build();
     }
 
     @Override

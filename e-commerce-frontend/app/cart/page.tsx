@@ -10,6 +10,7 @@ import { useToast } from "@/src/components/ui/toast-provider";
 import { useRequireAuth } from "@/src/hooks/use-require-auth";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "@/src/providers/language-provider";
+import { useMemo, useState } from "react";
 
 function CartContent() {
   const { isAuthenticated, initializing } = useRequireAuth();
@@ -17,12 +18,21 @@ function CartContent() {
   const { addToast } = useToast();
   const router = useRouter();
   const { t } = useTranslation();
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!initializing && isAuthenticated) {
       void refreshCart();
     }
   }, [initializing, isAuthenticated, refreshCart]);
+
+  useEffect(() => {
+    if (cart?.items) {
+      setSelectedIds(new Set(cart.items.map((i) => i.id)));
+    } else {
+      setSelectedIds(new Set());
+    }
+  }, [cart?.items]);
 
   const handleUpdateQuantity = async (itemId: string, quantity: number) => {
     try {
@@ -45,15 +55,39 @@ function CartContent() {
 
   const handleVariantChange = async (itemId: string, newVariantSku: string) => {
     try {
-        await changeVariant(itemId, newVariantSku);
-        addToast("Cập nhật phân loại thành công", "success");
+      await changeVariant(itemId, newVariantSku);
+      addToast("Variant updated", "success");
     } catch (error) {
         const message = error instanceof Error ? error.message : t.common.error;
         addToast(message, "error");
     }
   };
 
-  if (initializing || loading) {
+  const toggleSelect = (itemId: string, next: boolean) => {
+    setSelectedIds((prev) => {
+      const copy = new Set(prev);
+      if (next) {
+        copy.add(itemId);
+      } else {
+        copy.delete(itemId);
+      }
+      return copy;
+    });
+  };
+
+  const selectedCart = useMemo(() => {
+    if (!cart) return cart;
+    const items = cart.items.filter((i) => selectedIds.has(i.id));
+    const subtotal = items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0);
+    const discount = cart.discountTotal ?? 0;
+    const shipping = cart.shippingEstimate ?? 0;
+    const total = subtotal + shipping - discount;
+    return { ...cart, items, subtotal, total };
+  }, [cart, selectedIds]);
+
+  const hasSelection = selectedIds.size > 0;
+
+  if (initializing || (loading && !cart)) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center gap-3 text-sm text-zinc-600">
         <Spinner />
@@ -87,6 +121,9 @@ function CartContent() {
             <CartItemCard
               key={item.id}
               item={item}
+              selectable
+              selected={selectedIds.has(item.id)}
+              onSelectChange={(next) => toggleSelect(item.id, next)}
               onQuantityChange={(q) => handleUpdateQuantity(item.id, q)}
               onRemove={() => handleRemoveItem(item.id)}
               onVariantChange={(newSku) => handleVariantChange(item.id, newSku)}
@@ -94,7 +131,12 @@ function CartContent() {
           ))}
         </div>
         <div>
-          <CartSummary cart={cart} onCheckout={() => router.push("/checkout")} />
+          <CartSummary
+            cart={selectedCart ?? cart}
+            onCheckout={() => hasSelection && router.push(`/checkout?selected=${encodeURIComponent(Array.from(selectedIds).join(","))}`)}
+            disableAction={!hasSelection}
+            actionLabel={t.cart.proceed_checkout}
+          />
         </div>
       </div>
     </div>

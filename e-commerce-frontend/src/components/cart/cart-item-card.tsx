@@ -10,15 +10,19 @@ import { Button } from "../ui/button";
 import { QuantitySelector } from "./quantity-selector";
 import { useTranslation } from "../../providers/language-provider";
 import { ChevronDown } from "lucide-react";
+import { Checkbox } from "../ui/checkbox";
 
 type Props = {
   item: CartItem;
   onQuantityChange: (quantity: number) => void;
   onRemove: () => void;
   onVariantChange?: (newSku: string) => void;
+  selectable?: boolean;
+  selected?: boolean;
+  onSelectChange?: (next: boolean) => void;
 };
 
-export const CartItemCard: React.FC<Props> = ({ item, onQuantityChange, onRemove, onVariantChange }) => {
+export const CartItemCard: React.FC<Props> = ({ item, onQuantityChange, onRemove, onVariantChange, selectable, selected, onSelectChange }) => {
   const { t } = useTranslation();
   const image = item.product.images.find((img) => img.primary) ?? item.product.images[0];
   const maxQty = item.product.stock ?? 99;
@@ -37,12 +41,21 @@ export const CartItemCard: React.FC<Props> = ({ item, onQuantityChange, onRemove
   return (
     <div className="flex flex-col sm:flex-row gap-4 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
       {/* Image */}
-      <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-zinc-100 border border-zinc-100">
-        {image ? (
-          <Image src={image.url} alt={image.altText ?? item.product.name} fill className="object-cover" sizes="100px" />
-        ) : (
-          <div className="flex h-full items-center justify-center text-xs text-zinc-500">No image</div>
+      <div className="flex items-start gap-3">
+        {selectable && (
+          <Checkbox
+            checked={selected}
+            onCheckedChange={(v) => onSelectChange?.(!!v)}
+            className="mt-1"
+          />
         )}
+        <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-zinc-100 border border-zinc-100">
+          {image ? (
+            <Image src={image.url} alt={image.altText ?? item.product.name} fill className="object-cover" sizes="100px" />
+          ) : (
+            <div className="flex h-full items-center justify-center text-xs text-zinc-500">No image</div>
+          )}
+        </div>
       </div>
 
       {/* Content */}

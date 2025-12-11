@@ -57,7 +57,8 @@ const toCart = (payload: CartResponse | unknown): Cart => {
   const discount = parseNumber(data?.discountTotal, 0);
   const shipping = parseNumber(data?.shippingEstimate, 0);
   const currency = data?.currency ?? items[0]?.product.currency ?? "USD";
-  const totalFromServer = parseNumber(data?.total, subtotal + shipping - discount);
+  const totalFromServer = parseNumber(data?.total, Number.NaN);
+  const calculatedTotal = subtotal + shipping - discount;
 
   return {
     id: data?.id ?? "local",
@@ -65,7 +66,7 @@ const toCart = (payload: CartResponse | unknown): Cart => {
     subtotal,
     discountTotal: discount,
     shippingEstimate: shipping,
-    total: totalFromServer || subtotal + shipping - discount,
+    total: Number.isFinite(totalFromServer) ? totalFromServer : calculatedTotal,
     currency,
   };
 };
@@ -154,7 +155,9 @@ export const cartApi = {
           method: "PATCH",
           body: { 
             quantity: payload.quantity,
-            variantSku: payload.variantSku 
+            variantSku: payload.variantSku,
+            price: payload.price?.toString(),
+            currency: payload.currency,
           },
         }) as CartResponse,
       ),

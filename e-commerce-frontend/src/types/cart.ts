@@ -32,4 +32,6 @@ export type UpdateCartItemRequest = {
   itemId: string;
   quantity: number;
   variantSku?: string;
+  price?: number;
+  currency?: string;
 };

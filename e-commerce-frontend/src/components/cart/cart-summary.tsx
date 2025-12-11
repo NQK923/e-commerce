@@ -10,9 +10,10 @@ type Props = {
   cart: Cart;
   onCheckout?: () => void;
   actionLabel?: string;
+  disableAction?: boolean;
 };
 
-export const CartSummary: React.FC<Props> = ({ cart, onCheckout, actionLabel }) => {
+export const CartSummary: React.FC<Props> = ({ cart, onCheckout, actionLabel, disableAction }) => {
   const { t } = useTranslation();
   const label = actionLabel || t.cart.proceed_checkout;
 
@@ -42,7 +43,11 @@ export const CartSummary: React.FC<Props> = ({ cart, onCheckout, actionLabel }) 
         </div>
       </dl>
       {onCheckout && (
-        <Button className="mt-4 w-full bg-emerald-600 hover:bg-emerald-700" onClick={onCheckout}>
+        <Button
+          className="mt-4 w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60"
+          onClick={onCheckout}
+          disabled={disableAction}
+        >
           {label}
         </Button>
       )}
