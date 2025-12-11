@@ -40,13 +40,13 @@ public class ChatRestController {
     }
 
     @GetMapping("/conversations/{conversationId}/messages")
-    public List<ChatMessageDto> listMessages(@PathVariable String conversationId,
+    public List<ChatMessageDto> listMessages(@PathVariable("conversationId") String conversationId,
                                              @RequestParam(defaultValue = "50") @Min(1) @Max(200) int limit) {
         return getMessagesUseCase.listMessages(conversationId, limit);
     }
 
     @PostMapping("/conversations/{conversationId}/read")
-    public ResponseEntity<Void> markRead(@PathVariable String conversationId,
+    public ResponseEntity<Void> markRead(@PathVariable("conversationId") String conversationId,
                                          Principal principal,
                                          @RequestHeader(value = "Authorization", required = false) String authorization) {
         String userId = requireUser(principal, authorization);

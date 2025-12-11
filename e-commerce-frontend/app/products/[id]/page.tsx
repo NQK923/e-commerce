@@ -15,7 +15,6 @@ import { ProductReviews } from "@/src/components/product/product-reviews";
 import { Button } from "@/src/components/ui/button";
 import { Badge } from "@/src/components/ui/badge";
 import { Spinner } from "@/src/components/ui/spinner";
-import { Card } from "@/src/components/ui/card";
 import { useCart } from "@/src/store/cart-store";
 import { useAuth } from "@/src/store/auth-store";
 import { useToast } from "@/src/components/ui/toast-provider";

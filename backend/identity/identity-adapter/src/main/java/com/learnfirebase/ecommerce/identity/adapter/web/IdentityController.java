@@ -119,7 +119,7 @@ public class IdentityController {
     @DeleteMapping("/me/addresses/{addressId}")
     public ResponseEntity<Void> deleteAddress(
             @RequestHeader(name = "Authorization", required = false) String authorization,
-            @PathVariable String addressId) {
+            @PathVariable("addressId") String addressId) {
         String email = extractEmailFromAccessToken(authorization);
         if (email == null) {
             return ResponseEntity.status(401).build();

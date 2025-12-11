@@ -1,7 +1,9 @@
 package com.learnfirebase.ecommerce.cart.domain.model;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import com.learnfirebase.ecommerce.common.domain.AggregateRoot;
@@ -70,6 +72,33 @@ public class Cart extends AggregateRoot<CartId> {
 
     public void merge(List<CartItem> incoming) {
         incoming.forEach(this::addItem);
+    }
+
+    /**
+     * Collapse duplicate items (same product + variant) into a single entry to avoid PK conflicts.
+     */
+    public void deduplicateItems() {
+        if (items == null || items.isEmpty()) {
+            return;
+        }
+        Map<String, CartItem> merged = new LinkedHashMap<>();
+        for (CartItem item : items) {
+            if (item == null || item.getProductId() == null) {
+                continue;
+            }
+            String key = item.getProductId() + "|" + (item.getVariantSku() == null ? "" : item.getVariantSku());
+            CartItem existing = merged.get(key);
+            if (existing == null) {
+                merged.put(key, item);
+            } else {
+                existing.setQuantity(existing.getQuantity() + item.getQuantity());
+                if (item.getPrice() != null) {
+                    existing.setPrice(item.getPrice());
+                }
+            }
+        }
+        items.clear();
+        items.addAll(merged.values());
     }
 
     public Money total(String currency) {

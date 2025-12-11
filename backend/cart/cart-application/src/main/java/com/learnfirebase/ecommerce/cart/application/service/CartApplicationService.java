@@ -115,6 +115,7 @@ public class CartApplicationService implements ManageCartUseCase {
     }
 
     private CartDto saveAndMap(Cart cart, String currencyHint) {
+        cart.deduplicateItems();
         String currency = resolveCurrency(cart, currencyHint);
         normalizeCurrency(cart, currency);
         Cart saved = cartRepository.save(cart);

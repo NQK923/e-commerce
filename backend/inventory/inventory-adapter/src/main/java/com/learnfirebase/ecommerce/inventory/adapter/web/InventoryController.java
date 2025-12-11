@@ -18,7 +18,7 @@ public class InventoryController {
     private final QueryInventoryUseCase queryInventoryUseCase;
 
     @GetMapping("/product/{productId}")
-    public ResponseEntity<InventoryDto> getByProductId(@PathVariable String productId) {
+    public ResponseEntity<InventoryDto> getByProductId(@PathVariable("productId") String productId) {
         return ResponseEntity.ok(queryInventoryUseCase.getInventoryByProductId(productId));
     }
 }

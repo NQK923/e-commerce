@@ -42,7 +42,7 @@ public class OrderController {
     }
 
     @GetMapping("/{orderId}")
-    public ResponseEntity<OrderDto> getOrder(@PathVariable String orderId) {
+    public ResponseEntity<OrderDto> getOrder(@PathVariable("orderId") String orderId) {
         return ResponseEntity.ok(getOrderUseCase.getOrder(orderId));
     }
 
@@ -52,7 +52,7 @@ public class OrderController {
     }
 
     @PostMapping("/{orderId}/pay")
-    public ResponseEntity<OrderDto> pay(@PathVariable String orderId, @RequestBody PayOrderCommand command) {
+    public ResponseEntity<OrderDto> pay(@PathVariable("orderId") String orderId, @RequestBody PayOrderCommand command) {
         PayOrderCommand enriched = PayOrderCommand.builder()
             .orderId(orderId)
             .paymentReference(command.getPaymentReference())
@@ -61,7 +61,7 @@ public class OrderController {
     }
 
     @PostMapping("/{orderId}/cancel")
-    public ResponseEntity<OrderDto> cancel(@PathVariable String orderId, @RequestBody CancelOrderCommand command) {
+    public ResponseEntity<OrderDto> cancel(@PathVariable("orderId") String orderId, @RequestBody CancelOrderCommand command) {
         CancelOrderCommand enriched = CancelOrderCommand.builder()
             .orderId(orderId)
             .reason(command.getReason())
