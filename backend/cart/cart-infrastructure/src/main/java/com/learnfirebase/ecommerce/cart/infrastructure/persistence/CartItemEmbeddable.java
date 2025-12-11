@@ -15,6 +15,8 @@ import lombok.NoArgsConstructor;
 public class CartItemEmbeddable {
     @Column(name = "product_id")
     private String productId;
+    @Column(name = "variant_sku")
+    private String variantSku;
     private int quantity;
     private String price;
     private String currency;

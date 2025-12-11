@@ -10,7 +10,7 @@ import {useToast} from "../components/ui/toast-provider";
 type CartContextValue = {
   cart: Cart | null;
   loading: boolean;
-  addItem: (product: Product, quantity?: number) => Promise<void>;
+  addItem: (product: Product, quantity?: number, variantSku?: string) => Promise<void>;
   updateQuantity: (itemId: string, quantity: number) => Promise<void>;
   removeItem: (itemId: string) => Promise<void>;
   refreshCart: () => Promise<void>;
@@ -54,6 +54,15 @@ const persistLocalCart = (cart: Cart | null) => {
   }
 };
 
+const parseItemId = (itemId: string) => {
+    if (!itemId) return { productId: "", variantSku: undefined };
+    const parts = itemId.split(":");
+    if (parts.length > 1) {
+        return { productId: parts[0], variantSku: parts[1] };
+    }
+    return { productId: itemId, variantSku: undefined };
+};
+
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, initializing } = useAuth();
   const { addToast } = useToast();
@@ -70,14 +79,14 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const addItemToLocal = useCallback(
-    (product: Product, quantity = 1) => {
+    (product: Product, quantity = 1, variantSku?: string) => {
       const available = product.stock ?? Number.POSITIVE_INFINITY;
       if (available <= 0) {
         addToast("Product is out of stock", "error");
         return;
       }
       const existingItems = loadLocalCart()?.items ?? [];
-      const found = existingItems.find((item) => item.product.id === product.id);
+      const found = existingItems.find((item) => item.product.id === product.id && item.variantSku === variantSku);
       const nextQuantity = Math.min(
         available,
         found ? found.quantity + quantity : quantity,
@@ -86,17 +95,21 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         addToast("Quantity is not valid", "error");
         return;
       }
+      
+      const itemId = variantSku ? `${product.id}:${variantSku}` : product.id;
+
       const updatedItems = found
         ? existingItems.map((item) =>
-            item.product.id === product.id
+            (item.product.id === product.id && item.variantSku === variantSku)
               ? { ...item, quantity: nextQuantity, subtotal: nextQuantity * item.unitPrice }
               : item,
           )
         : [
             ...existingItems,
             {
-              id: product.id,
+              id: itemId,
               product,
+              variantSku,
               quantity: nextQuantity,
               unitPrice: product.price,
               subtotal: product.price * nextQuantity,
@@ -136,9 +149,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [serverCartUnavailable, user]);
 
   const addItem = useCallback(
-    async (product: Product, quantity = 1) => {
+    async (product: Product, quantity = 1, variantSku?: string) => {
       if (useLocalCart) {
-        addItemToLocal(product, quantity);
+        addItemToLocal(product, quantity, variantSku);
         return;
       }
 
@@ -152,6 +165,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const desired = Math.min(quantity, available);
         const serverCart = await cartApi.addItem({
           productId: product.id,
+          variantSku,
           quantity: desired,
           price: product.price,
           currency: product.currency ?? "USD",
@@ -163,7 +177,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error("Failed to add item to server cart, using local cart instead", error);
         setServerCartUnavailable(true);
         setServerCartId(null);
-        addItemToLocal(product, quantity);
+        addItemToLocal(product, quantity, variantSku);
       } finally {
         setLoading(false);
       }
@@ -193,7 +207,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const currentItem = cart?.items.find((i) => i.id === itemId);
         const max = currentItem?.product.stock ?? quantity;
         const clamped = Math.min(Math.max(quantity, 0), max);
-        const serverCart = await cartApi.updateItem({ itemId, quantity: clamped });
+        const { productId, variantSku } = parseItemId(itemId);
+        
+        const serverCart = await cartApi.updateItem({ 
+            itemId: productId, 
+            variantSku,
+            quantity: clamped 
+        });
         setCart(serverCart);
         setServerCartId(serverCart?.id ?? null);
       } catch (error) {
@@ -214,7 +234,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setLoading(false);
       }
     },
-    [setAndPersistLocal, useLocalCart],
+    [cart?.items, setAndPersistLocal, useLocalCart],
   );
 
   const removeItem = useCallback(
@@ -229,7 +249,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setLoading(true);
       try {
-        const serverCart = await cartApi.removeItem(itemId);
+        const { productId, variantSku } = parseItemId(itemId);
+        const serverCart = await cartApi.removeItem(productId, variantSku);
         setCart(serverCart);
         setServerCartId(serverCart?.id ?? null);
       } catch (error) {
@@ -287,6 +308,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (local?.items?.length) {
         const items: AddToCartRequest[] = local.items.map((item) => ({
           productId: item.product.id,
+          variantSku: item.variantSku,
           quantity: item.quantity,
           price: item.unitPrice,
           currency: item.product.currency ?? "USD",

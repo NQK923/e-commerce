@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 public class UpdateItemCommand {
     String cartId;
     String productId;
+    String variantSku;
     int quantity;
     String price;
     String currency;

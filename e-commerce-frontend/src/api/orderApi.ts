@@ -59,4 +59,5 @@ export const orderApi = {
     );
   },
   get: (id: string) => apiRequest<BackendOrder>(`/api/orders/${id}`).then(mapOrder),
+  create: (data: any) => apiRequest<BackendOrder>("/api/orders", { method: "POST", body: data }).then(mapOrder),
 };

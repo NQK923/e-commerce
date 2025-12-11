@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.learnfirebase.ecommerce.cart.application.command.AddItemCommand;
@@ -43,6 +44,7 @@ public class CartController {
         AddItemCommand effective = AddItemCommand.builder()
             .cartId(cartId)
             .productId(command.getProductId())
+            .variantSku(command.getVariantSku())
             .quantity(command.getQuantity())
             .price(command.getPrice())
             .currency(command.getCurrency())
@@ -57,6 +59,7 @@ public class CartController {
         UpdateItemCommand effective = UpdateItemCommand.builder()
             .cartId(cartId)
             .productId(productId)
+            .variantSku(command.getVariantSku())
             .quantity(command.getQuantity())
             .price(command.getPrice())
             .currency(command.getCurrency())
@@ -66,11 +69,13 @@ public class CartController {
 
     @DeleteMapping("/items/{productId}")
     public ResponseEntity<CartDto> removeItem(@PathVariable("productId") String productId,
+        @RequestParam(required = false) String variantSku,
         @RequestHeader(name = "Authorization", required = false) String authorization) {
         String cartId = extractUserId(authorization);
         RemoveItemCommand command = RemoveItemCommand.builder()
             .cartId(cartId)
             .productId(productId)
+            .variantSku(variantSku)
             .build();
         return ResponseEntity.ok(manageCartUseCase.removeItem(command));
     }

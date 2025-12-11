@@ -3,6 +3,7 @@ import { Product } from "./product";
 export type CartItem = {
   id: string;
   product: Product;
+  variantSku?: string;
   quantity: number;
   unitPrice: number;
   subtotal: number;
@@ -20,6 +21,7 @@ export type Cart = {
 
 export type AddToCartRequest = {
   productId: string;
+  variantSku?: string;
   quantity: number;
   price?: number;
   currency?: string;
@@ -29,4 +31,5 @@ export type AddToCartRequest = {
 export type UpdateCartItemRequest = {
   itemId: string;
   quantity: number;
+  variantSku?: string;
 };

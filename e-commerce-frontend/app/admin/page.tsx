@@ -57,7 +57,7 @@ function AdminContent() {
             adminApi.users().catch(() => []),
             productApi.list({ page: 0, size: 5, includeOutOfStock: true }).catch(() => ({ items: [] })),
             sellerApi.listApplications().catch(() => []),
-            orderApi.list(0, 100).catch(() => ({ items: [], total: 0 }))
+            orderApi.list({ page: 0, size: 100 }).catch(() => ({ items: [], total: 0 }))
         ]);
 
         setUsers(usersData.map(u => ({ ...u, status: "active", lastActive: "recently", orders: 0 })));

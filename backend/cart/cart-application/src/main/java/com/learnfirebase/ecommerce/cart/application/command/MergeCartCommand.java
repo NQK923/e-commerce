@@ -23,6 +23,7 @@ public class MergeCartCommand {
     @AllArgsConstructor
     public static class MergeItem {
         String productId;
+        String variantSku;
         int quantity;
         String price;
         String currency;

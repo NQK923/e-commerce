@@ -24,7 +24,7 @@ export default function OrderDetailPage() {
     if (!orderId) return;
     setLoading(true);
     try {
-      const response = await orderApi.detail(orderId);
+      const response = await orderApi.get(orderId);
       setOrder(response);
       setError(null);
     } catch (err) {

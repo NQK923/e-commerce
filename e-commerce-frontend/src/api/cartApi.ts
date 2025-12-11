@@ -16,6 +16,7 @@ type CartResponse = {
   id?: string;
   items?: Array<{
     productId: string;
+    variantSku?: string;
     quantity: number;
     price?: string;
     currency?: string;
@@ -44,7 +45,8 @@ const toCart = (payload: CartResponse | unknown): Cart => {
       const unitPrice = parseNumber(item.price, 0);
       const quantity = item.quantity ?? 0;
       return {
-        id: item.productId,
+        id: item.variantSku ? `${item.productId}:${item.variantSku}` : item.productId,
+        variantSku: item.variantSku,
         product: toProduct(item.productId, unitPrice, item.currency),
         quantity,
         unitPrice,
@@ -75,8 +77,17 @@ const enrichCartProducts = async (cart: Cart): Promise<Cart> => {
     cart.items.map(async (item) => {
       try {
         const detail = await productApi.detail(item.product.id);
-        const price = Number.isFinite(detail.price) ? detail.price : item.unitPrice ?? 0;
-        const stock = detail.stock ?? item.product.stock;
+        let price = Number.isFinite(detail.price) ? detail.price : item.unitPrice ?? 0;
+        let stock = detail.stock ?? item.product.stock;
+        
+        if (item.variantSku && detail.variants) {
+             const variant = detail.variants.find(v => v.sku === item.variantSku);
+             if (variant) {
+                 price = variant.price;
+                 stock = variant.quantity;
+             }
+        }
+
         const quantity = clampQuantity(item.quantity, stock);
         if (quantity <= 0) return null;
         return {
@@ -127,6 +138,7 @@ export const cartApi = {
           method: "POST",
           body: {
             productId: payload.productId,
+            variantSku: payload.variantSku,
             quantity: payload.quantity,
             price: payload.price?.toString(),
             currency: payload.currency,
@@ -140,12 +152,15 @@ export const cartApi = {
       toCart(
         await apiRequest(`/api/carts/items/${payload.itemId}`, {
           method: "PATCH",
-          body: { quantity: payload.quantity },
+          body: { 
+            quantity: payload.quantity,
+            variantSku: payload.variantSku 
+          },
         }) as CartResponse,
       ),
     ),
-  removeItem: async (itemId: string) =>
-    enrichCartProducts(toCart(await apiRequest(`/api/carts/items/${itemId}`, { method: "DELETE" }) as CartResponse)),
+  removeItem: async (itemId: string, variantSku?: string) =>
+    enrichCartProducts(toCart(await apiRequest(`/api/carts/items/${itemId}${variantSku ? `?variantSku=${variantSku}` : ''}`, { method: "DELETE" }) as CartResponse)),
   merge: async (items: AddToCartRequest[]) =>
     enrichCartProducts(
       toCart(
@@ -154,6 +169,7 @@ export const cartApi = {
           body: {
             items: items.map((item) => ({
               productId: item.productId,
+              variantSku: item.variantSku,
               quantity: item.quantity,
               price: item.price?.toString(),
               currency: item.currency,

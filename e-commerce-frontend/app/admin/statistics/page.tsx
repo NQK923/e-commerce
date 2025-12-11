@@ -32,7 +32,7 @@ export default function StatisticsPage() {
     const fetchData = async () => {
       try {
         const [ordersRes, productsRes] = await Promise.all([
-          orderApi.list(0, 100).catch(() => ({ items: [] })),
+          orderApi.list({ page: 0, size: 100 }).catch(() => ({ items: [] })),
           productApi.list({ size: 100, includeOutOfStock: true }).catch(() => ({ items: [] }))
         ]);
 

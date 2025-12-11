@@ -2,6 +2,7 @@ package com.learnfirebase.ecommerce.cart.domain.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import com.learnfirebase.ecommerce.common.domain.AggregateRoot;
 import com.learnfirebase.ecommerce.common.domain.valueobject.Money;
@@ -24,15 +25,17 @@ public class Cart extends AggregateRoot<CartId> {
 
     public void addItem(CartItem item) {
         this.items.stream()
-            .filter(existing -> existing.getProductId().equals(item.getProductId()))
+            .filter(existing -> existing.getProductId().equals(item.getProductId()) 
+                && Objects.equals(existing.getVariantSku(), item.getVariantSku()))
             .findFirst()
             .ifPresentOrElse(existing -> existing.setQuantity(existing.getQuantity() + item.getQuantity()), () -> this.items.add(item));
     }
 
-    public void updateQuantity(String productId, int quantity, Money price) {
-        this.items.removeIf(i -> i.getProductId().equals(productId) && quantity <= 0);
+    public void updateQuantity(String productId, String variantSku, int quantity, Money price) {
+        this.items.removeIf(i -> i.getProductId().equals(productId) 
+            && Objects.equals(i.getVariantSku(), variantSku) && quantity <= 0);
         this.items.stream()
-            .filter(i -> i.getProductId().equals(productId))
+            .filter(i -> i.getProductId().equals(productId) && Objects.equals(i.getVariantSku(), variantSku))
             .findFirst()
             .ifPresentOrElse(
                 i -> {
@@ -47,13 +50,18 @@ public class Cart extends AggregateRoot<CartId> {
                 },
                 () -> {
                     if (quantity > 0) {
-                        this.items.add(CartItem.builder().productId(productId).quantity(quantity).price(price).build());
+                        this.items.add(CartItem.builder()
+                            .productId(productId)
+                            .variantSku(variantSku)
+                            .quantity(quantity)
+                            .price(price)
+                            .build());
                     }
                 });
     }
 
-    public void removeItem(String productId) {
-        this.items.removeIf(item -> item.getProductId().equals(productId));
+    public void removeItem(String productId, String variantSku) {
+        this.items.removeIf(item -> item.getProductId().equals(productId) && Objects.equals(item.getVariantSku(), variantSku));
     }
 
     public void clear() {

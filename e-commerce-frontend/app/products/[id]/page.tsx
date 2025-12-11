@@ -163,8 +163,11 @@ export default function ProductDetailPage() {
     const available = displayProduct.stock ?? quantity;
     const clamped = Math.min(Math.max(quantity, 1), available);
     
-    // Note: Backend cart update needed for full variant support. Using base logic for now.
-    await addItem(displayProduct, clamped);
+    const variantSku = selectedVariantIndex !== null && product?.variants && product.variants[selectedVariantIndex]
+        ? product.variants[selectedVariantIndex].sku
+        : undefined;
+
+    await addItem(displayProduct, clamped, variantSku);
     addToast(`${displayProduct.name} ${t.product.added_to_cart}`, "success");
   };
 

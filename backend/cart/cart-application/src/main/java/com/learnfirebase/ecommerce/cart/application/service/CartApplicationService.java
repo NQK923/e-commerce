@@ -38,6 +38,7 @@ public class CartApplicationService implements ManageCartUseCase {
             .build();
         cart.addItem(CartItem.builder()
             .productId(command.getProductId())
+            .variantSku(command.getVariantSku())
             .quantity(command.getQuantity())
             .price(money)
             .build());
@@ -51,14 +52,14 @@ public class CartApplicationService implements ManageCartUseCase {
             .amount(new BigDecimal(Optional.ofNullable(command.getPrice()).orElse("0")))
             .currency(Optional.ofNullable(command.getCurrency()).orElse("USD"))
             .build();
-        cart.updateQuantity(command.getProductId(), command.getQuantity(), money);
+        cart.updateQuantity(command.getProductId(), command.getVariantSku(), command.getQuantity(), money);
         return saveAndMap(cart, money.getCurrency());
     }
 
     @Override
     public CartDto removeItem(RemoveItemCommand command) {
         Cart cart = getOrCreateCart(command.getCartId());
-        cart.removeItem(command.getProductId());
+        cart.removeItem(command.getProductId(), command.getVariantSku());
         return saveAndMap(cart, null);
     }
 
@@ -69,6 +70,7 @@ public class CartApplicationService implements ManageCartUseCase {
             ? command.getItems().stream()
                 .map(item -> CartItem.builder()
                     .productId(item.getProductId())
+                    .variantSku(item.getVariantSku())
                     .quantity(item.getQuantity())
                     .price(Money.builder()
                         .amount(new BigDecimal(Optional.ofNullable(item.getPrice()).orElse("0")))
@@ -130,6 +132,7 @@ public class CartApplicationService implements ManageCartUseCase {
             .items(cart.getItems().stream()
                 .map(item -> CartDto.CartItemDto.builder()
                     .productId(item.getProductId())
+                    .variantSku(item.getVariantSku())
                     .quantity(item.getQuantity())
                     .price(item.getPrice().getAmount().toPlainString())
                     .currency(item.getPrice().getCurrency())

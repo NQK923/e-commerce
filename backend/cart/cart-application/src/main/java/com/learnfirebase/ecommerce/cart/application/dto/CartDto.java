@@ -22,6 +22,7 @@ public class CartDto {
     @Builder
     public static class CartItemDto {
         String productId;
+        String variantSku;
         int quantity;
         String price;
         String currency;

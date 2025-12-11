@@ -19,7 +19,7 @@ function OrdersContent() {
   const loadOrders = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await orderApi.list(0, 20);
+      const response = await orderApi.list({ page: 0, size: 20 });
       setOrders(response.items);
       setError(null);
     } catch (err) {

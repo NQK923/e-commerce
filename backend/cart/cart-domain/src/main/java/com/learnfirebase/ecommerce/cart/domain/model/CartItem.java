@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CartItem {
     private String productId;
+    private String variantSku;
     private int quantity;
     private Money price;
 
