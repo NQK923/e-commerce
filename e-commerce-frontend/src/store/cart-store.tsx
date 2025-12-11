@@ -255,7 +255,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setLoading(false);
       }
     },
-    [cart?.items, setAndPersistLocal, useLocalCart],
+    [cart, setAndPersistLocal, useLocalCart],
   );
 
   const removeItem = useCallback(
@@ -338,17 +338,20 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setLoading(true);
       try {
-        const { productId } = parseItemId(itemId);
-        const serverCart = await cartApi.updateItem({
-          itemId: productId,
+        const { productId, variantSku: oldVariantSku } = parseItemId(itemId);
+        // remove old variant then add new to avoid duplicates
+        await cartApi.removeItem(productId, oldVariantSku);
+        const serverCart = await cartApi.addItem({
+          productId,
           variantSku: newVariantSku,
           quantity: item.quantity,
           price: unitPrice,
           currency: item.product.currency ?? cart?.currency ?? "USD",
+          cartId: serverCartId ?? undefined,
         });
         setCart(serverCart);
         setServerCartId(serverCart?.id ?? null);
-        addToast("Updated", "success");
+        addToast("Variant updated", "success");
       } catch (error) {
         console.error("Failed to change variant", error);
         addToast("Failed to update variant", "error");
@@ -357,7 +360,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setLoading(false);
       }
     },
-    [addToast, cart, setAndPersistLocal, useLocalCart],
+    [addToast, cart, serverCartId, setAndPersistLocal, useLocalCart],
   );
 
   const clearCart = useCallback(async () => {

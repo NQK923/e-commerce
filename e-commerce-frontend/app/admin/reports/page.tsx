@@ -45,6 +45,7 @@ function ReportsContent() {
         r.id === id ? { ...r, status: action === 'resolve' ? 'RESOLVED' : 'REJECTED' } : r
       ));
     } catch (error) {
+      console.error(`Failed to ${action} report`, error);
       addToast(`Failed to ${action} report`, 'error');
     }
   };

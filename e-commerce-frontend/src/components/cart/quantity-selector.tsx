@@ -17,10 +17,6 @@ export const QuantitySelector: React.FC<Props> = ({ quantity, onChange, min = 1,
     onChange(next);
   };
 
-  const btnSize = size === "sm" ? "icon-sm" : "sm"; // Assuming "icon-sm" logic or just reusing "sm" if button supports it. 
-  // Wait, button sizes are likely "default", "sm", "lg", "icon". 
-  // Let's just pass "sm" to Button if size is "sm".
-  
   return (
     <div className={`flex items-center ${size === "sm" ? "gap-1" : "gap-2"}`}>
       <Button variant="secondary" size="sm" className={size === "sm" ? "h-7 w-7 p-0" : ""} onClick={() => handleChange(quantity - 1)} disabled={quantity <= min}>

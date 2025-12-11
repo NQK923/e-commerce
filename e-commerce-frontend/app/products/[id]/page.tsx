@@ -1,6 +1,6 @@
 'use client';
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { 
@@ -81,7 +81,6 @@ const ProductCardSimple = ({ product }: { product: Product }) => {
 
 export default function ProductDetailPage() {
   const params = useParams<{ id: string }>();
-  const router = useRouter();
   const productId = params?.id;
   const { addItem } = useCart();
   const { user } = useAuth();

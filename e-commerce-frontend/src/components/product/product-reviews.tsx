@@ -57,6 +57,7 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
       setShowForm(false);
       fetchReviews(); // Reload
     } catch (error) {
+      console.error("Failed to submit review", error)
       addToast("Không thể gửi đánh giá. Bạn có thể đã đánh giá sản phẩm này rồi.", "error");
     } finally {
       setSubmitting(false);

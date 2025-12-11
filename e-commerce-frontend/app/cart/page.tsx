@@ -10,7 +10,44 @@ import { useToast } from "@/src/components/ui/toast-provider";
 import { useRequireAuth } from "@/src/hooks/use-require-auth";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "@/src/providers/language-provider";
-import { useMemo, useState } from "react";
+import { useMemo, useReducer } from "react";
+import { Cart } from "@/src/types/cart";
+
+type SelectionAction =
+  | { type: "sync"; items: Cart["items"] | undefined }
+  | { type: "toggle"; id: string; value: boolean };
+
+const selectionReducer = (state: Set<string>, action: SelectionAction) => {
+  switch (action.type) {
+    case "sync": {
+      const incoming = new Set((action.items ?? []).map((i) => i.id));
+      const next = new Set<string>();
+      incoming.forEach((id) => next.add(id)); // auto-select new/remaining items
+      // retain only items that still exist
+      let changed = next.size !== state.size;
+      if (!changed) {
+        for (const id of state) {
+          if (!next.has(id)) {
+            changed = true;
+            break;
+          }
+        }
+      }
+      return changed ? next : state;
+    }
+    case "toggle": {
+      const next = new Set(state);
+      if (action.value) {
+        next.add(action.id);
+      } else {
+        next.delete(action.id);
+      }
+      return next;
+    }
+    default:
+      return state;
+  }
+};
 
 function CartContent() {
   const { isAuthenticated, initializing } = useRequireAuth();
@@ -18,7 +55,7 @@ function CartContent() {
   const { addToast } = useToast();
   const router = useRouter();
   const { t } = useTranslation();
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [selectedIds, dispatchSelection] = useReducer(selectionReducer, new Set<string>());
 
   useEffect(() => {
     if (!initializing && isAuthenticated) {
@@ -27,11 +64,7 @@ function CartContent() {
   }, [initializing, isAuthenticated, refreshCart]);
 
   useEffect(() => {
-    if (cart?.items) {
-      setSelectedIds(new Set(cart.items.map((i) => i.id)));
-    } else {
-      setSelectedIds(new Set());
-    }
+    dispatchSelection({ type: "sync", items: cart?.items });
   }, [cart?.items]);
 
   const handleUpdateQuantity = async (itemId: string, quantity: number) => {
@@ -64,15 +97,7 @@ function CartContent() {
   };
 
   const toggleSelect = (itemId: string, next: boolean) => {
-    setSelectedIds((prev) => {
-      const copy = new Set(prev);
-      if (next) {
-        copy.add(itemId);
-      } else {
-        copy.delete(itemId);
-      }
-      return copy;
-    });
+    dispatchSelection({ type: "toggle", id: itemId, value: next });
   };
 
   const selectedCart = useMemo(() => {

@@ -3,7 +3,6 @@
 import Image from "next/image";
 import React, { useMemo, useState } from "react";
 import { ProductImage } from "../../types/product";
-import { Badge } from "../ui/badge";
 import { cx } from "../../utils/cx";
 
 type Props = {

@@ -31,15 +31,12 @@ function SellerDashboardContent() {
   const router = useRouter();
   const [products, setProducts] = React.useState<Product[]>([]);
   const [orders, setOrders] = React.useState<Order[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [actionProductId, setActionProductId] = React.useState<string | null>(null);
   const { addToast } = useToast();
 
   React.useEffect(() => {
     if (!user || !user.roles?.includes("SELLER")) return;
     
     const loadData = async () => {
-      setLoading(true);
       try {
         const [prodRes, ordRes] = await Promise.all([
           productApi.list({ page: 0, size: 100, includeOutOfStock: true }),
@@ -49,14 +46,12 @@ function SellerDashboardContent() {
         setOrders(ordRes.items ?? []);
       } catch (e) {
         console.error("Failed to load dashboard data", e);
-        addToast("Không tải được dữ liệu bảng điều khiển", "error");
-      } finally {
-        setLoading(false);
+        addToast("Failed to load dashboard data", "error");
       }
     };
-    
+      
     void loadData();
-  }, [user]);
+    }, [user, addToast]);
 
   React.useEffect(() => {
     if (initializing) return;
@@ -106,9 +101,7 @@ function SellerDashboardContent() {
       addToast("Đã gỡ sản phẩm khỏi danh sách", "success");
     } catch (error) {
       console.error("Failed to remove product", error);
-      addToast("Không gỡ được sản phẩm", "error");
-    } finally {
-      setActionProductId(null);
+      addToast("Failed to remove product", "error");
     }
   };
 
