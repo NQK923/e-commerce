@@ -61,6 +61,7 @@ function CheckoutContent() {
         userId: user?.id,
         currency: cart.currency ?? "USD",
         address,
+        paymentMethod: "COD", // Placeholder as no UI for payment method yet
         items: cart.items.map((item) => ({
           productId: item.product.id,
           quantity: item.quantity,

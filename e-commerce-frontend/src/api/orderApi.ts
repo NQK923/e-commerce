@@ -45,6 +45,28 @@ const mapOrder = (dto: BackendOrder): Order => ({
   }))
 });
 
+type CreateOrderItem = {
+  productId: string;
+  quantity: number;
+  price: number;
+};
+
+type CreateOrderRequest = {
+  userId?: string;
+  items: CreateOrderItem[];
+  currency: string;
+  address: {
+    fullName: string;
+    line1: string;
+    line2?: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    country: string;
+  };
+  paymentMethod: string;
+};
+
 export const orderApi = {
   list: (params: ApiListParams = {}) => {
     const query = buildQueryString(params);
@@ -59,5 +81,5 @@ export const orderApi = {
     );
   },
   get: (id: string) => apiRequest<BackendOrder>(`/api/orders/${id}`).then(mapOrder),
-  create: (data: any) => apiRequest<BackendOrder>("/api/orders", { method: "POST", body: data }).then(mapOrder),
+  create: (data: CreateOrderRequest) => apiRequest<BackendOrder>("/api/orders", { method: "POST", body: data }).then(mapOrder),
 };

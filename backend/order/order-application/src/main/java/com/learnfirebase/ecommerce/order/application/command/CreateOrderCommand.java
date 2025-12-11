@@ -11,6 +11,8 @@ public class CreateOrderCommand {
     String userId;
     List<OrderItemCommand> items;
     String currency;
+    String address;
+    String paymentMethod;
 
     @Value
     @Builder
