@@ -13,6 +13,7 @@ type CartContextValue = {
   addItem: (product: Product, quantity?: number, variantSku?: string) => Promise<void>;
   updateQuantity: (itemId: string, quantity: number) => Promise<void>;
   removeItem: (itemId: string) => Promise<void>;
+  changeVariant: (itemId: string, newVariantSku: string) => Promise<void>;
   refreshCart: () => Promise<void>;
   clearCart: () => Promise<void>;
 };
@@ -268,6 +269,32 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     [setAndPersistLocal, useLocalCart],
   );
 
+  const changeVariant = useCallback(
+    async (itemId: string, newVariantSku: string) => {
+      const item = cart?.items.find((i) => i.id === itemId);
+      if (!item) return;
+
+      // If sku is same, do nothing
+      if (item.variantSku === newVariantSku) return;
+
+      setLoading(true);
+      try {
+        // 1. Remove old item
+        await removeItem(itemId);
+
+        // 2. Add new item (with same quantity)
+        // Note: We use addItem internal logic which handles merging if new variant already exists
+        await addItem(item.product, item.quantity, newVariantSku);
+      } catch (error) {
+        console.error("Failed to change variant", error);
+        addToast("Failed to update variant", "error");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [addItem, cart?.items, removeItem, addToast],
+  );
+
   const clearCart = useCallback(async () => {
     if (useLocalCart) {
       setAndPersistLocal(null);
@@ -338,10 +365,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       addItem,
       updateQuantity,
       removeItem,
+      changeVariant,
       refreshCart,
       clearCart,
     }),
-    [addItem, cart, clearCart, loading, refreshCart, removeItem, updateQuantity],
+    [addItem, cart, clearCart, loading, refreshCart, removeItem, updateQuantity, changeVariant],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

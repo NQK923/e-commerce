@@ -13,7 +13,7 @@ import { useTranslation } from "@/src/providers/language-provider";
 
 function CartContent() {
   const { isAuthenticated, initializing } = useRequireAuth();
-  const { cart, loading, refreshCart, updateQuantity, removeItem } = useCart();
+  const { cart, loading, refreshCart, updateQuantity, removeItem, changeVariant } = useCart();
   const { addToast } = useToast();
   const router = useRouter();
   const { t } = useTranslation();
@@ -40,6 +40,16 @@ function CartContent() {
     } catch (error) {
       const message = error instanceof Error ? error.message : t.common.error;
       addToast(message, "error");
+    }
+  };
+
+  const handleVariantChange = async (itemId: string, newVariantSku: string) => {
+    try {
+        await changeVariant(itemId, newVariantSku);
+        addToast("Cập nhật phân loại thành công", "success");
+    } catch (error) {
+        const message = error instanceof Error ? error.message : t.common.error;
+        addToast(message, "error");
     }
   };
 
@@ -79,6 +89,7 @@ function CartContent() {
               item={item}
               onQuantityChange={(q) => handleUpdateQuantity(item.id, q)}
               onRemove={() => handleRemoveItem(item.id)}
+              onVariantChange={(newSku) => handleVariantChange(item.id, newSku)}
             />
           ))}
         </div>

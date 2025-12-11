@@ -33,7 +33,7 @@ public class CartApplicationService implements ManageCartUseCase {
     public CartDto addItem(AddItemCommand command) {
         Cart cart = getOrCreateCart(command.getCartId());
         Money money = Money.builder()
-            .amount(new BigDecimal(Optional.ofNullable(command.getPrice()).orElse("0")))
+            .amount(parsePrice(command.getPrice()))
             .currency(Optional.ofNullable(command.getCurrency()).orElse("USD"))
             .build();
         cart.addItem(CartItem.builder()
@@ -49,7 +49,7 @@ public class CartApplicationService implements ManageCartUseCase {
     public CartDto updateItem(UpdateItemCommand command) {
         Cart cart = getOrCreateCart(command.getCartId());
         Money money = Money.builder()
-            .amount(new BigDecimal(Optional.ofNullable(command.getPrice()).orElse("0")))
+            .amount(parsePrice(command.getPrice()))
             .currency(Optional.ofNullable(command.getCurrency()).orElse("USD"))
             .build();
         cart.updateQuantity(command.getProductId(), command.getVariantSku(), command.getQuantity(), money);
@@ -73,7 +73,7 @@ public class CartApplicationService implements ManageCartUseCase {
                     .variantSku(item.getVariantSku())
                     .quantity(item.getQuantity())
                     .price(Money.builder()
-                        .amount(new BigDecimal(Optional.ofNullable(item.getPrice()).orElse("0")))
+                        .amount(parsePrice(item.getPrice()))
                         .currency(Optional.ofNullable(item.getCurrency()).orElse("USD"))
                         .build())
                     .build())
@@ -82,6 +82,17 @@ public class CartApplicationService implements ManageCartUseCase {
         cart.merge(items);
         String currency = items.stream().findFirst().map(i -> i.getPrice().getCurrency()).orElse(null);
         return saveAndMap(cart, currency);
+    }
+
+    private BigDecimal parsePrice(String price) {
+        if (price == null || price.trim().isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+        try {
+            return new BigDecimal(price);
+        } catch (NumberFormatException e) {
+            return BigDecimal.ZERO;
+        }
     }
 
     @Override

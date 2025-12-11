@@ -1,6 +1,7 @@
 package com.learnfirebase.ecommerce.cart.infrastructure.persistence;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.stream.Collectors;
 import java.util.Optional;
 
@@ -52,14 +53,17 @@ public class CartRepositoryImpl implements CartRepository {
     private Cart toDomain(CartEntity entity) {
         return Cart.builder()
             .id(new CartId(entity.getId()))
-            .items(Optional.ofNullable(entity.getItems()).orElseGet(java.util.ArrayList::new).stream()
+            .items(Optional.ofNullable(entity.getItems()).orElseGet(ArrayList::new).stream()
                 .map(item -> CartItem.builder()
                     .productId(item.getProductId())
                     .variantSku(item.getVariantSku())
                     .quantity(item.getQuantity())
-                    .price(Money.builder().amount(new BigDecimal(item.getPrice())).currency(item.getCurrency()).build())
+                    .price(Money.builder()
+                        .amount(new BigDecimal(Optional.ofNullable(item.getPrice()).orElse("0")))
+                        .currency(item.getCurrency())
+                        .build())
                     .build())
-                .collect(Collectors.toList()))
+                .collect(Collectors.toCollection(ArrayList::new)))
             .build();
     }
 }
