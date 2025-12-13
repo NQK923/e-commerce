@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React from "react";
-import { ShoppingBag, User, Search, Menu, LogOut, Globe, Store, Shield } from "lucide-react";
+import { ShoppingBag, User, Search, Menu, LogOut, Store, Shield } from "lucide-react";
 import { useAuth } from "../../store/auth-store";
 import { useCart } from "../../store/cart-store";
 import { cx } from "../../utils/cx";
@@ -14,7 +14,7 @@ export const Header: React.FC = () => {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const { cart } = useCart();
-  const { t, language, setLanguage } = useTranslation();
+  const { t } = useTranslation();
   const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
@@ -32,10 +32,6 @@ export const Header: React.FC = () => {
     ...(isAdmin ? [{ href: "/admin", label: "Admin" }] : []),
   ];
 
-  const toggleLanguage = () => {
-    setLanguage(language === 'vi' ? 'en' : 'vi');
-  };
-
   if (pathname?.startsWith('/admin')) {
     return null;
   }
@@ -49,7 +45,7 @@ export const Header: React.FC = () => {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-sm">
               <ShoppingBag size={18} />
             </div>
-            Store
+            EcomX
           </Link>
 
           <nav className="hidden items-center gap-6 text-sm font-medium text-zinc-500 md:flex">
@@ -96,16 +92,6 @@ export const Header: React.FC = () => {
           {/* Search - Hidden on mobile for now or icon only */}
           <button className="hidden p-2 text-zinc-500 transition-colors hover:bg-emerald-50 hover:text-emerald-600 sm:block sm:rounded-full">
             <Search size={20} />
-          </button>
-
-          {/* Language Switcher */}
-          <button 
-            onClick={toggleLanguage}
-            className="flex items-center gap-1 text-xs font-medium uppercase text-zinc-600 hover:text-emerald-600"
-            title="Switch Language"
-          >
-            <Globe size={16} />
-            <span suppressHydrationWarning>{language}</span>
           </button>
 
           {/* Cart */}

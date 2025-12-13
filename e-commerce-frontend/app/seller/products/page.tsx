@@ -55,7 +55,6 @@ function SellerProductsContent() {
                 includeOutOfStock: true,
             });
             setProducts(response.items);
-            setTotalElements(response.total);
             setTotalPages(response.totalPages || 0);
         } catch (err) {
             console.error('Failed to fetch seller products', err);

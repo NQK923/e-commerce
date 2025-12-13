@@ -21,7 +21,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "E-Commerce",
+  title: "EcomX",
   description: "Production-ready e-commerce frontend",
 };
 

@@ -4,8 +4,8 @@ import { useParams } from "next/navigation";
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { 
-  Heart, Share2, ShieldCheck, Truck, RefreshCcw, 
-  Minus, Plus, ChevronRight, Home, MessageSquare 
+  Share2, ShieldCheck, Truck, RefreshCcw, 
+  Minus, Plus, ChevronRight, Home, MessageSquare, Flag
 } from "lucide-react";
 
 import { productApi } from "@/src/api/productApi";
@@ -248,9 +248,11 @@ export default function ProductDetailPage() {
                                 )}
                             </div>
                         </div>
-                        <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-red-500">
-                            <Heart size={24} />
-                        </Button>
+                        <ReportProductDialog productId={displayProduct.id} productName={displayProduct.name}>
+                            <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-red-500" title="Báo cáo sản phẩm">
+                                <Flag size={20} />
+                            </Button>
+                        </ReportProductDialog>
                     </div>
 
                     <div className="mt-6 rounded-xl bg-zinc-50 p-4">
@@ -383,8 +385,8 @@ export default function ProductDetailPage() {
             <div className="lg:col-span-12 space-y-8">
                  <div className="rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm">
                     <h3 className="mb-6 text-xl font-bold text-zinc-900 border-b border-zinc-100 pb-4">Mô tả chi tiết</h3>
-                    <div className="prose prose-sm max-w-none text-zinc-700">
-                        <p className="whitespace-pre-line leading-relaxed">{displayProduct.description}</p>
+                    <div className="prose prose-sm max-w-none text-zinc-700 leading-normal">
+                        <p className="whitespace-pre-line">{displayProduct.description}</p>
                     </div>
                  </div>
 
@@ -392,9 +394,6 @@ export default function ProductDetailPage() {
                     <ProductReviews productId={displayProduct.id} />
                  </div>
                  
-                 <div className="flex justify-center">
-                    <ReportProductDialog productId={displayProduct.id} productName={displayProduct.name} />
-                 </div>
             </div>
         </div>
 

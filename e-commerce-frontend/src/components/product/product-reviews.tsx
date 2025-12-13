@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Star } from "lucide-react";
 import { productApi, Review } from "@/src/api/productApi";
+import { orderApi } from "@/src/api/orderApi"; // Import orderApi
 import { useAuth } from "@/src/store/auth-store";
 import { Button } from "@/src/components/ui/button";
 import { useToast } from "@/src/components/ui/toast-provider";
@@ -20,6 +21,7 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [hasPurchased, setHasPurchased] = useState(false); // New state
 
   // Form state
   const [rating, setRating] = useState(5);
@@ -36,13 +38,33 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
     }
   }, [productId]);
 
+  const checkIfUserPurchasedProduct = React.useCallback(async () => {
+    if (!user?.id) {
+      setHasPurchased(false);
+      return;
+    }
+    try {
+      // Assuming orderApi.list can fetch orders for the current user
+      // and contains product IDs in its items.
+      const userOrdersResponse = await orderApi.list({ page: 0, size: 100, sort: 'createdAt,desc' }); // Fetch some recent orders
+      const purchased = userOrdersResponse.items.some(
+        (order) => order.status === 'PAID' && order.items.some((item) => item.productId === productId)
+      );
+      setHasPurchased(purchased);
+    } catch (error) {
+      console.error("Failed to check purchase status", error);
+      setHasPurchased(false);
+    }
+  }, [user?.id, productId]);
+
   useEffect(() => {
     fetchReviews();
-  }, [fetchReviews]);
+    checkIfUserPurchasedProduct();
+  }, [fetchReviews, checkIfUserPurchasedProduct]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!user || !hasPurchased) return; // Ensure user is logged in and has purchased
     setSubmitting(true);
     try {
       await productApi.addReview(productId, {
@@ -57,8 +79,8 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
       setShowForm(false);
       fetchReviews(); // Reload
     } catch (error) {
-      console.error("Failed to submit review", error)
-      addToast("Không thể gửi đánh giá. Bạn có thể đã đánh giá sản phẩm này rồi.", "error");
+      console.error("Failed to submit review", error);
+      addToast("Không thể gửi đánh giá. Vui lòng đảm bảo bạn đã mua sản phẩm này và chưa đánh giá.", "error");
     } finally {
       setSubmitting(false);
     }
@@ -68,12 +90,18 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
     <div className="space-y-6 pt-8 border-t border-zinc-100">
       <div className="flex items-center justify-between">
         <h3 className="text-xl font-bold text-zinc-900">Đánh giá sản phẩm ({reviews.length})</h3>
-        {user && !showForm && (
+        {user && !showForm && hasPurchased && ( // Conditional render based on hasPurchased
           <Button variant="outline" onClick={() => setShowForm(true)}>
             Viết đánh giá
           </Button>
         )}
       </div>
+
+      {!user ? (
+        <p className="text-zinc-500 py-4">Đăng nhập để xem hoặc viết đánh giá.</p>
+      ) : !hasPurchased && !showForm ? (
+        <p className="text-zinc-500 py-4">Bạn cần mua sản phẩm này để viết đánh giá.</p>
+      ) : null}
 
       {showForm && (
         <form onSubmit={handleSubmit} className="bg-zinc-50 p-6 rounded-xl border border-zinc-200 space-y-4">
@@ -159,3 +187,4 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
     </div>
   );
 }
+

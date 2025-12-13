@@ -124,7 +124,7 @@ export const vi = {
   },
   footer: {
     customer_service: "Chăm sóc khách hàng",
-    about: "Về ShopeeClone",
+    about: "Về EcomX",
     payment_logistics: "Thanh toán & Vận chuyển",
     follow_us: "Theo dõi chúng tôi",
     help_centre: "Trung tâm trợ giúp",

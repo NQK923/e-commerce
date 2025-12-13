@@ -124,7 +124,7 @@ export const en = {
   },
   footer: {
     customer_service: "Customer Service",
-    about: "About ShopeeClone",
+    about: "About EcomX",
     payment_logistics: "Payment & Logistics",
     follow_us: "Follow Us",
     help_centre: "Help Centre",

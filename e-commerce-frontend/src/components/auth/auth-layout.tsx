@@ -18,7 +18,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, subtitl
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-lg shadow-emerald-600/20 transition-transform group-hover:scale-110 group-hover:rotate-3">
               <ShoppingBag size={24} />
             </div>
-            <span className="text-2xl font-bold tracking-tight text-zinc-900">ShopeeClone</span>
+            <span className="text-2xl font-bold tracking-tight text-zinc-900">EcomX</span>
           </Link>
           <h2 className="text-3xl font-extrabold tracking-tight text-zinc-900">{title}</h2>
           <p className="mt-2 text-sm text-zinc-600">{subtitle}</p>
