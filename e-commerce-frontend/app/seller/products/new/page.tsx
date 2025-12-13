@@ -12,20 +12,7 @@ import { useRequireAuth } from "@/src/hooks/use-require-auth";
 import { uploadToBucket } from "@/src/lib/storage";
 import { ProductVariantRequest } from "@/src/types/product";
 import { config } from "@/src/config/env";
-
-const CATEGORIES = [
-  "Điện tử",
-  "Thời trang",
-  "Gia dụng",
-  "Sách",
-  "Làm đẹp",
-  "Sức khỏe",
-  "Đồ chơi",
-  "Thể thao",
-  "Ô tô - Xe máy",
-  "Bách hóa online",
-  "Khác",
-];
+import { DEFAULT_PRODUCT_CATEGORY, PRODUCT_CATEGORIES } from "@/src/constants/categories";
 
 function NewProductContent() {
     const router = useRouter();
@@ -41,7 +28,7 @@ function NewProductContent() {
         price: "",
         quantity: "",
         currency: "VND",
-        categoryId: CATEGORIES[0],
+        categoryId: DEFAULT_PRODUCT_CATEGORY,
     });
 
     const [selectedImages, setSelectedImages] = useState<File[]>([]);
@@ -74,7 +61,7 @@ function NewProductContent() {
                     price: detail.price?.toString() ?? "",
                     quantity: detail.stock?.toString() ?? "",
                     currency: detail.currency ?? "VND",
-                    categoryId: detail.category ?? CATEGORIES[0],
+                    categoryId: detail.category ?? DEFAULT_PRODUCT_CATEGORY,
                 });
                 const urls = detail.images?.map((img) => img.url) ?? [];
                 setExistingImages(urls);
@@ -265,8 +252,8 @@ function NewProductContent() {
                                     value={form.categoryId}
                                     onChange={(e) => setForm((prev) => ({...prev, categoryId: e.target.value}))}
                                 >
-                                    {CATEGORIES.map(cat => (
-                                        <option key={cat} value={cat}>{cat}</option>
+                                    {PRODUCT_CATEGORIES.map(cat => (
+                                        <option key={cat.value} value={cat.value}>{cat.label}</option>
                                     ))}
                                 </select>
                             </div>

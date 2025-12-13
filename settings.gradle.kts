@@ -75,3 +75,21 @@ listOf(
     // bootstrap
     "bootstrap",
 ).forEach { includeModule(it) }
+
+// Ensure intermediate parent projects point to backend folders to avoid missing directory warnings.
+listOf(
+    "common",
+    "identity",
+    "product",
+    "order",
+    "inventory",
+    "promotion",
+    "logistics",
+    "notification",
+    "report",
+    "cart",
+    "chat",
+    "bootstrap",
+).forEach { parent ->
+    project(":$parent").projectDir = file("backend/$parent")
+}

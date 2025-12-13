@@ -60,3 +60,12 @@ subprojects {
         options.compilerArgs.add("-parameters")
     }
 }
+
+// Root project is an aggregator; disable bootJar here to avoid missing main class issues.
+tasks.named<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
+    enabled = false
+}
+
+tasks.named<Jar>("jar") {
+    enabled = true
+}

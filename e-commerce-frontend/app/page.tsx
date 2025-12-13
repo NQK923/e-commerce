@@ -19,15 +19,11 @@ import {
 import { productApi } from "@/src/api/productApi";
 import { ProductCard } from "@/src/components/product/product-card";
 import { Button } from "@/src/components/ui/button";
-import { useCart } from "@/src/store/cart-store";
-import { useToast } from "@/src/components/ui/toast-provider";
 import { Product } from "@/src/types/product";
 import { useTranslation } from "@/src/providers/language-provider";
 import { Skeleton } from "@/src/components/ui/skeleton";
 
 export default function HomePage() {
-  const { addItem } = useCart();
-  const { addToast } = useToast();
   const { t } = useTranslation();
 
   const [bestSellers, setBestSellers] = useState<Product[]>([]);
@@ -53,11 +49,6 @@ export default function HomePage() {
     };
     void loadData();
   }, []);
-
-  const handleAddToCart = async (product: Product) => {
-    await addItem(product, 1);
-    addToast(`${product.name} ${t.cart.added}`, "success");
-  };
 
   const Categories = [
     { name: t.home.categories.electronics || "Điện tử", icon: Smartphone, color: "text-blue-600", bg: "bg-blue-50", href: "electronics" },
@@ -209,7 +200,7 @@ export default function HomePage() {
         ) : (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {bestSellers.map((product) => (
-                <ProductCard key={product.id} product={product} onAddToCart={handleAddToCart} />
+                <ProductCard key={product.id} product={product} />
             ))}
              {bestSellers.length === 0 && (
                 <div className="col-span-full py-12 text-center text-zinc-500 bg-white rounded-xl border border-dashed">
@@ -277,11 +268,11 @@ export default function HomePage() {
                 ))}
             </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {newArrivals.map((product) => (
-              <ProductCard key={product.id} product={product} onAddToCart={handleAddToCart} />
-            ))}
-          </div>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {newArrivals.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
         )}
         
         <div className="mt-12 text-center">

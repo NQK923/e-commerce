@@ -8,13 +8,10 @@ import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
 import { Spinner } from "@/src/components/ui/spinner";
 import { useProducts } from "@/src/hooks/use-products";
-import { useCart } from "@/src/store/cart-store";
-import { useToast } from "@/src/components/ui/toast-provider";
-import { Product } from "@/src/types/product";
 import { useTranslation } from "@/src/providers/language-provider";
 import { useDebounce } from "@/src/hooks/use-debounce";
+import { PRODUCT_CATEGORIES } from "@/src/constants/categories";
 
-const CATEGORIES = ["Electronics", "Fashion", "Home", "Books", "Beauty", "Sports", "Toys", "Automotive"];
 const SORT_OPTIONS = [
   { label: "newest_arrivals", value: "createdAt,desc" },
   { label: "price_low_high", value: "price,asc" },
@@ -26,8 +23,6 @@ function ProductsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useTranslation();
-  const { addItem } = useCart();
-  const { addToast } = useToast();
 
   // Initialize state from URL
   const initialSearch = searchParams.get("search") || "";
@@ -76,11 +71,6 @@ function ProductsContent() {
   );
 
   const { data, loading, error, reload } = useProducts(params);
-
-  const handleAdd = async (product: Product) => {
-    await addItem(product, 1);
-    addToast(`${product.name} ${t.cart.added}`, "success");
-  };
 
   const clearFilters = () => {
     setSearch("");
@@ -153,17 +143,17 @@ function ProductsContent() {
                       />
                       {t.home.categories.view_all}
                     </label>
-                    {CATEGORIES.map((cat) => (
-                      <label key={cat} className="flex items-center gap-2 text-sm text-zinc-700 cursor-pointer hover:text-emerald-600 transition-colors">
+                    {PRODUCT_CATEGORIES.map((cat) => (
+                      <label key={cat.value} className="flex items-center gap-2 text-sm text-zinc-700 cursor-pointer hover:text-emerald-600 transition-colors">
                         <input 
                           type="radio" 
                           name="category" 
-                          value={cat} 
-                          checked={category === cat} 
-                          onChange={() => { setCategory(cat); setPage(0); }}
+                          value={cat.value} 
+                          checked={category === cat.value} 
+                          onChange={() => { setCategory(cat.value); setPage(0); }}
                           className="accent-emerald-600 h-4 w-4"
                         />
-                        {cat}
+                        {cat.label}
                       </label>
                     ))}
                   </div>
@@ -249,7 +239,7 @@ function ProductsContent() {
             <>
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {data?.items.map((product) => (
-                  <ProductCard key={product.id} product={product} onAddToCart={handleAdd} />
+                  <ProductCard key={product.id} product={product} />
                 ))}
               </div>
 
