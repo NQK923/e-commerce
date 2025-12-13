@@ -9,7 +9,7 @@ import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { QuantitySelector } from "./quantity-selector";
 import { useTranslation } from "../../providers/language-provider";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Trash2 } from "lucide-react";
 import { Checkbox } from "../ui/checkbox";
 
 type Props = {
@@ -29,7 +29,6 @@ export const CartItemCard: React.FC<Props> = ({ item, onQuantityChange, onRemove
   
   const hasVariants = item.product.variants && item.product.variants.length > 0;
   
-  // Use local state for immediate feedback if needed, but here we rely on props
   const currentVariantSku = item.variantSku;
 
   const handleVariantChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -39,42 +38,44 @@ export const CartItemCard: React.FC<Props> = ({ item, onQuantityChange, onRemove
   };
 
   return (
-    <div className="flex flex-col sm:flex-row gap-4 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
-      {/* Image */}
-      <div className="flex items-start gap-3">
+    <div className="group relative flex flex-col sm:flex-row gap-5 rounded-2xl border border-zinc-100 bg-white p-4 shadow-sm transition-all hover:shadow-md hover:border-emerald-100">
+      {/* Selection & Image */}
+      <div className="flex items-start gap-4">
         {selectable && (
-          <Checkbox
-            checked={selected}
-            onCheckedChange={(v) => onSelectChange?.(!!v)}
-            className="mt-1"
-          />
+          <div className="pt-8">
+             <Checkbox
+                checked={selected}
+                onCheckedChange={(v) => onSelectChange?.(!!v)}
+                className="h-5 w-5 border-zinc-300 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
+              />
+          </div>
         )}
-        <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-zinc-100 border border-zinc-100">
+        <Link href={`/products/${item.product.id}`} className="relative h-28 w-24 shrink-0 overflow-hidden rounded-xl bg-zinc-50 border border-zinc-100 group-hover:border-emerald-200 transition-colors">
           {image ? (
             <Image src={image.url} alt={image.altText ?? item.product.name} fill className="object-cover" sizes="100px" />
           ) : (
-            <div className="flex h-full items-center justify-center text-xs text-zinc-500">No image</div>
+            <div className="flex h-full items-center justify-center text-xs text-zinc-400">No image</div>
           )}
-        </div>
+        </Link>
       </div>
 
       {/* Content */}
-      <div className="flex flex-1 flex-col justify-between gap-4">
+      <div className="flex flex-1 flex-col justify-between gap-3 min-w-0">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
-          <div className="space-y-1">
-            <Link href={`/products/${item.product.id}`} className="text-base font-semibold text-zinc-900 hover:text-emerald-600 hover:underline line-clamp-2">
+          <div className="space-y-1.5 pr-8">
+            <Link href={`/products/${item.product.id}`} className="text-base font-medium text-zinc-900 hover:text-emerald-700 transition-colors line-clamp-2" title={item.product.name}>
               {item.product.name}
             </Link>
             
             <div className="flex flex-wrap items-center gap-2">
                {/* Variant Selector */}
                 {hasVariants ? (
-                    <div className="relative inline-block">
+                    <div className="relative inline-block group/select">
                         <select 
                             value={currentVariantSku || ''} 
                             onChange={handleVariantChange}
                             disabled={!onVariantChange}
-                            className="appearance-none cursor-pointer rounded-md border border-zinc-300 bg-white py-1 pl-2 pr-8 text-xs font-medium text-zinc-700 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 hover:bg-zinc-50"
+                            className="appearance-none cursor-pointer rounded-lg bg-zinc-50 border border-zinc-200 py-1 pl-2.5 pr-8 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:border-zinc-300 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100"
                         >
                             {item.product.variants?.map((v) => (
                                 <option key={v.sku} value={v.sku}>
@@ -82,35 +83,52 @@ export const CartItemCard: React.FC<Props> = ({ item, onQuantityChange, onRemove
                                 </option>
                             ))}
                         </select>
-                         <ChevronDown size={14} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-zinc-500" />
+                         <ChevronDown size={14} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 group-hover/select:text-zinc-600" />
                     </div>
                 ) : (
-                    <span className="text-xs text-zinc-500">Mặc định</span>
+                   null
                 )}
-            </div>
-
-            <div className="flex items-center gap-2 mt-1">
-              <span className="text-sm font-semibold text-emerald-600">
-                {formatCurrency(item.unitPrice, item.product.currency ?? "USD")}
-              </span>
-              {item.product.flashSaleEndAt && <Badge tone="warning" className="text-[10px] px-1 py-0">{t.product.flash_sale}</Badge>}
+                 {item.product.flashSaleEndAt && <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-200 border-0 text-[10px] px-2 py-0.5">{t.product.flash_sale}</Badge>}
             </div>
           </div>
+          
+           {/* Remove Button for Desktop - Absolute top right */}
+           <button 
+             onClick={onRemove} 
+             className="absolute top-4 right-4 hidden sm:flex text-zinc-400 hover:text-rose-500 transition-colors p-1 rounded-md hover:bg-rose-50"
+             title={t.cart.remove}
+           >
+             <Trash2 size={18} />
+           </button>
+        </div>
 
-          <Button variant="ghost" size="sm" onClick={onRemove} className="self-start text-xs text-zinc-400 hover:text-red-600 hover:bg-red-50 -mt-1 -mr-2">
+        <div className="flex flex-wrap items-end justify-between gap-4 mt-2">
+          <div className="flex items-center gap-3">
+             <div className="flex flex-col">
+                 {/* Unit Price */}
+                 <span className="text-xs text-zinc-500 font-medium">Đơn giá</span>
+                 <span className="text-sm font-semibold text-zinc-700">
+                    {formatCurrency(item.unitPrice, item.product.currency ?? "USD")}
+                 </span>
+             </div>
+             <div className="h-8 w-px bg-zinc-100 mx-1 hidden xs:block"></div>
+             <QuantitySelector quantity={item.quantity} onChange={onQuantityChange} max={maxQty} size="sm" />
+          </div>
+
+          <div className="flex flex-col items-end">
+             {/* Subtotal */}
+             <span className="text-xs text-zinc-500 font-medium">Thành tiền</span>
+             <span className="text-lg font-bold text-emerald-700">
+               {formatCurrency(item.subtotal, item.product.currency ?? "USD")}
+             </span>
+          </div>
+        </div>
+        
+         {/* Remove Button for Mobile */}
+         <Button variant="ghost" size="sm" onClick={onRemove} className="sm:hidden self-start text-xs text-red-500 hover:bg-red-50 h-8 px-0 -ml-2">
+            <Trash2 size={14} className="mr-1.5" />
             {t.cart.remove}
-          </Button>
-        </div>
-
-        <div className="flex items-center justify-between border-t border-zinc-100 pt-3 mt-auto">
-          <QuantitySelector quantity={item.quantity} onChange={onQuantityChange} max={maxQty} size="sm" />
-          <div className="text-right">
-            {/* <div className="text-[10px] text-zinc-500 uppercase font-medium tracking-wide">{t.cart.item_subtotal}</div> */}
-            <div className="text-base font-bold text-zinc-900">
-              {formatCurrency(item.subtotal, item.product.currency ?? "USD")}
-            </div>
-          </div>
-        </div>
+         </Button>
       </div>
     </div>
   );

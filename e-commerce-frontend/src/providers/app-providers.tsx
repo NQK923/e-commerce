@@ -18,7 +18,9 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children, initialLan
       <ToastProvider>
         <AuthProvider>
           <ChatProvider>
-            <CartProvider>{children}</CartProvider>
+            <CartProvider>
+              {children}
+            </CartProvider>
           </ChatProvider>
         </AuthProvider>
       </ToastProvider>

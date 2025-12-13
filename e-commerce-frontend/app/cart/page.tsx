@@ -12,6 +12,8 @@ import { useRouter } from "next/navigation";
 import { useTranslation } from "@/src/providers/language-provider";
 import { useMemo, useReducer } from "react";
 import { Cart } from "@/src/types/cart";
+import { ShoppingBag, ArrowLeft } from "lucide-react";
+import { Button } from "@/src/components/ui/button";
 
 type SelectionAction =
   | { type: "sync"; items: Cart["items"] | undefined }
@@ -114,56 +116,76 @@ function CartContent() {
 
   if (initializing || (loading && !cart)) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center gap-3 text-sm text-zinc-600">
-        <Spinner />
-        {t.common.loading}
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-sm text-zinc-600 bg-zinc-50/50">
+        <Spinner size="lg" />
+        <span className="animate-pulse font-medium text-zinc-400">{t.common.loading}</span>
       </div>
     );
   }
 
   if (!cart || cart.items.length === 0) {
     return (
-      <div className="mx-auto flex max-w-3xl flex-col items-center gap-3 px-4 py-10 text-center">
-        <p className="text-lg font-semibold text-zinc-900">{t.cart.empty}</p>
-        <Link href="/products" className="text-sm font-semibold text-emerald-600 hover:underline">
-          {t.cart.continue_shopping}
+      <div className="mx-auto flex min-h-[60vh] max-w-3xl flex-col items-center justify-center gap-6 px-4 py-10 text-center">
+        <div className="flex h-24 w-24 items-center justify-center rounded-full bg-zinc-100 shadow-sm">
+           <ShoppingBag className="h-10 w-10 text-zinc-300" />
+        </div>
+        <div className="space-y-2">
+            <h2 className="text-2xl font-bold text-zinc-900">{t.cart.empty}</h2>
+            <p className="text-zinc-500 max-w-sm mx-auto">
+                Giỏ hàng của bạn đang trống. Hãy thêm sản phẩm để tiếp tục mua sắm.
+            </p>
+        </div>
+        <Link href="/products">
+          <Button size="lg" className="gap-2 bg-emerald-600 hover:bg-emerald-700 font-semibold shadow-lg shadow-emerald-600/20">
+             <ArrowLeft size={16} />
+             {t.cart.continue_shopping}
+          </Button>
         </Link>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-10">
-      <div className="flex items-center justify-between border-b border-zinc-200 pb-4">
-        <h1 className="text-3xl font-bold text-zinc-900">{t.cart.title}</h1>
-        <Link href="/products" className="text-sm font-semibold text-emerald-600 hover:underline">
-          {t.cart.continue_shopping}
-        </Link>
-      </div>
-      <div className="grid gap-8 lg:grid-cols-[2fr,1fr]">
-        <div className="flex flex-col gap-4">
-          {cart.items.map((item) => (
-            <CartItemCard
-              key={item.id}
-              item={item}
-              selectable
-              selected={selectedIds.has(item.id)}
-              onSelectChange={(next) => toggleSelect(item.id, next)}
-              onQuantityChange={(q) => handleUpdateQuantity(item.id, q)}
-              onRemove={() => handleRemoveItem(item.id)}
-              onVariantChange={(newSku) => handleVariantChange(item.id, newSku)}
+    <div className="min-h-screen bg-zinc-50/50 pb-20">
+        <div className="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-10 sm:px-6 lg:px-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-zinc-200 pb-6 gap-4">
+            <div className="flex items-baseline gap-3">
+                 <h1 className="text-3xl font-bold text-zinc-900">{t.cart.title}</h1>
+                 <span className="text-sm font-medium text-zinc-500">({cart.items.length} sản phẩm)</span>
+            </div>
+            <Link href="/products">
+                <Button variant="ghost" className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 -ml-4 sm:ml-0">
+                    <ArrowLeft size={16} className="mr-2" />
+                    {t.cart.continue_shopping}
+                </Button>
+            </Link>
+        </div>
+        
+        <div className="grid gap-8 lg:grid-cols-[1fr,380px] xl:gap-12">
+            <div className="flex flex-col gap-4">
+            {cart.items.map((item) => (
+                <CartItemCard
+                key={item.id}
+                item={item}
+                selectable
+                selected={selectedIds.has(item.id)}
+                onSelectChange={(next) => toggleSelect(item.id, next)}
+                onQuantityChange={(q) => handleUpdateQuantity(item.id, q)}
+                onRemove={() => handleRemoveItem(item.id)}
+                onVariantChange={(newSku) => handleVariantChange(item.id, newSku)}
+                />
+            ))}
+            </div>
+            <div className="lg:block">
+            <CartSummary
+                cart={selectedCart ?? cart}
+                onCheckout={() => hasSelection && router.push(`/checkout?selected=${encodeURIComponent(Array.from(selectedIds).join(","))}`)}
+                disableAction={!hasSelection}
+                actionLabel={t.cart.proceed_checkout}
             />
-          ))}
+            </div>
         </div>
-        <div>
-          <CartSummary
-            cart={selectedCart ?? cart}
-            onCheckout={() => hasSelection && router.push(`/checkout?selected=${encodeURIComponent(Array.from(selectedIds).join(","))}`)}
-            disableAction={!hasSelection}
-            actionLabel={t.cart.proceed_checkout}
-          />
         </div>
-      </div>
     </div>
   );
 }
@@ -173,7 +195,6 @@ export default function CartPage() {
     <Suspense fallback={
       <div className="flex min-h-[60vh] items-center justify-center gap-3 text-sm text-zinc-600">
         <Spinner />
-        Loading cart...
       </div>
     }>
       <CartContent />
