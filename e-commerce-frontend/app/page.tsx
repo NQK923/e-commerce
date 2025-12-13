@@ -83,7 +83,7 @@ export default function HomePage() {
                 <Sparkles className="mr-2 h-4 w-4 text-yellow-400" />
                 <span>Chào mừng mùa mua sắm mới</span>
               </div>
-              <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-6xl mb-6 leading-tight">
+              <h1 className="text-4xl font-bold tracking-tight text-white sm:text-6xl mb-6 leading-tight">
                 Khám phá thế giới <br/>
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-200 to-teal-400">
                   Mua sắm trực tuyến

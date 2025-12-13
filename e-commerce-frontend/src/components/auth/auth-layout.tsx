@@ -20,7 +20,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, subtitl
             </div>
             <span className="text-2xl font-bold tracking-tight text-zinc-900">EcomX</span>
           </Link>
-          <h2 className="text-3xl font-extrabold tracking-tight text-zinc-900">{title}</h2>
+          <h2 className="text-3xl font-bold tracking-tight text-zinc-900">{title}</h2>
           <p className="mt-2 text-sm text-zinc-600">{subtitle}</p>
         </div>
 

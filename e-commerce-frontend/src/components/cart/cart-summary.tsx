@@ -62,7 +62,7 @@ export const CartSummary: React.FC<Props> = ({ cart, onCheckout, actionLabel, di
             
             <div className="flex justify-between items-end pt-2">
             <dt className="text-base font-bold text-zinc-900">{t.cart.total}</dt>
-            <dd className="text-2xl font-extrabold text-emerald-700">
+            <dd className="text-2xl font-bold text-emerald-700">
                 {formatCurrency(cart.total, cart.currency ?? "USD")}
             </dd>
             </div>

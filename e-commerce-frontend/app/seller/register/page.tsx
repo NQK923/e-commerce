@@ -133,7 +133,7 @@ function SellerRegisterContent() {
               <Sparkles size={14} className="text-yellow-300" />
               {t.nav.sellerChannel}
             </div>
-            <h1 className="text-4xl font-extrabold leading-tight sm:text-5xl">
+            <h1 className="text-4xl font-bold leading-tight sm:text-5xl">
               {t.seller.title}
             </h1>
             <p className="text-lg text-emerald-100">{t.seller.subtitle}</p>

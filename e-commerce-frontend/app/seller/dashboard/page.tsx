@@ -153,7 +153,7 @@ function SellerDashboardContent() {
             <Sparkles size={14} className="text-yellow-300" />
             Seller Dashboard
           </div>
-          <h1 className="text-3xl font-extrabold tracking-tight">Xin chào, {user.displayName ?? "Seller"}</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Xin chào, {user.displayName ?? "Seller"}</h1>
           <p className="text-emerald-100/80 font-medium">Tổng quan hoạt động kinh doanh của bạn hôm nay.</p>
         </div>
         <div className="flex gap-3 relative z-10">
