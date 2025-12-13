@@ -7,11 +7,8 @@ import { Product } from "../../types/product";
 import { formatCurrency, formatNumber } from "../../utils/format";
 import { Badge } from "../ui/badge";
 import { Card } from "../ui/card";
-import { Button } from "../ui/button";
 import { useTranslation } from "../../providers/language-provider";
-import { ShoppingCart, Star } from "lucide-react";
-import { useCart } from "../../store/cart-store";
-import { useToast } from "../ui/toast-provider";
+import { Star } from "lucide-react";
 
 type Props = {
   product: Product;
@@ -19,21 +16,7 @@ type Props = {
 
 export const ProductCard: React.FC<Props> = ({ product }) => {
   const { t } = useTranslation();
-  const { addItem } = useCart();
-  const { addToast } = useToast();
   const primaryImage = product.images.find((img) => img.primary) ?? product.images[0];
-
-  const handleAddToCart = async (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent navigation to product page
-    e.stopPropagation();
-    try {
-        await addItem(product, 1);
-        addToast(t.product.added_to_cart || "Added to cart", "success");
-    } catch (error) {
-        // error handled in store or ignore
-        console.error(error);
-    }
-  };
 
   return (
     <Link href={`/products/${product.id}`} className="block h-full group">
@@ -67,19 +50,6 @@ export const ProductCard: React.FC<Props> = ({ product }) => {
               </Badge>
             )}
           </div>
-
-          {/* Quick Actions Overlay */}
-           <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full transition-transform duration-300 group-hover:translate-y-0 z-20 flex gap-2 justify-center bg-gradient-to-t from-black/50 to-transparent pt-12">
-               <Button 
-                 size="icon" 
-                 variant="secondary" 
-                 className="rounded-full h-10 w-10 bg-white text-zinc-900 hover:bg-emerald-600 hover:text-white shadow-lg transition-colors border-0"
-                 onClick={handleAddToCart}
-                 title={t.product.add_to_cart}
-               >
-                 <ShoppingCart size={18} />
-               </Button>
-           </div>
         </div>
 
       {/* Content Section */}

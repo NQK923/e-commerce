@@ -8,6 +8,9 @@ import { Input } from "@/src/components/ui/input";
 import { useToast } from "@/src/components/ui/toast-provider";
 import { useAuth } from "@/src/store/auth-store";
 import { useTranslation } from "@/src/providers/language-provider";
+import { AuthLayout } from "@/src/components/auth/auth-layout";
+import { Spinner } from "@/src/components/ui/spinner";
+import { ArrowRight } from "lucide-react";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -39,48 +42,68 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-10">
-      <h1 className="text-3xl font-bold text-zinc-900">{t.auth.create_account_title}</h1>
-      <form className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm" onSubmit={handleSubmit}>
-        <div className="grid gap-4 md:grid-cols-2">
-          <Input
+    <AuthLayout 
+        title={t.auth.create_account_title} 
+        subtitle={t.auth.join_us_subtitle}
+    >
+      <form className="space-y-4" onSubmit={handleSubmit}>
+        <Input
             label={t.auth.display_name_label}
             required
+            placeholder="Your Name"
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
-          />
-          <Input
+            className="h-10"
+        />
+        <Input
             label={t.auth.email_label}
             type="email"
             required
+            placeholder="name@example.com"
             value={form.email}
             onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
-          />
-          <Input
-            label={t.auth.password_label}
-            type="password"
-            required
-            value={form.password}
-            onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
-          />
-          <Input
-            label={t.auth.confirm_password_label}
-            type="password"
-            required
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-          />
+            className="h-10"
+        />
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <Input
+                label={t.auth.password_label}
+                type="password"
+                required
+                placeholder="••••••••"
+                value={form.password}
+                onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
+                className="h-10"
+            />
+            <Input
+                label={t.auth.confirm_password_label}
+                type="password"
+                required
+                placeholder="••••••••"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="h-10"
+            />
         </div>
-        <Button type="submit" className="mt-6 w-full bg-emerald-600 hover:bg-emerald-700" disabled={loading}>
-          {loading ? t.auth.creating_account : t.auth.signup_button}
-        </Button>
+
+        <div className="pt-2">
+            <Button 
+                type="submit" 
+                className="w-full h-10 bg-emerald-600 hover:bg-emerald-700 text-sm font-semibold shadow-lg shadow-emerald-600/20" 
+                disabled={loading}
+            >
+                {loading ? <Spinner size="sm" className="mr-2 text-white" /> : null}
+                {loading ? t.auth.creating_account : t.auth.signup_button}
+                {!loading && <ArrowRight size={16} className="ml-2" />}
+            </Button>
+        </div>
       </form>
-      <p className="text-sm text-zinc-600">
+      
+      <p className="mt-6 text-center text-xs text-zinc-600">
         {t.auth.already_have_account}{" "}
-        <Link className="font-semibold text-emerald-600 hover:underline" href="/login">
+        <Link className="font-semibold text-emerald-600 hover:text-emerald-500 hover:underline transition-all" href="/login">
           {t.auth.login_button}
         </Link>
       </p>
-    </div>
+    </AuthLayout>
   );
 }

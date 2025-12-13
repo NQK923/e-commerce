@@ -222,7 +222,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const currentItem = cart?.items.find((i) => i.id === itemId);
         const { price: unitPrice, stock: variantStock } = currentItem
-          ? resolveVariantInfo(currentItem.product, variantSku ?? currentItem.variantSku)
+          ? resolveVariantInfo(currentItem.product, currentItem.variantSku)
           : { price: 0, stock: undefined };
         const max = variantStock ?? currentItem?.product.stock ?? quantity;
         const clamped = Math.min(Math.max(quantity, 0), max);

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Geist_Mono } from "next/font/google"; // Changed Geist to Inter
 import { cookies } from "next/headers";
 import { Suspense } from "react";
 import "./globals.css";
@@ -10,9 +10,9 @@ import { ProtectedRouteGuard } from "@/src/components/auth/protected-route-guard
 
 const LANGUAGE_COOKIE = "ecommerce_lang_v2";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+const inter = Inter({ // Changed geistSans to inter
+  variable: "--font-inter", // Changed variable name
+  subsets: ["latin", "vietnamese"], // Added vietnamese subset
 });
 
 const geistMono = Geist_Mono({
@@ -36,7 +36,7 @@ export default async function RootLayout({
 
   return (
     <html lang={initialLanguage}>
-      <body className={`${geistSans.variable} ${geistMono.variable} bg-zinc-50 text-zinc-900 antialiased`}>
+      <body className={`${inter.variable} ${geistMono.variable} bg-zinc-50 text-zinc-900 antialiased`}>
         <AppProviders initialLanguage={initialLanguage}>
           <Suspense fallback={null}>
             <ProtectedRouteGuard />
