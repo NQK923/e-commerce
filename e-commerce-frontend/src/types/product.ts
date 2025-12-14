@@ -41,9 +41,11 @@ export type UpsertProductRequest = {
   quantity?: number;
   categoryId?: string;
   images: Array<{
+    id?: string;
     url: string;
     altText?: string;
     primary?: boolean;
+    sortOrder?: number;
   }>;
   variants?: ProductVariantRequest[];
 };

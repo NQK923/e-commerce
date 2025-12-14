@@ -125,18 +125,23 @@ public class ProductApplicationService implements ManageProductUseCase, QueryPro
                 // Non-critical?
             }
 
-            System.out.println("DEBUG: Publishing event");
-            eventPublisher.publish(ProductCreatedEvent.builder()
-                .productId(saved.getId().getValue())
-                .initialStock(command.getQuantity())
-                .variants(command.getVariants() != null ? command.getVariants().stream()
-                    .map(v -> ProductCreatedEvent.VariantInitialStock.builder()
-                        .sku(v.getSku())
-                        .quantity(v.getQuantity() != null ? v.getQuantity() : 0)
-                        .build())
-                    .collect(Collectors.toList()) : java.util.Collections.emptyList())
-                .build());
-            System.out.println("DEBUG: Event published. Returning DTO");
+            if (existingProduct == null) {
+                System.out.println("DEBUG: Publishing event (New Product)");
+                eventPublisher.publish(ProductCreatedEvent.builder()
+                    .productId(saved.getId().getValue())
+                    .initialStock(command.getQuantity())
+                    .variants(command.getVariants() != null ? command.getVariants().stream()
+                        .map(v -> ProductCreatedEvent.VariantInitialStock.builder()
+                            .sku(v.getSku())
+                            .quantity(v.getQuantity() != null ? v.getQuantity() : 0)
+                            .build())
+                        .collect(Collectors.toList()) : java.util.Collections.emptyList())
+                    .build());
+            } else {
+                System.out.println("DEBUG: Skipping event publication for Product Update to prevent inventory duplication.");
+            }
+            
+            System.out.println("DEBUG: Event published (if new). Returning DTO");
             return toDto(saved);
         } catch (Exception e) {
             System.err.println("DEBUG: Error in execute: " + e.getMessage());

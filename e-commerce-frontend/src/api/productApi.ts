@@ -128,8 +128,9 @@ export const productApi = {
           quantity: v.quantity,
         })),
         images: payload.images?.map((img, idx: number) => ({
+          id: img.id,
           url: img.url,
-          sortOrder: idx,
+          sortOrder: img.sortOrder ?? idx,
           primaryImage: img.primary ?? idx === 0,
         })),
       },
@@ -151,8 +152,9 @@ export const productApi = {
           quantity: v.quantity,
         })),
         images: payload.images?.map((img, idx: number) => ({
+          id: img.id,
           url: img.url,
-          sortOrder: idx,
+          sortOrder: img.sortOrder ?? idx,
           primaryImage: img.primary ?? idx === 0,
         })),
       },

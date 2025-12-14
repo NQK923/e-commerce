@@ -51,10 +51,10 @@ export default function HomePage() {
   }, []);
 
   const Categories = [
-    { name: t.home.categories.electronics || "Điện tử", icon: Smartphone, color: "text-blue-600", bg: "bg-blue-50", href: "electronics" },
-    { name: t.home.categories.fashion || "Thời trang", icon: Shirt, color: "text-rose-600", bg: "bg-rose-50", href: "fashion" },
-    { name: t.home.categories.home || "Nhà cửa", icon: HomeIcon, color: "text-amber-600", bg: "bg-amber-50", href: "home" },
-    { name: t.home.categories.books || "Sách", icon: BookOpen, color: "text-indigo-600", bg: "bg-indigo-50", href: "books" },
+    { name: "Điện tử", icon: Smartphone, color: "text-blue-600", bg: "bg-blue-50", href: "Điện tử" },
+    { name: "Thời trang", icon: Shirt, color: "text-rose-600", bg: "bg-rose-50", href: "Thời trang" },
+    { name: "Gia dụng", icon: HomeIcon, color: "text-amber-600", bg: "bg-amber-50", href: "Gia dụng" },
+    { name: "Sách", icon: BookOpen, color: "text-indigo-600", bg: "bg-indigo-50", href: "Sách" },
   ];
 
   const Benefits = [
