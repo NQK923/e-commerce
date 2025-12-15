@@ -1,8 +1,10 @@
 package com.learnfirebase.ecommerce.order.application.service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.learnfirebase.ecommerce.common.application.pagination.PageRequest;
@@ -43,31 +45,53 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
 
     @Override
     public OrderDto execute(CreateOrderCommand command) {
-        List<OrderItem> items = command.getItems().stream()
-            .map(item -> OrderItem.builder()
-                .productId(item.getProductId())
-                .quantity(item.getQuantity())
-                .price(Money.builder().amount(new BigDecimal(item.getPrice())).currency(command.getCurrency()).build())
-                .build())
-            .collect(Collectors.toList());
+        List<OrderItem> items = new ArrayList<>();
+        
+        Set<String> standardProductIds = command.getItems().stream()
+            .filter(item -> item.getFlashSaleId() == null)
+            .map(CreateOrderCommand.OrderItemCommand::getProductId)
+            .collect(Collectors.toSet());
 
-        Map<String, String> prices = loadProductPort.loadProductPrices(command.getCurrency(),
-            items.stream().map(OrderItem::getProductId).collect(Collectors.toSet()));
-        if (!prices.isEmpty()) {
-            items = items.stream()
-                .map(item -> OrderItem.builder()
-                    .productId(item.getProductId())
-                    .quantity(item.getQuantity())
-                    .price(Money.builder().amount(new BigDecimal(prices.getOrDefault(item.getProductId(), item.getPrice().getAmount().toPlainString()))).currency(command.getCurrency()).build())
-                    .build())
-                .collect(Collectors.toList());
+        Map<String, String> standardPrices = loadProductPort.loadProductPrices(command.getCurrency(), standardProductIds);
+
+        for (CreateOrderCommand.OrderItemCommand itemCmd : command.getItems()) {
+            BigDecimal price;
+            if (itemCmd.getFlashSaleId() != null) {
+                // Flash Sale: Use command price
+                price = new BigDecimal(itemCmd.getPrice());
+            } else {
+                String fetched = standardPrices.get(itemCmd.getProductId());
+                price = (fetched != null) ? new BigDecimal(fetched) : new BigDecimal(itemCmd.getPrice());
+            }
+            
+            items.add(OrderItem.builder()
+                .productId(itemCmd.getProductId())
+                .quantity(itemCmd.getQuantity())
+                .price(Money.builder().amount(price).currency(command.getCurrency()).build())
+                .build());
         }
 
         Order order = domainService.initiateOrder(new UserId(command.getUserId()), items, command.getCurrency());
         Order saved = orderRepository.save(order);
 
-        inventoryReservationPort.reserve(saved.getId().getValue(),
-            saved.getItems().stream().collect(Collectors.toMap(OrderItem::getProductId, OrderItem::getQuantity)));
+        // Standard Reservations
+        Map<String, Integer> standardReservations = command.getItems().stream()
+            .filter(i -> i.getFlashSaleId() == null)
+            .collect(Collectors.toMap(CreateOrderCommand.OrderItemCommand::getProductId, CreateOrderCommand.OrderItemCommand::getQuantity));
+            
+        if (!standardReservations.isEmpty()) {
+            inventoryReservationPort.reserve(saved.getId().getValue(), standardReservations);
+        }
+
+        // Flash Sale Reservations
+        command.getItems().stream()
+            .filter(i -> i.getFlashSaleId() != null)
+            .forEach(i -> {
+                 boolean success = inventoryReservationPort.reserveFlashSale(saved.getId().getValue(), i.getFlashSaleId(), i.getQuantity());
+                 if (!success) {
+                     throw new OrderDomainException("Flash Sale stock exhausted or invalid for product " + i.getProductId());
+                 }
+            });
 
         order.getDomainEvents().forEach(event -> {
             orderOutboxPort.saveEvent(event);

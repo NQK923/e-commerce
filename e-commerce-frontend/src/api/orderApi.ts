@@ -47,6 +47,7 @@ const mapOrder = (dto: BackendOrder): Order => ({
 
 type CreateOrderItem = {
   productId: string;
+  flashSaleId?: string;
   quantity: number;
   price: number;
 };

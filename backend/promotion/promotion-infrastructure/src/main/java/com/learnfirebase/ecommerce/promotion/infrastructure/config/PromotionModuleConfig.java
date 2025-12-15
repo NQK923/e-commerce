@@ -19,4 +19,11 @@ public class PromotionModuleConfig {
     public PromotionApplicationService promotionApplicationService(PromotionRepository promotionRepository, PromotionUsageRepository promotionUsageRepository) {
         return new PromotionApplicationService(promotionRepository, promotionUsageRepository);
     }
+
+    @Bean
+    public com.learnfirebase.ecommerce.promotion.application.service.FlashSaleApplicationService flashSaleApplicationService(
+            com.learnfirebase.ecommerce.promotion.application.port.out.FlashSaleRepository flashSaleRepository,
+            com.learnfirebase.ecommerce.promotion.application.port.out.FlashSaleCachePort flashSaleCachePort) {
+        return new com.learnfirebase.ecommerce.promotion.application.service.FlashSaleApplicationService(flashSaleRepository, flashSaleCachePort);
+    }
 }
