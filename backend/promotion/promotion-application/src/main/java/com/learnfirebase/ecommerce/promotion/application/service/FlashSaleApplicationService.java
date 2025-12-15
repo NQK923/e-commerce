@@ -58,4 +58,9 @@ public class FlashSaleApplicationService implements CreateFlashSaleUseCase, List
     public List<FlashSale> listActiveFlashSales() {
         return flashSaleRepository.findAllActive();
     }
+
+    @Override
+    public List<FlashSale> listAllFlashSales() {
+        return flashSaleRepository.findAll();
+    }
 }

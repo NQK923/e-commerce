@@ -1,15 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { flashSaleApi, FlashSale } from "../src/api/flashSaleApi";
-import { orderApi } from "../src/api/orderApi";
-import { useAuth } from "../src/store/auth-store";
+import { flashSaleApi, FlashSale } from "@/src/api/flashSaleApi";
+import { orderApi } from "@/src/api/orderApi";
+import { useAuth } from "@/src/store/auth-store";
 import { useRouter } from "next/navigation";
-import { Card } from "../src/components/ui/card";
-import { Badge } from "../src/components/ui/badge";
-import { Skeleton } from "../src/components/ui/skeleton";
-import { formatCurrency } from "../src/utils/format";
-import { Button } from "../src/components/ui/button";
+import { Card } from "@/src/components/ui/card";
+import { Badge } from "@/src/components/ui/badge";
+import { Skeleton } from "@/src/components/ui/skeleton";
+import { formatCurrency } from "@/src/utils/format";
+import { Button } from "@/src/components/ui/button";
 import { Clock, Zap } from "lucide-react";
 
 export default function FlashSalesPage() {
@@ -19,11 +19,18 @@ export default function FlashSalesPage() {
   const router = useRouter();
 
   useEffect(() => {
-    setLoading(true);
-    flashSaleApi.listActive()
-        .then(setSales)
-        .catch(console.error)
-        .finally(() => setLoading(false));
+    const fetchSales = async () => {
+      setLoading(true);
+      try {
+        const data = await flashSaleApi.listActive();
+        setSales(data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSales();
   }, []);
 
   const handleBuy = async (sale: FlashSale) => {
@@ -54,10 +61,10 @@ export default function FlashSalesPage() {
             },
             paymentMethod: "CREDIT_CARD"
         });
-        alert("Order placed successfully!"); // Could be improved with Toast
+        alert("Đặt hàng thành công!"); // Could be improved with Toast
         router.push("/orders");
     } catch (e) {
-        alert("Failed to purchase: " + e);
+        alert("Lỗi khi mua hàng: " + e);
     }
   };
 
@@ -99,10 +106,10 @@ export default function FlashSalesPage() {
                         <div className="relative aspect-square bg-zinc-100 flex items-center justify-center">
                             {/* Placeholder image logic since FlashSale doesn't have image yet. 
                                 In real app, we would fetch product details to get image. */}
-                            <div className="text-zinc-400 font-medium">No Image</div>
+                            <div className="text-zinc-400 font-medium">Không có ảnh</div>
                             <div className="absolute top-3 left-3">
                                 <Badge className="bg-red-600 text-white border-red-600 animate-pulse">
-                                    Flash Sale
+                                    Đang giảm giá
                                 </Badge>
                             </div>
                         </div>

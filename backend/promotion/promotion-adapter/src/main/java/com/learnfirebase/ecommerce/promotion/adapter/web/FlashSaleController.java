@@ -31,6 +31,11 @@ public class FlashSaleController {
         return ResponseEntity.ok(createFlashSaleUseCase.createFlashSale(command));
     }
 
+    @GetMapping("/admin/flash-sales")
+    public ResponseEntity<List<FlashSale>> getAllFlashSales() {
+        return ResponseEntity.ok(listFlashSalesUseCase.listAllFlashSales());
+    }
+
     @GetMapping("/flash-sales")
     public ResponseEntity<List<FlashSale>> getActiveFlashSales() {
         return ResponseEntity.ok(listFlashSalesUseCase.listActiveFlashSales());

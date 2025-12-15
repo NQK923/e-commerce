@@ -37,6 +37,11 @@ public class FlashSaleRepositoryImpl implements FlashSaleRepository {
         return repository.findAllActive().stream().map(this::toDomain).collect(java.util.stream.Collectors.toList());
     }
 
+    @Override
+    public java.util.List<FlashSale> findAll() {
+        return repository.findAll().stream().map(this::toDomain).collect(java.util.stream.Collectors.toList());
+    }
+
     private FlashSaleEntity toEntity(FlashSale flashSale) {
         return FlashSaleEntity.builder()
             .id(flashSale.getId() != null ? java.util.UUID.fromString(flashSale.getId().getValue()) : null)

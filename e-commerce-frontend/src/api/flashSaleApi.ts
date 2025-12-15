@@ -9,7 +9,7 @@ export interface FlashSale {
     endTime: string;
     totalQuantity: number;
     remainingQuantity: number;
-    status: string;
+    status: 'PENDING' | 'ACTIVE' | 'ENDED' | 'CANCELLED';
 }
 
 export interface CreateFlashSaleRequest {
@@ -31,5 +31,8 @@ export const flashSaleApi = {
         }),
 
     listActive: () => 
-        apiRequest<FlashSale[]>('/api/flash-sales')
+        apiRequest<FlashSale[]>('/api/flash-sales'),
+
+    listAllAdmin: () =>
+        apiRequest<FlashSale[]>('/api/admin/flash-sales')
 };

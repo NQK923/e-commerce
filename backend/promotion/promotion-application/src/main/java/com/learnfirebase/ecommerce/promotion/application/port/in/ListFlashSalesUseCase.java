@@ -6,4 +6,5 @@ import com.learnfirebase.ecommerce.promotion.domain.model.FlashSale;
 
 public interface ListFlashSalesUseCase {
     List<FlashSale> listActiveFlashSales();
+    List<FlashSale> listAllFlashSales();
 }

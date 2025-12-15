@@ -16,7 +16,8 @@ import {
   Store,
   ShieldCheck,
   BarChart3,
-  Flag
+  Flag,
+  Zap
 } from 'lucide-react';
 import { Button } from '@/src/components/ui/button';
 import { useAuth } from '@/src/store/auth-store';
@@ -33,14 +34,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   };
 
   const navItems = [
-    { label: 'Dashboard', icon: LayoutDashboard, href: '/admin' },
-    { label: 'Users', icon: Users, href: '/admin/users' },
-    { label: 'Products', icon: Package, href: '/admin/products' },
-    { label: 'Orders', icon: ShoppingCart, href: '/admin/orders' },
-    { label: 'Sellers', icon: Store, href: '/admin/sellers' },
-    { label: 'Statistics', icon: BarChart3, href: '/admin/statistics' },
-    { label: 'Reports', icon: Flag, href: '/admin/reports' },
-    { label: 'Settings', icon: Settings, href: '/admin/settings' },
+    { label: 'Tổng quan', icon: LayoutDashboard, href: '/admin' },
+    { label: 'Người dùng', icon: Users, href: '/admin/users' },
+    { label: 'Sản phẩm', icon: Package, href: '/admin/products' },
+    { label: 'Đơn hàng', icon: ShoppingCart, href: '/admin/orders' },
+    { label: 'Flash Sales', icon: Zap, href: '/admin/flash-sales' },
+    { label: 'Người bán', icon: Store, href: '/admin/sellers' },
+    { label: 'Thống kê', icon: BarChart3, href: '/admin/statistics' },
+    { label: 'Báo cáo', icon: Flag, href: '/admin/reports' },
+    { label: 'Cài đặt', icon: Settings, href: '/admin/settings' },
   ];
 
   return (
@@ -88,7 +90,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors"
           >
             <LogOut size={20} />
-            {sidebarOpen && <span className="font-medium">Sign Out</span>}
+            {sidebarOpen && <span className="font-medium">Đăng xuất</span>}
           </button>
         </div>
       </aside>

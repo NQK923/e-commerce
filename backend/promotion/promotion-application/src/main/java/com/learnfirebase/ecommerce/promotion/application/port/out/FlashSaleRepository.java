@@ -10,4 +10,5 @@ public interface FlashSaleRepository {
     Optional<FlashSale> findById(FlashSaleId id);
     Optional<FlashSale> findActiveByProductId(String productId);
     java.util.List<FlashSale> findAllActive();
+    java.util.List<FlashSale> findAll();
 }
