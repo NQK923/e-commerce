@@ -21,6 +21,7 @@ public class JpaOrderItemEntity {
     @Id
     private String id;
     private String productId;
+    private String flashSaleId;
     private int quantity;
     private String price;
 

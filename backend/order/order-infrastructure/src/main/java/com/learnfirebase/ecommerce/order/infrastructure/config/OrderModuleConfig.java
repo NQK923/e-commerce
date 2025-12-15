@@ -24,10 +24,11 @@ public class OrderModuleConfig {
     public OrderApplicationService orderApplicationService(
         OrderRepository orderRepository,
         LoadProductPort loadProductPort,
+        com.learnfirebase.ecommerce.order.application.port.out.LoadFlashSalePort loadFlashSalePort,
         InventoryReservationPort inventoryReservationPort,
         OrderOutboxPort orderOutboxPort,
         OrderEventPublisher orderEventPublisher
     ) {
-        return new OrderApplicationService(orderRepository, loadProductPort, inventoryReservationPort, orderOutboxPort, orderEventPublisher);
+        return new OrderApplicationService(orderRepository, loadProductPort, loadFlashSalePort, inventoryReservationPort, orderOutboxPort, orderEventPublisher);
     }
 }

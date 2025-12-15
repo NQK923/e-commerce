@@ -38,6 +38,7 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
 
     private final OrderRepository orderRepository;
     private final LoadProductPort loadProductPort;
+    private final com.learnfirebase.ecommerce.order.application.port.out.LoadFlashSalePort loadFlashSalePort;
     private final InventoryReservationPort inventoryReservationPort;
     private final OrderOutboxPort orderOutboxPort;
     private final OrderEventPublisher eventPublisher;
@@ -57,8 +58,23 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
         for (CreateOrderCommand.OrderItemCommand itemCmd : command.getItems()) {
             BigDecimal price;
             if (itemCmd.getFlashSaleId() != null) {
-                // Flash Sale: Use command price
-                price = new BigDecimal(itemCmd.getPrice());
+                // Flash Sale: Validate and use Flash Sale price
+                var flashSale = loadFlashSalePort.loadFlashSale(itemCmd.getFlashSaleId())
+                    .orElseThrow(() -> new OrderDomainException("Flash Sale not found: " + itemCmd.getFlashSaleId()));
+                
+                if (!flashSale.getProductId().equals(itemCmd.getProductId())) {
+                     throw new OrderDomainException("Flash Sale " + itemCmd.getFlashSaleId() + " does not match product " + itemCmd.getProductId());
+                }
+                
+                if (!flashSale.isActive()) {
+                     throw new OrderDomainException("Flash Sale " + itemCmd.getFlashSaleId() + " is not active");
+                }
+                
+                if (!flashSale.getPrice().getCurrency().equals(command.getCurrency())) {
+                     throw new OrderDomainException("Currency mismatch for Flash Sale " + itemCmd.getFlashSaleId());
+                }
+
+                price = flashSale.getPrice().getAmount();
             } else {
                 String fetched = standardPrices.get(itemCmd.getProductId());
                 price = (fetched != null) ? new BigDecimal(fetched) : new BigDecimal(itemCmd.getPrice());
@@ -66,6 +82,7 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
             
             items.add(OrderItem.builder()
                 .productId(itemCmd.getProductId())
+                .flashSaleId(itemCmd.getFlashSaleId())
                 .quantity(itemCmd.getQuantity())
                 .price(Money.builder().amount(price).currency(command.getCurrency()).build())
                 .build());
@@ -117,6 +134,12 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
             .orElseThrow(() -> new OrderDomainException("Order not found"));
         order.cancel(command.getReason());
         Order saved = orderRepository.save(order);
+        
+        // Release Flash Sale Stock
+        saved.getItems().stream()
+             .filter(item -> item.getFlashSaleId() != null)
+             .forEach(item -> inventoryReservationPort.releaseFlashSale(item.getFlashSaleId(), item.getQuantity()));
+
         order.getDomainEvents().forEach(eventPublisher::publish);
         return toDto(saved);
     }

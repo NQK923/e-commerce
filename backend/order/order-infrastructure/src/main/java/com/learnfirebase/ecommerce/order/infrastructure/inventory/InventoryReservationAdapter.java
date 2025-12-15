@@ -41,8 +41,26 @@ public class InventoryReservationAdapter implements InventoryReservationPort {
         script.setScriptText(scriptText);
         script.setResultType(Long.class);
         
-        Long result = redisTemplate.execute(script, Collections.singletonList(key), String.valueOf(quantity));
+                Long result = redisTemplate.execute(script, Collections.singletonList(key), String.valueOf(quantity));
         
-        return result != null && result >= 0;
-    }
-}
+                
+        
+                return result != null && result >= 0;
+        
+            }
+        
+        
+        
+            @Override
+        
+            public void releaseFlashSale(String flashSaleId, int quantity) {
+        
+                String key = String.format(FLASH_SALE_STOCK_KEY_PREFIX, flashSaleId);
+        
+                redisTemplate.opsForValue().increment(key, quantity);
+        
+            }
+        
+        }
+        
+        

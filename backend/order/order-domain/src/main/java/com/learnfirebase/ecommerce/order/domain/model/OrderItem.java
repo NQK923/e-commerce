@@ -15,6 +15,7 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode(of = {"productId"})
 public class OrderItem {
     private String productId;
+    private String flashSaleId;
     private int quantity;
     private Money price;
 

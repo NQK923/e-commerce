@@ -8,7 +8,6 @@ import com.learnfirebase.ecommerce.common.domain.valueobject.Money;
 import com.learnfirebase.ecommerce.promotion.application.port.out.FlashSaleRepository;
 import com.learnfirebase.ecommerce.promotion.domain.model.FlashSale;
 import com.learnfirebase.ecommerce.promotion.domain.model.FlashSaleId;
-import com.learnfirebase.ecommerce.promotion.domain.model.FlashSaleStatus;
 
 import lombok.RequiredArgsConstructor;
 
@@ -25,7 +24,7 @@ public class FlashSaleRepositoryImpl implements FlashSaleRepository {
 
     @Override
     public Optional<FlashSale> findById(FlashSaleId id) {
-        return repository.findById(id.getValue()).map(this::toDomain);
+        return repository.findById(java.util.UUID.fromString(id.getValue())).map(this::toDomain);
     }
 
     @Override
@@ -40,12 +39,12 @@ public class FlashSaleRepositoryImpl implements FlashSaleRepository {
 
     private FlashSaleEntity toEntity(FlashSale flashSale) {
         return FlashSaleEntity.builder()
-            .id(flashSale.getId() != null ? flashSale.getId().getValue() : null)
+            .id(flashSale.getId() != null ? java.util.UUID.fromString(flashSale.getId().getValue()) : null)
             .productId(flashSale.getProductId())
             .price(flashSale.getPrice().getAmount())
-            .currency(flashSale.getPrice().getCurrency().getCurrencyCode())
+            .currency(flashSale.getPrice().getCurrency())
             .originalPrice(flashSale.getOriginalPrice().getAmount())
-            .originalCurrency(flashSale.getOriginalPrice().getCurrency().getCurrencyCode())
+            .originalCurrency(flashSale.getOriginalPrice().getCurrency())
             .startTime(flashSale.getStartTime())
             .endTime(flashSale.getEndTime())
             .totalQuantity(flashSale.getTotalQuantity())
@@ -62,11 +61,11 @@ public class FlashSaleRepositoryImpl implements FlashSaleRepository {
             .productId(entity.getProductId())
             .price(Money.builder()
                 .amount(entity.getPrice())
-                .currency(java.util.Currency.getInstance(entity.getCurrency()))
+                .currency(entity.getCurrency())
                 .build())
             .originalPrice(Money.builder()
                 .amount(entity.getOriginalPrice())
-                .currency(java.util.Currency.getInstance(entity.getOriginalCurrency()))
+                .currency(entity.getOriginalCurrency())
                 .build())
             .startTime(entity.getStartTime())
             .endTime(entity.getEndTime())

@@ -6,5 +6,6 @@ dependencies {
     implementation(project(":order:order-domain"))
     implementation(project(":common:common-domain"))
     implementation(project(":common:common-application"))
+    implementation(project(":promotion:promotion-domain"))
 }
 

@@ -1,14 +1,12 @@
 package com.learnfirebase.ecommerce.promotion.infrastructure.persistence;
 
 import java.util.Optional;
-import java.util.UUID;
 
 import org.springframework.stereotype.Repository;
 
 import com.learnfirebase.ecommerce.promotion.application.port.out.PromotionRepository;
 import com.learnfirebase.ecommerce.promotion.domain.model.Promotion;
 import com.learnfirebase.ecommerce.promotion.domain.model.PromotionId;
-import com.learnfirebase.ecommerce.promotion.domain.model.PromotionRule;
 
 import lombok.RequiredArgsConstructor;
 

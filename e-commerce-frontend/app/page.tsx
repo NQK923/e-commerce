@@ -224,13 +224,13 @@ export default function HomePage() {
                     </span>
                     <h2 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
                         Giảm đến 50% cho <br/>
-                        <span className="text-purple-300">Bộ sưu tập mùa hè</span>
+                        <span className="text-purple-300">Flash Sales Mùa Hè</span>
                     </h2>
                     <p className="max-w-md text-lg text-purple-100/80">
                         Đừng bỏ lỡ cơ hội sở hữu những món đồ thời thượng với giá cực hời. Số lượng có hạn!
                     </p>
                     <Button size="lg" className="bg-white text-purple-900 hover:bg-purple-50 border-0 font-bold">
-                        Mua ngay bây giờ
+                        <Link href="/flash-sales">Săn Flash Sale Ngay</Link>
                     </Button>
                 </div>
                 {/* Decorative Element */}
