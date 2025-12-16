@@ -47,14 +47,17 @@ function SellerProductsContent() {
         setLoading(true);
         setError(null);
         try {
+            const sellerId = user.id;
             const response = await productApi.list({
                 search: debouncedSearchTerm || undefined,
                 page: currentPage,
                 size: pageSize,
                 sort: 'createdAt,desc',
                 includeOutOfStock: true,
+                sellerId,
             });
-            setProducts(response.items);
+            const scopedProducts = (response.items ?? []).filter((p) => p.sellerId === sellerId);
+            setProducts(scopedProducts);
             setTotalPages(response.totalPages || 0);
         } catch (err) {
             console.error('Failed to fetch seller products', err);
@@ -93,6 +96,7 @@ function SellerProductsContent() {
                 currency: product.currency ?? "VND",
                 quantity: 0, // Mark as out of stock
                 categoryId: product.category,
+                sellerId: user.id,
                 images: product.images?.map((img, idx) => ({
                     url: img.url,
                     primary: img.primary ?? idx === 0,

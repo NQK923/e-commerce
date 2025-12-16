@@ -124,6 +124,7 @@ export const productApi = {
         currency: payload.currency ?? "VND",
         quantity: payload.quantity ?? 0,
         categoryId: payload.categoryId,
+        sellerId: payload.sellerId,
         variants: payload.variants?.map((v) => ({
           sku: v.sku,
           name: v.name,
@@ -148,6 +149,7 @@ export const productApi = {
         currency: payload.currency ?? "VND",
         quantity: payload.quantity ?? 0,
         categoryId: payload.categoryId,
+        sellerId: payload.sellerId,
         variants: payload.variants?.map((v) => ({
           sku: v.sku,
           name: v.name,

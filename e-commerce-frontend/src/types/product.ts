@@ -40,6 +40,7 @@ export type UpsertProductRequest = {
   currency?: string;
   quantity?: number;
   categoryId?: string;
+  sellerId?: string;
   images: Array<{
     id?: string;
     url: string;

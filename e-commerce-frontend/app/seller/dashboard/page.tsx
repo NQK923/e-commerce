@@ -39,12 +39,15 @@ function SellerDashboardContent() {
     if (!user || !user.roles?.includes("SELLER")) return;
     
     const loadData = async () => {
+      const sellerId = user.id;
+      if (!sellerId) return;
       try {
         const [prodRes, ordRes] = await Promise.all([
-          productApi.list({ page: 0, size: 100, includeOutOfStock: true }),
+          productApi.list({ page: 0, size: 100, includeOutOfStock: true, sellerId }),
           orderApi.list({ page: 0, size: 50, sort: 'createdAt,desc' })
         ]);
-        setProducts(prodRes.items ?? []);
+        const scopedProducts = (prodRes.items ?? []).filter((p) => p.sellerId === sellerId);
+        setProducts(scopedProducts);
         setOrders(ordRes.items ?? []);
       } catch (e) {
         console.error("Failed to load dashboard data", e);
@@ -108,6 +111,7 @@ function SellerDashboardContent() {
         currency: product.currency ?? "VND",
         quantity: 0,
         categoryId: product.category,
+        sellerId: user.id,
         images: product.images?.map((img, idx) => ({
             url: img.url,
             primary: img.primary ?? idx === 0,

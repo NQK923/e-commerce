@@ -215,6 +215,7 @@ function NewProductContent() {
                 price: parseFloat(data.price),
                 currency: data.currency || "VND",
                 categoryId: data.categoryId,
+                sellerId: user.id,
                 quantity: data.hasVariants ? 
                     data.variants!.reduce((sum, v) => sum + v.quantity, 0) 
                     : (parseInt(data.quantity || "0")),
