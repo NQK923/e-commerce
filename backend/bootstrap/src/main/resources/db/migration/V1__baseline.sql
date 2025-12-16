@@ -1,3 +1,5 @@
+-- Consolidated baseline (includes previous V1-V12), keeps seed data
+
 -- identity
 CREATE TABLE users (
     id VARCHAR(255) PRIMARY KEY,
@@ -69,9 +71,12 @@ CREATE TABLE products (
     id VARCHAR(255) PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     description TEXT,
-    price VARCHAR(50),
+    price NUMERIC,
     currency VARCHAR(10),
     category_id VARCHAR(255),
+    quantity INTEGER,
+    sold_count INTEGER DEFAULT 0,
+    seller_id VARCHAR(255),
     created_at TIMESTAMP,
     updated_at TIMESTAMP
 );
@@ -79,8 +84,9 @@ CREATE TABLE products (
 CREATE TABLE product_variants (
     sku VARCHAR(255) PRIMARY KEY,
     name VARCHAR(255),
-    price VARCHAR(50),
+    price NUMERIC,
     currency VARCHAR(10),
+    quantity INTEGER,
     product_id VARCHAR(255) NOT NULL REFERENCES products(id) ON DELETE CASCADE
 );
 
@@ -97,6 +103,35 @@ CREATE TABLE product_tags (
     tag VARCHAR(255) NOT NULL,
     PRIMARY KEY (product_id, tag)
 );
+
+CREATE TABLE product_reports (
+    id VARCHAR(255) PRIMARY KEY,
+    product_id VARCHAR(255) NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    user_id VARCHAR(255),
+    reason VARCHAR(50) NOT NULL,
+    description TEXT,
+    status VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL
+);
+
+CREATE INDEX idx_product_reports_product_id ON product_reports(product_id);
+CREATE INDEX idx_product_reports_status ON product_reports(status);
+CREATE INDEX idx_product_reports_created_at ON product_reports(created_at);
+
+CREATE TABLE product_reviews (
+    id VARCHAR(255) PRIMARY KEY,
+    product_id VARCHAR(255) NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    user_id VARCHAR(255) NOT NULL,
+    user_name VARCHAR(255),
+    rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    comment TEXT,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL
+);
+
+CREATE INDEX idx_product_reviews_product_id ON product_reviews(product_id);
+CREATE INDEX idx_product_reviews_user_id ON product_reviews(user_id);
 
 -- inventory
 CREATE TABLE inventory (
@@ -120,10 +155,11 @@ CREATE TABLE carts (
 CREATE TABLE cart_items (
     cart_id VARCHAR(255) REFERENCES carts(id) ON DELETE CASCADE,
     product_id VARCHAR(255) NOT NULL,
+    variant_sku VARCHAR(255) NOT NULL DEFAULT '',
     quantity INT NOT NULL,
     price VARCHAR(50),
     currency VARCHAR(10),
-    PRIMARY KEY (cart_id, product_id)
+    PRIMARY KEY (cart_id, product_id, variant_sku)
 );
 
 -- order
@@ -140,6 +176,7 @@ CREATE TABLE orders (
 CREATE TABLE order_items (
     id VARCHAR(255) PRIMARY KEY,
     product_id VARCHAR(255),
+    flash_sale_id VARCHAR(255),
     quantity INT NOT NULL,
     price VARCHAR(50),
     order_id VARCHAR(255) REFERENCES orders(id) ON DELETE CASCADE
@@ -170,3 +207,48 @@ CREATE TABLE shipping_rates (
     cost VARCHAR(50),
     currency VARCHAR(10)
 );
+
+-- chat
+CREATE TABLE chat_conversation (
+    id VARCHAR(255) PRIMARY KEY,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE chat_conversation_participants (
+    conversation_id VARCHAR(255) NOT NULL REFERENCES chat_conversation(id) ON DELETE CASCADE,
+    participant_id VARCHAR(255) NOT NULL,
+    PRIMARY KEY (conversation_id, participant_id)
+);
+
+CREATE TABLE chat_message (
+    id VARCHAR(255) PRIMARY KEY,
+    conversation_id VARCHAR(255) NOT NULL REFERENCES chat_conversation(id) ON DELETE CASCADE,
+    sender_id VARCHAR(255) NOT NULL,
+    receiver_id VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    sent_at TIMESTAMP NOT NULL,
+    status VARCHAR(32) NOT NULL
+);
+
+CREATE INDEX idx_chat_message_conversation_sent_at ON chat_message(conversation_id, sent_at);
+
+-- flash sale
+CREATE TABLE flash_sales (
+    id UUID PRIMARY KEY,
+    product_id VARCHAR(255) NOT NULL,
+    price NUMERIC(19, 2) NOT NULL,
+    currency VARCHAR(3) NOT NULL,
+    original_price NUMERIC(19, 2) NOT NULL,
+    original_currency VARCHAR(3) NOT NULL,
+    start_time TIMESTAMP WITH TIME ZONE NOT NULL,
+    end_time TIMESTAMP WITH TIME ZONE NOT NULL,
+    total_quantity INTEGER NOT NULL,
+    remaining_quantity INTEGER NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE,
+    updated_at TIMESTAMP WITH TIME ZONE
+);
+
+CREATE INDEX idx_flash_sales_product_id ON flash_sales(product_id);
+CREATE INDEX idx_flash_sales_status ON flash_sales(status);
+CREATE INDEX idx_flash_sales_time ON flash_sales(start_time, end_time);

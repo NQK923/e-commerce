@@ -1,1 +1,0 @@
-ALTER TABLE products ADD COLUMN sold_count INTEGER DEFAULT 0;
