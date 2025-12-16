@@ -16,9 +16,10 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 type LanguageProviderProps = {
   children: React.ReactNode;
+  initialLanguage?: 'en' | 'vi'; // accepted but we currently only support vi
 };
 
-export function LanguageProvider({ children }: LanguageProviderProps) {
+export function LanguageProvider({ children}: LanguageProviderProps) {
   // Always Vietnamese
   const language: Language = 'vi';
   const t = vi;

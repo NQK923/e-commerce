@@ -19,6 +19,7 @@ type ConversationDto = {
     displayName?: string;
     avatarUrl?: string;
     role?: string;
+    storeName?: string;
   }>;
   lastMessage?: MessageDto;
   unreadCount?: number;

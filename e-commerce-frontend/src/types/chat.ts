@@ -15,6 +15,7 @@ export type ChatParticipant = {
   displayName?: string;
   avatarUrl?: string;
   role?: string;
+  storeName?: string;
 };
 
 export type ConversationSummary = {

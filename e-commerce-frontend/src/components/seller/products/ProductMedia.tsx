@@ -1,6 +1,6 @@
 import React, { useRef } from "react";
 import Image from "next/image";
-import { X, ImagePlus, RefreshCw, Trash2 } from "lucide-react";
+import { ImagePlus, RefreshCw, Trash2 } from "lucide-react";
 
 interface ProductMediaProps {
   images: string[]; // [0] is cover, rest are gallery

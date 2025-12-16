@@ -5,6 +5,7 @@ export type AppConfig = {
   supabaseAnonKey?: string;
   supabaseProductBucket?: string;
   supabaseSellerBucket?: string;
+  supabaseChatBucket?: string;
 };
 
 const apiBaseUrl =
@@ -15,6 +16,7 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabaseProductBucket = process.env.NEXT_PUBLIC_SUPABASE_PRODUCT_BUCKET || "product-images";
 const supabaseSellerBucket = process.env.NEXT_PUBLIC_SUPABASE_SELLER_BUCKET || "seller-assets";
+const supabaseChatBucket = process.env.NEXT_PUBLIC_SUPABASE_CHAT_BUCKET || "chat-attachments";
 
 export const config: AppConfig = {
   apiBaseUrl,
@@ -23,6 +25,7 @@ export const config: AppConfig = {
   supabaseAnonKey,
   supabaseProductBucket,
   supabaseSellerBucket,
+  supabaseChatBucket,
 };
 
 export const requireConfig = (): AppConfig => {

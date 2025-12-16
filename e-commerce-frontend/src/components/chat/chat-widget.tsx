@@ -1,23 +1,23 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   ArrowLeft,
+  Check,
+  CheckCheck,
   Image as ImageIcon,
   Loader2,
   MessageCircle,
+  Minimize2,
   MoreHorizontal,
   Phone,
   Search,
   Send,
+  Smile,
   User,
   Video,
   X,
-  Minimize2,
-  Smile,
-  Check,
-  CheckCheck
 } from "lucide-react";
 import { useChat } from "@/src/store/chat-store";
 import { useAuth } from "@/src/store/auth-store";
@@ -26,6 +26,8 @@ import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
 import { useToast } from "@/src/components/ui/toast-provider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/src/components/ui/avatar";
+import { uploadToBucket } from "@/src/lib/storage";
+import { config } from "@/src/config/env";
 
 type ChatWidgetProps = {
   fullPage?: boolean;
@@ -54,6 +56,32 @@ const getOtherParticipant = (
   currentUserId?: string,
 ) => conversation?.participants.find((p) => p.id !== currentUserId) ?? null;
 
+const formatShopFallback = (id?: string) => {
+  if (!id) return "Shop";
+  const suffix = id.length > 4 ? id.slice(-4).toUpperCase() : id.toUpperCase();
+  return `Shop ${suffix}`;
+};
+
+const resolveParticipantName = (
+  participant: ConversationSummary["participants"][number] | null,
+  fallbackId?: string,
+) => {
+  if (!participant) return formatShopFallback(fallbackId);
+  return (
+    participant.storeName ||
+    participant.displayName ||
+    participant.id ||
+    formatShopFallback(fallbackId)
+  );
+};
+
+const isImageContent = (content: string): boolean => {
+  const lowered = content.toLowerCase();
+  const imageExts = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".avif", ".svg"];
+  const looksLikeUrl = lowered.startsWith("http://") || lowered.startsWith("https://");
+  return looksLikeUrl && imageExts.some((ext) => lowered.includes(ext));
+};
+
 // --- Sub-components ---
 
 type MessageBubbleProps = {
@@ -61,10 +89,13 @@ type MessageBubbleProps = {
   isMine: boolean;
   isFirstInGroup: boolean; // Is this the first message in a series from this sender?
   isLastInGroup: boolean;  // Is this the last message in a series from this sender?
+  showAvatar: boolean;
+  senderAvatar?: string;
+  senderName?: string;
 };
 
 const MessageBubble: React.FC<MessageBubbleProps> = ({ 
-  message, isMine, isFirstInGroup, isLastInGroup 
+  message, isMine, isFirstInGroup, isLastInGroup, showAvatar, senderAvatar, senderName
 }) => {
   // Define border radius for each corner
   const getBorderRadius = () => {
@@ -85,26 +116,57 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
     }
   };
 
+  const isImage = isImageContent(message.content);
+
+  const bubbleClass = isImage
+    ? "bg-transparent shadow-none p-0"
+    : isMine
+        ? "bg-linear-to-br from-emerald-500 to-emerald-600 text-white px-3 py-2 shadow-sm"
+        : "bg-white text-zinc-800 border border-zinc-100 px-3 py-2 shadow-sm";
+
   return (
-    <div 
-      className={`relative px-4 py-2 text-[15px] leading-relaxed break-words shadow-sm transition-all duration-200 min-w-[30px]
-        ${isMine 
-            ? "bg-gradient-to-br from-emerald-500 to-emerald-600 text-white" 
-            : "bg-white text-zinc-800 border border-zinc-100"
-        }
-      `}
-      style={{ borderRadius: getBorderRadius() }}
-    >
-      <p>{message.content}</p>
-      {isMine && isLastInGroup && ( // Show status only for my last message in a group
-        <div className="mt-1 text-[10px] flex justify-end items-center gap-1">
-          {message.status === 'READ' ? <CheckCheck size={12} className="text-emerald-200" /> : <Check size={12} className="text-emerald-200" />}
+    <div className={`flex w-full ${isMine ? "justify-end" : "justify-start"} ${isLastInGroup ? 'mb-3' : 'mb-0.5'} group`}>
+      {/* Avatar column (only for incoming) */}
+      {!isMine && (
+        <div className="flex flex-col justify-end mr-2 w-8 shrink-0">
+          {showAvatar ? (
+            <Avatar className="h-8 w-8 ring-2 ring-white shadow-sm">
+              <AvatarImage src={senderAvatar} />
+              <AvatarFallback className="text-[10px] bg-emerald-100 text-emerald-700 font-bold">
+                {senderName?.charAt(0) || <User size={12} />}
+              </AvatarFallback>
+            </Avatar>
+          ) : (
+            <div className="w-8" />
+          )}
         </div>
       )}
+      
+      <div
+        className={`relative text-[15px] leading-relaxed wrap-break-word transition-all duration-200 min-w-[30px] ${bubbleClass}`}
+        style={{ borderRadius: getBorderRadius(), maxWidth: isImage ? "320px" : "100%" }}
+      >
+        {isImage ? (
+          <a href={message.content} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-xl">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={message.content} alt="Chat attachment" className="max-h-72 w-full object-cover" />
+          </a>
+        ) : (
+          <p>{message.content}</p>
+        )}
+        {isMine && isLastInGroup && ( // Show status only for my last message in a group
+          <div className="mt-1 text-[10px] flex justify-end items-center gap-1">
+            {message.status === 'READ' ? <CheckCheck size={12} className="text-emerald-200" /> : <Check size={12} className="text-emerald-200" />}
+          </div>
+        )}
+      </div>
+      {/* Optional: Timestamp for the bubble */}
+      <span className="text-[10px] text-zinc-400 mt-1 ml-1 self-end opacity-0 group-hover:opacity-100 transition-opacity">
+        {formatTimeShort(message.sentAt)}
+      </span>
     </div>
   );
 };
-
 const ConversationItem: React.FC<{
   conversation: ConversationSummary;
   active: boolean;
@@ -114,6 +176,7 @@ const ConversationItem: React.FC<{
   const other = getOtherParticipant(conversation, currentUserId);
   const last = conversation.lastMessage;
   const isUnread = (conversation.unreadCount || 0) > 0;
+  const otherName = resolveParticipantName(other, conversation.id);
 
   return (
     <div
@@ -127,8 +190,8 @@ const ConversationItem: React.FC<{
       <div className="relative shrink-0">
         <Avatar className="h-12 w-12 border-2 border-white shadow-sm group-hover:border-emerald-100 transition-colors">
           <AvatarImage src={other?.avatarUrl} />
-          <AvatarFallback className="bg-gradient-to-br from-zinc-100 to-zinc-200 text-zinc-600 font-semibold">
-            {other?.displayName?.charAt(0).toUpperCase() || <User size={20} />}
+          <AvatarFallback className="bg-linear-to-br from-zinc-100 to-zinc-200 text-zinc-600 font-semibold">
+            {otherName.trim().charAt(0).toUpperCase() || <User size={20} />}
           </AvatarFallback>
         </Avatar>
         {/* Mock Online Indicator */}
@@ -138,7 +201,7 @@ const ConversationItem: React.FC<{
       <div className="flex-1 min-w-0">
         <div className="flex justify-between items-center mb-0.5">
            <h4 className={`text-[14px] truncate ${isUnread ? "font-bold text-zinc-900" : "font-semibold text-zinc-700"}`}>
-             {other?.displayName || other?.id || "Unknown"}
+             {otherName}
            </h4>
            {last && (
              <span className={`text-[10px] flex-none ml-2 ${isUnread ? "font-bold text-emerald-600" : "text-zinc-400"}`}>
@@ -152,14 +215,14 @@ const ConversationItem: React.FC<{
             {last ? (
               <>
                 {last.senderId === currentUserId && "You: "}
-                {last.content}
+                {isImageContent(last.content) ? "Photo" : last.content}
               </>
             ) : (
               <span className="italic opacity-80">Start a conversation</span>
             )}
           </p>
           {isUnread && (
-            <span className="flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-emerald-500 px-1.5 text-[10px] font-bold text-white shadow-sm">
+            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-emerald-500 px-1.5 text-[10px] font-bold text-white shadow-sm">
               {conversation.unreadCount}
             </span>
           )}
@@ -170,7 +233,8 @@ const ConversationItem: React.FC<{
 };
 
 export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initialTargetUserId }) => {
-  const { user, initializing } = useAuth();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { user} = useAuth();
   const isAuthenticated = Boolean(user);
   const router = useRouter();
   const pathname = usePathname();
@@ -187,55 +251,18 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
     loadingMessages,
   } = useChat();
 
-  const [isOpen, setIsOpen] = useState(fullPage);
   const [filter, setFilter] = useState("");
-  const [draft, setDraft] = useState("");
+  // Initialize composeTarget and isOpen directly based on props
   const [composeTarget, setComposeTarget] = useState(initialTargetUserId ?? "");
+  const [isOpen, setIsOpen] = useState(fullPage || Boolean(initialTargetUserId)); // isOpen can be true if fullPage or initialTargetUserId is present
+
+  const [draft, setDraft] = useState(""); // Moved draft declaration here
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  // --- Effects ---
-
-  useEffect(() => {
-    if (initialTargetUserId) {
-        setComposeTarget(initialTargetUserId);
-        setIsOpen(true);
-    }
-  }, [initialTargetUserId]);
-
-  useEffect(() => {
-    if (fullPage) setIsOpen(true);
-  }, [fullPage]);
-
-  useEffect(() => {
-    if (!isAuthenticated) return;
-    if (fullPage && !activeConversationId && conversations.length > 0 && !composeTarget) {
-      setActiveConversationId(conversations[0].id);
-    }
-    if (composeTarget && !activeConversationId) {
-      const existing = conversations.find(c => 
-          c.participants.some(p => p.id === composeTarget)
-      );
-      if (existing) setActiveConversationId(existing.id);
-      else setActiveConversationId(`temp:${composeTarget}`);
-    }
-  }, [activeConversationId, composeTarget, conversations, isAuthenticated, setActiveConversationId, fullPage]);
-
-  const derivedConversationKey = activeConversationId ?? (composeTarget ? `temp:${composeTarget}` : null);
-  const messages = getMessagesForConversation(derivedConversationKey);
-  
-  useEffect(() => {
-    if (messagesEndRef.current && (isOpen || fullPage)) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [messages.length, loadingMessages, activeConversationId, isOpen, fullPage]);
-
-  useEffect(() => {
-      if (activeConversationId && isOpen && !fullPage) {
-          setTimeout(() => inputRef.current?.focus(), 200);
-      }
-  }, [activeConversationId, isOpen, fullPage]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const userClearedSelection = useRef(false);
 
   // --- Derived State ---
 
@@ -244,85 +271,120 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
     [activeConversationId, conversations],
   );
 
-  const otherParticipant = getOtherParticipant(activeConversation, user?.id);
+  const otherParticipant = useMemo(
+    () => getOtherParticipant(activeConversation, user?.id),
+    [activeConversation, user?.id],
+  );
 
-  const filteredConversations = conversations.filter((conversation) => {
-    const other = getOtherParticipant(conversation, user?.id);
-    if (!filter.trim()) return true;
-    return (
-      other?.displayName?.toLowerCase().includes(filter.toLowerCase()) ||
-      other?.id?.toLowerCase().includes(filter.toLowerCase())
-    );
-  });
+  const derivedConversationKey = useMemo(
+    () => activeConversationId ?? (composeTarget ? `temp:${composeTarget}` : null),
+    [activeConversationId, composeTarget],
+  );
+
+  const messages = useMemo(
+    () => getMessagesForConversation(derivedConversationKey),
+    [derivedConversationKey, getMessagesForConversation],
+  );
+
+  const filteredConversations = useMemo(
+    () =>
+      conversations.filter((conversation) => {
+        const other = getOtherParticipant(conversation, user?.id);
+        if (!filter.trim()) return true;
+        return (
+          other?.displayName?.toLowerCase().includes(filter.toLowerCase()) ||
+          other?.storeName?.toLowerCase().includes(filter.toLowerCase()) ||
+          other?.id?.toLowerCase().includes(filter.toLowerCase())
+        );
+      }),
+    [conversations, filter, user?.id],
+  );
 
   const unreadTotal = useMemo(
     () => conversations.reduce((sum, conv) => sum + (conv.unreadCount ?? 0), 0),
     [conversations],
   );
 
-  // Group messages by sender and time proximity
-  const messageGroups = useMemo(() => {
-    if (!messages.length) return [];
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    if (activeConversationId) {
+      userClearedSelection.current = false;
+      return;
+    }
+    if (userClearedSelection.current) return;
+    if (activeConversationId) return;
+    if (conversations.length > 0 && !composeTarget) {
 
-    const groups: {
-        senderId: string;
-        isMine: boolean;
-        avatarUrl?: string; // Avatar URL of the sender
-        messages: ChatMessage[];
-    }[] = [];
+      setActiveConversationId(conversations[0].id);
+    } else if (composeTarget) {
 
-    let currentGroup: typeof groups[0] | null = null;
+      setActiveConversationId(`temp:${composeTarget}`);
+    }
+  }, [activeConversationId, composeTarget, conversations, isAuthenticated, setActiveConversationId]);
 
-    messages.forEach((msg) => {
-        const isMine = msg.senderId === user?.id;
-        
-        // Start a new group if:
-        // 1. There's no current group
-        // 2. The sender changes
-        // 3. The time difference is greater than 5 minutes (300,000 ms)
-        const shouldStartNewGroup = !currentGroup ||
-            currentGroup.senderId !== msg.senderId ||
-            (msg.sentAt && currentGroup.messages.length > 0 &&
-                (new Date(msg.sentAt).getTime() - new Date(currentGroup.messages[currentGroup.messages.length - 1].sentAt).getTime()) > (5 * 60 * 1000));
+  useEffect(() => {
+    if (initialTargetUserId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setComposeTarget(initialTargetUserId);
+      if (!activeConversationId) {
 
-        if (shouldStartNewGroup) {
-            currentGroup = {
-                senderId: msg.senderId,
-                isMine: isMine,
-                avatarUrl: isMine ? user?.avatarUrl : otherParticipant?.avatarUrl,
-                messages: [msg],
-            };
-            groups.push(currentGroup);
-        } else {
-            currentGroup!.messages.push(msg);
-        }
-    });
+        setActiveConversationId(`temp:${initialTargetUserId}`);
+      }
 
-    return groups;
-  }, [messages, user?.id, user?.avatarUrl, otherParticipant?.avatarUrl]);
+      setIsOpen(true);
+      userClearedSelection.current = false;
+    }
+  }, [activeConversationId, initialTargetUserId, setActiveConversationId]);
 
-  const handleSend = async () => {
-    const content = draft.trim();
-    if (!content) return;
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages.length, activeConversationId]);
+
+  const resolveReceiverId = () => otherParticipant?.id || composeTarget;
+
+  const sendContent = async (content: string) => {
+    const trimmed = content.trim();
+    if (!trimmed) return;
 
     if (connectionStatus !== "connected") {
       addToast("Connecting...", "info");
-      // Allow trying anyway, maybe it just reconnected
     }
 
-    const receiverId = otherParticipant?.id || composeTarget;
-    if (!receiverId) return;
+    const receiverId = resolveReceiverId();
+    if (!receiverId) {
+      addToast("Chọn người nhận trước khi gửi", "error");
+      return;
+    }
 
     try {
       await sendMessage({
         conversationId: activeConversation?.id,
         receiverId,
-        content,
+        content: trimmed,
       });
       setDraft("");
       inputRef.current?.focus();
-    } catch (error) {
+    } catch (_error: unknown) { // eslint-disable-line @typescript-eslint/no-unused-vars
       addToast("Failed to send", "error");
+    }
+  };
+
+  const handleSend = async () => sendContent(draft);
+
+  const handleSelectImage = () => fileInputRef.current?.click();
+
+  const handleImageChosen = async (file?: File) => {
+    if (!file) return;
+    setUploadingImage(true);
+    try {
+      const imageUrl = await uploadToBucket(config.supabaseChatBucket, file);
+      await sendContent(imageUrl);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Upload image failed";
+      addToast(message, "error");
+    } finally {
+      setUploadingImage(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
@@ -366,7 +428,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
       </div>
 
       {/* List */}
-      <div className="flex-1 overflow-y-auto pt-2 space-y-1 custom-scrollbar scroll-smooth">
+          <div className="flex-1 overflow-y-auto pt-2 space-y-1 custom-scrollbar scroll-smooth">
         {loadingConversations && conversations.length === 0 ? (
            <div className="flex justify-center py-8"><Loader2 className="animate-spin text-emerald-500" /></div>
         ) : filteredConversations.length === 0 ? (
@@ -385,6 +447,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
                     active={activeConversationId === conv.id}
                     onSelect={() => {
                         setComposeTarget("");
+                        userClearedSelection.current = false;
                         setActiveConversationId(conv.id);
                     }}
                     currentUserId={user?.id}
@@ -403,7 +466,10 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
                 value={composeTarget}
                 onChange={(e) => {
                     setComposeTarget(e.target.value);
-                    if (e.target.value) setActiveConversationId(`temp:${e.target.value}`);
+                    if (e.target.value) {
+                        userClearedSelection.current = false;
+                        setActiveConversationId(`temp:${e.target.value}`);
+                    }
                 }}
              />
          </div>
@@ -426,7 +492,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
          );
      }
 
-     const displayName = otherParticipant?.displayName || otherParticipant?.id || (composeTarget ? `User: ${composeTarget}` : "Loading...");
+      const displayName = resolveParticipantName(otherParticipant, composeTarget || "Shop");
      const isSeller = otherParticipant?.role === "SELLER";
 
      return (
@@ -435,24 +501,25 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
              <div className="flex items-center justify-between px-4 py-3 bg-white/90 backdrop-blur-md border-b border-zinc-200/60 shadow-sm z-20 sticky top-0">
                  <div className="flex items-center gap-3">
                      {!fullPage && (
-                         <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-9 w-9 text-emerald-600 hover:bg-emerald-50 rounded-full -ml-2"
-                            onClick={() => {
+                          <Button 
+                             variant="ghost" 
+                             size="icon" 
+                             className="h-9 w-9 text-emerald-600 hover:bg-emerald-50 rounded-full -ml-2"
+                             onClick={() => {
+                                userClearedSelection.current = true;
                                 setActiveConversationId(null);
                                 setComposeTarget("");
-                            }}
-                         >
-                             <ArrowLeft size={20} />
+                             }}
+                          >
+                              <ArrowLeft size={20} />
                          </Button>
                      )}
                      
-                     <div className="relative">
+                      <div className="relative">
                         <Avatar className="h-10 w-10 border border-zinc-100 shadow-sm">
                             <AvatarImage src={otherParticipant?.avatarUrl} />
-                            <AvatarFallback className="bg-gradient-to-br from-emerald-100 to-emerald-200 text-emerald-700 font-bold">
-                                {displayName.charAt(0)}
+                            <AvatarFallback className="bg-linear-to-br from-emerald-100 to-emerald-200 text-emerald-700 font-bold">
+                                {displayName.trim().charAt(0)}
                             </AvatarFallback>
                         </Avatar>
                         {connectionStatus === "connected" && (
@@ -495,49 +562,38 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
                      <>
                         {/* Initial User Info Header */}
                         <div className="flex flex-col items-center py-8 gap-3 opacity-80 mb-6">
-                             <Avatar className="h-20 w-20 ring-4 ring-white shadow-md">
+                              <Avatar className="h-20 w-20 ring-4 ring-white shadow-md">
                                 <AvatarImage src={otherParticipant?.avatarUrl} />
-                                <AvatarFallback className="text-2xl bg-zinc-100 text-zinc-400">{displayName.charAt(0)}</AvatarFallback>
-                             </Avatar>
+                                <AvatarFallback className="text-2xl bg-zinc-100 text-zinc-400">{displayName.trim().charAt(0)}</AvatarFallback>
+                              </Avatar>
                              <div className="text-center">
                                  <h3 className="text-lg font-bold text-zinc-900">{displayName}</h3>
                                  <p className="text-xs text-zinc-500 font-medium">EcomX Marketplace &bull; Connected</p>
                              </div>
                         </div>
 
-                        {messageGroups.map((group, groupIndex) => (
-                            <div 
-                                key={`msg-group-${groupIndex}`} 
-                                className={`flex items-end mb-3 ${group.isMine ? "justify-end" : "justify-start"}`}
-                            >
-                                {/* Avatar for incoming messages, only shown at the bottom of the group */}
-                                {!group.isMine && group.avatarUrl && (
-                                    <Avatar className="h-8 w-8 ring-2 ring-white shadow-sm mr-2 flex-none">
-                                        <AvatarImage src={group.avatarUrl} />
-                                        <AvatarFallback className="text-[10px] bg-emerald-100 text-emerald-700 font-bold">
-                                            {group.senderId.charAt(0)}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                )}
+                        {messages.map((msg, idx) => {
+                            const isMine = msg.senderId === user?.id;
+                            const prevMsg = messages[idx - 1];
+                            const nextMsg = messages[idx + 1];
+                            
+                            // Check for new group based on sender and time (still useful for bubble rounding)
+                            const isFirstInGroup = !prevMsg || prevMsg.senderId !== msg.senderId || (new Date(msg.sentAt).getTime() - new Date(prevMsg.sentAt).getTime() > (5 * 60 * 1000));
+                            const isLastInGroup = !nextMsg || nextMsg.senderId !== msg.senderId || (new Date(nextMsg.sentAt).getTime() - new Date(msg.sentAt).getTime() > (5 * 60 * 1000));
 
-                                <div className={`flex flex-col max-w-[75%] ${group.isMine ? 'items-end' : 'items-start'}`}>
-                                    {group.messages.map((msg, idx) => (
-                                        <div key={msg.id} className={`${idx > 0 ? 'mt-0.5' : ''}`}> {/* Small margin between bubbles in group */}
-                                            <MessageBubble
-                                                message={msg}
-                                                isMine={group.isMine}
-                                                isFirstInGroup={idx === 0}
-                                                isLastInGroup={idx === group.messages.length - 1}
-                                            />
-                                        </div>
-                                    ))}
-                                    {/* Optional: Timestamp for the group, below the last bubble */}
-                                    <span className="text-[10px] text-zinc-400 mt-1 mr-1">
-                                        {formatTimeShort(group.messages[group.messages.length - 1].sentAt)}
-                                    </span>
-                                </div>
-                            </div>
-                        ))}
+                            return (
+                                <MessageBubble
+                                    key={msg.id}
+                                    message={msg}
+                                    isMine={isMine}
+                                    isFirstInGroup={isFirstInGroup}
+                                    isLastInGroup={isLastInGroup}
+                                    showAvatar={!isMine} // Always show avatar for incoming messages
+                                    senderAvatar={otherParticipant?.avatarUrl}
+                                    senderName={displayName}
+                                />
+                            );
+                        })}
                         <div ref={messagesEndRef} className="h-2" />
                      </>
                  )}
@@ -546,16 +602,24 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
              {/* Input Area */}
              <div className="p-3 bg-white border-t border-zinc-100">
                  <div className="flex items-end gap-2 max-w-full">
-                     <div className="flex gap-1 pb-2 text-emerald-600 shrink-0">
-                         <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-emerald-50 transition-colors"><ImageIcon size={20} /></Button>
-                         <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-emerald-50 transition-colors"><Smile size={20} /></Button>
-                     </div>
+                      <div className="flex gap-1 pb-2 text-emerald-600 shrink-0">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-9 w-9 rounded-full hover:bg-emerald-50 transition-colors"
+                            onClick={handleSelectImage}
+                            disabled={uploadingImage}
+                          >
+                            {uploadingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon size={20} />}
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-emerald-50 transition-colors"><Smile size={20} /></Button>
+                      </div>
                      
-                     <div className="flex-1 relative min-w-0">
-                         <Input
-                             ref={inputRef}
-                             className="w-full rounded-[24px] bg-zinc-100 border-transparent py-2.5 px-4 focus:bg-white focus:border-emerald-200 focus:ring-4 focus:ring-emerald-500/10 transition-all shadow-sm min-h-[42px] max-h-[120px] text-[15px] resize-none overflow-hidden"
-                             placeholder="Type a message..."
+                      <div className="flex-1 relative min-w-0">
+                          <Input
+                              ref={inputRef}
+                              className="w-full rounded-3xl bg-zinc-100 border-transparent py-2.5 px-4 focus:bg-white focus:border-emerald-200 focus:ring-4 focus:ring-emerald-500/10 transition-all shadow-sm min-h-[42px] max-h-[120px] text-[15px] resize-none overflow-hidden"
+                              placeholder="Type a message..."
                              value={draft}
                              onChange={(e) => setDraft(e.target.value)}
                              onKeyDown={(e) => {
@@ -566,24 +630,31 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
                              }}
                              autoComplete="off"
                          />
-                     </div>
-                     
-                     <Button 
-                        size="icon" 
-                        variant="ghost"
-                        onClick={handleSend}
-                        disabled={!draft.trim()}
-                        className={`h-10 w-10 rounded-full mb-0.5 shrink-0 transition-all duration-300 ${
-                            draft.trim() 
-                                ? "bg-emerald-600 text-white hover:bg-emerald-700 shadow-md hover:shadow-lg transform hover:-translate-y-0.5" 
-                                : "bg-transparent text-zinc-300 hover:bg-zinc-50"
+                      </div>
+
+                      <Button 
+                         size="icon" 
+                         variant="ghost"
+                         onClick={handleSend}
+                         disabled={!draft.trim() && !uploadingImage}
+                         className={`h-10 w-10 rounded-full mb-0.5 shrink-0 transition-all duration-300 ${
+                             draft.trim() 
+                                 ? "bg-emerald-600 text-white hover:bg-emerald-700 shadow-md hover:shadow-lg transform hover:-translate-y-0.5" 
+                                 : "bg-transparent text-zinc-300 hover:bg-zinc-50"
                         }`}
-                     >
-                         <Send size={18} fill={draft.trim() ? "currentColor" : "none"} className={draft.trim() ? "ml-0.5" : ""} />
-                     </Button>
-                 </div>
-             </div>
-         </div>
+                      >
+                          <Send size={18} fill={draft.trim() ? "currentColor" : "none"} className={draft.trim() ? "ml-0.5" : ""} />
+                      </Button>
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    ref={fileInputRef}
+                    className="hidden"
+                    onChange={(e) => handleImageChosen(e.target.files?.[0])}
+                  />
+              </div>
+          </div>
      );
   };
 
@@ -618,7 +689,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
                 )}
                 <Button
                     onClick={() => setIsOpen(true)}
-                    className="h-16 w-16 rounded-full shadow-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 hover:scale-110 transition-all duration-300 relative border-4 border-white/20"
+                    className="h-16 w-16 rounded-full shadow-2xl bg-linear-to-br from-emerald-500 to-emerald-700 hover:scale-110 transition-all duration-300 relative border-4 border-white/20"
                 >
                     <MessageCircle size={32} className="text-white fill-white/20" />
                     {unreadTotal > 0 && (
@@ -638,7 +709,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
                 ${isOpen ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-12 scale-95 pointer-events-none"}
             `}
             style={{
-                width: "380px",
+                width: "420px",
                 height: "640px",
                 maxHeight: "calc(100vh - 40px)",
                 bottom: 0,
@@ -648,7 +719,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
             }}
         >
              {!isAuthenticated ? (
-                 <div className="flex flex-col h-full bg-gradient-to-b from-emerald-50 to-white">
+                 <div className="flex flex-col h-full bg-linear-to-b from-emerald-50 to-white">
                      <div className="flex justify-between items-center p-4">
                          <span className="font-bold text-emerald-800 tracking-tight text-lg">EcomX Support</span>
                          <Button variant="ghost" size="sm" onClick={() => setIsOpen(false)} className="hover:bg-black/5 rounded-full h-8 w-8 p-0"><X size={20}/></Button>
@@ -659,7 +730,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
                          </div>
                          <div className="space-y-2">
                             <h3 className="font-bold text-xl text-zinc-900">Hello there! 👋</h3>
-                            <p className="text-sm text-zinc-500 leading-relaxed max-w-[240px] mx-auto">
+                            <p className="text-sm text-zinc-500 leading-relaxed max-w-60 mx-auto">
                                 Sign in to start chatting with sellers, track orders, and get support.
                             </p>
                          </div>
