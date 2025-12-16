@@ -356,8 +356,8 @@ export default function ProductDetailPage() {
                     </div>
 
                     {/* Shop Info Card */}
-                    {seller && (
-                        <div className="mt-8 border-t border-zinc-200 pt-6">
+                    <div className="mt-8 border-t border-zinc-200 pt-6">
+                        {seller ? (
                             <div className="flex items-center gap-4">
                                 <div className="h-14 w-14 overflow-hidden rounded-full border border-zinc-200 bg-zinc-100">
                                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -390,8 +390,26 @@ export default function ProductDetailPage() {
                                     </Link>
                                 </div>
                             </div>
-                        </div>
-                    )}
+                        ) : (
+                            /* Fallback for System/Legacy Products or Loading */
+                            <div className="flex items-center gap-4">
+                                <div className="h-14 w-14 overflow-hidden rounded-full border border-zinc-200 bg-zinc-100 flex items-center justify-center">
+                                    <Store size={24} className="text-zinc-400" />
+                                </div>
+                                <div className="flex-1">
+                                    <h4 className="font-bold text-zinc-900">Cửa hàng chính hãng</h4>
+                                    <div className="flex items-center gap-2 text-xs text-zinc-500">
+                                        <span className="flex items-center gap-1"><ShieldCheck size={12} className="text-emerald-500"/> Verified</span>
+                                    </div>
+                                </div>
+                                <div className="flex flex-col gap-2 sm:flex-row">
+                                   <Button variant="secondary" size="sm" disabled>
+                                        Xem Shop
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Policy / Trust Badges */}

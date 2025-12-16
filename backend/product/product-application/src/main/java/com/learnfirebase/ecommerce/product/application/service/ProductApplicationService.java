@@ -73,6 +73,10 @@ public class ProductApplicationService implements ManageProductUseCase, QueryPro
             if (priceStr == null || priceStr.trim().isEmpty()) {
                 throw new IllegalArgumentException("Product price is required");
             }
+            
+            if (command.getSellerId() == null || command.getSellerId().trim().isEmpty()) {
+                throw new IllegalArgumentException("Product must have a seller");
+            }
 
             List<ProductVariant> variantsToUse = command.getVariants() != null ? command.getVariants().stream()
                 .map(v -> {
