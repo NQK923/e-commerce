@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 
 import { productApi } from "@/src/api/productApi";
+import { userApi } from "@/src/api/userApi";
 import { ProductGallery } from "@/src/components/product/product-gallery";
 import { ReportProductDialog } from "@/src/components/product/report-product-dialog";
 import { ProductReviews } from "@/src/components/product/product-reviews";
@@ -19,8 +20,10 @@ import { useCart } from "@/src/store/cart-store";
 import { useAuth } from "@/src/store/auth-store";
 import { useToast } from "@/src/components/ui/toast-provider";
 import { Product } from "@/src/types/product";
+import { User } from "@/src/types/auth";
 import { formatCurrency } from "@/src/utils/format";
 import { useTranslation } from "@/src/providers/language-provider";
+import { Store } from "lucide-react";
 
 // --- Components ---
 
@@ -88,6 +91,7 @@ export default function ProductDetailPage() {
   const { t } = useTranslation();
   
   const [product, setProduct] = useState<Product | null>(null);
+  const [seller, setSeller] = useState<User | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [selectedVariantIndex, setSelectedVariantIndex] = useState<number | null>(null);
   const [quantity, setQuantity] = useState(1);
@@ -105,6 +109,11 @@ export default function ProductDetailPage() {
         if (detail.variants && detail.variants.length > 0) {
             setSelectedVariantIndex(0);
         }
+        
+        if (detail.sellerId) {
+            userApi.getById(detail.sellerId).then(setSeller).catch(console.error);
+        }
+
         setError(null);
         
         // Fetch Related Products (Same Category)
@@ -340,19 +349,49 @@ export default function ProductDetailPage() {
                                 {saleEnded ? t.product.sale_ended : outOfStock ? t.common.out_of_stock : t.product.add_to_cart}
                             </Button>
                             
-                            {displayProduct.sellerId && displayProduct.sellerId !== user?.id && (
-                                <Link href={`/chat?userId=${displayProduct.sellerId}`} passHref>
-                                    <Button variant="outline" className="h-12 border-emerald-200 text-emerald-700 hover:bg-emerald-50" title="Chat với người bán">
-                                        <MessageSquare size={20} className="mr-2" /> Chat
-                                    </Button>
-                                </Link>
-                            )}
-
                             <Button variant="outline" className="h-12 w-12 border-zinc-200 text-zinc-500 hover:bg-zinc-50 hover:text-emerald-600">
                                 <Share2 size={20} />
                             </Button>
                         </div>
                     </div>
+
+                    {/* Shop Info Card */}
+                    {seller && (
+                        <div className="mt-8 border-t border-zinc-200 pt-6">
+                            <div className="flex items-center gap-4">
+                                <div className="h-14 w-14 overflow-hidden rounded-full border border-zinc-200 bg-zinc-100">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img 
+                                        src={seller.avatarUrl || "https://placehold.co/100?text=Shop"} 
+                                        alt={seller.displayName}
+                                        className="h-full w-full object-cover"
+                                    />
+                                </div>
+                                <div className="flex-1">
+                                    <h4 className="font-bold text-zinc-900">{seller.displayName}</h4>
+                                    <div className="flex items-center gap-2 text-xs text-zinc-500">
+                                        <span className="flex items-center gap-1"><Store size={12}/> Online</span>
+                                        <span>•</span>
+                                        <span>Đánh giá 4.9 (1k+)</span>
+                                    </div>
+                                </div>
+                                <div className="flex flex-col gap-2 sm:flex-row">
+                                    {displayProduct.sellerId && displayProduct.sellerId !== user?.id && (
+                                        <Link href={`/chat?userId=${displayProduct.sellerId}`}>
+                                            <Button variant="outline" size="sm" className="w-full text-emerald-600 hover:bg-emerald-50 border-emerald-200">
+                                                <MessageSquare size={16} className="mr-2"/> Chat
+                                            </Button>
+                                        </Link>
+                                    )}
+                                    <Link href={`/shop/${seller.id}`}>
+                                        <Button variant="secondary" size="sm" className="w-full">
+                                            Xem Shop
+                                        </Button>
+                                    </Link>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Policy / Trust Badges */}

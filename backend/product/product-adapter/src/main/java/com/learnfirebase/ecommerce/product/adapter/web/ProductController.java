@@ -41,6 +41,7 @@ public class ProductController {
         @RequestParam(name = "category", required = false) String category,
         @RequestParam(name = "minPrice", required = false) BigDecimal minPrice,
         @RequestParam(name = "maxPrice", required = false) BigDecimal maxPrice,
+        @RequestParam(name = "sellerId", required = false) String sellerId,
         @RequestParam(name = "sort", required = false) String sort,
         @RequestParam(name = "includeOutOfStock", defaultValue = "false") boolean includeOutOfStock) {
         
@@ -50,6 +51,7 @@ public class ProductController {
             .category(category)
             .minPrice(minPrice)
             .maxPrice(maxPrice)
+            .sellerId(sellerId)
             .build();
             
         PageResponse<ProductDto> products = queryProductUseCase.searchProducts(query, pageRequest);

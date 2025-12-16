@@ -10,6 +10,7 @@ import { Spinner } from '../ui/spinner';
 type ReportProductDialogProps = {
   productId: string;
   productName: string;
+  children?: React.ReactNode;
 };
 
 const REASONS: { value: ReportReason; label: string }[] = [
@@ -19,7 +20,7 @@ const REASONS: { value: ReportReason; label: string }[] = [
   { value: 'OTHER', label: 'Other Reason' },
 ];
 
-export const ReportProductDialog: React.FC<ReportProductDialogProps> = ({ productId, productName }) => {
+export const ReportProductDialog: React.FC<ReportProductDialogProps> = ({ productId, productName, children }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [reason, setReason] = useState<ReportReason>('FAKE');
   const [description, setDescription] = useState('');
@@ -44,6 +45,9 @@ export const ReportProductDialog: React.FC<ReportProductDialogProps> = ({ produc
   };
 
   if (!isOpen) {
+    if (children) {
+      return <div onClick={() => setIsOpen(true)} className="cursor-pointer inline-block">{children}</div>;
+    }
     return (
       <button 
         onClick={() => setIsOpen(true)}

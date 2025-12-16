@@ -130,6 +130,11 @@ public class IdentityController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<UserDto> getUserById(@PathVariable("id") String id) {
+        return ResponseEntity.ok(userQueryUseCase.getById(id));
+    }
+
     private String extractEmailFromAccessToken(String authorization) {
         if (authorization == null || !authorization.startsWith("Bearer ")) {
             return null;

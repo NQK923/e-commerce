@@ -84,6 +84,10 @@ public class ProductRepositoryImpl implements ProductRepository {
                 ));
             }
 
+            if (query.getSellerId() != null && !query.getSellerId().trim().isEmpty()) {
+                predicates.add(criteriaBuilder.equal(root.get("sellerId"), query.getSellerId()));
+            }
+
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
 

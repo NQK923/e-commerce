@@ -59,4 +59,5 @@ export type ProductListParams = {
   size?: number;
   sort?: string;
   includeOutOfStock?: boolean;
+  sellerId?: string;
 };

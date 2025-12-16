@@ -42,6 +42,7 @@ type BackendProductDto = {
   flashSaleStartAt?: string;
   flashSaleEndAt?: string;
   discountPercentage?: number;
+  sellerId?: string;
   images?: Array<{
     id?: string;
     url: string;
@@ -72,6 +73,7 @@ const mapProduct = (dto: BackendProductDto): Product => {
     flashSaleStartAt: dto.flashSaleStartAt,
     flashSaleEndAt: dto.flashSaleEndAt,
     discountPercentage: dto.discountPercentage,
+    sellerId: dto.sellerId,
     images:
       dto.images?.map((img, idx) => ({
         id: img.id ?? `${dto.id}-img-${idx}`,
@@ -99,6 +101,7 @@ export const productApi = {
       size: params.size,
       sort: params.sort,
       includeOutOfStock: params.includeOutOfStock,
+      sellerId: params.sellerId,
     });
     return apiRequest<BackendPageResponse<BackendProductDto>>(`/api/products${query}`).then(
       (resp): PaginatedResponse<Product> => ({

@@ -14,7 +14,7 @@ type AppProvidersProps = {
 
 export const AppProviders: React.FC<AppProvidersProps> = ({ children, initialLanguage }) => {
   return (
-    <LanguageProvider initialLanguage={initialLanguage}>
+    <LanguageProvider>
       <ToastProvider>
         <AuthProvider>
           <ChatProvider>

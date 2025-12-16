@@ -12,4 +12,5 @@ public class ProductSearchQuery {
     String category;
     BigDecimal minPrice;
     BigDecimal maxPrice;
+    String sellerId;
 }
