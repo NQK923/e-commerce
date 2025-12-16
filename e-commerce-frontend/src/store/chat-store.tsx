@@ -74,15 +74,13 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const items = await chatApi.listConversations();
       setConversations(items);
-      if (!activeConversationId && items.length > 0) {
-        setActiveConversationId(items[0].id);
-      }
+      setActiveConversationId((current) => current ?? items[0]?.id ?? null);
     } catch {
       addToast("Failed to load conversations", "error");
     } finally {
       setLoadingConversations(false);
     }
-  }, [activeConversationId, addToast, user]);
+  }, [addToast, user]);
 
   useEffect(() => {
     if (!user) {

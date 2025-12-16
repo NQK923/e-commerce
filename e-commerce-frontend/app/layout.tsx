@@ -7,6 +7,7 @@ import { AppProviders } from "@/src/providers/app-providers";
 import { Header } from "@/src/components/layout/header";
 import { Footer } from "@/src/components/layout/footer";
 import { ProtectedRouteGuard } from "@/src/components/auth/protected-route-guard";
+import { ChatWidget } from "@/src/components/chat/chat-widget";
 
 const LANGUAGE_COOKIE = "ecommerce_lang_v2";
 
@@ -42,13 +43,16 @@ export default async function RootLayout({
           <Suspense fallback={null}>
             <ProtectedRouteGuard />
           </Suspense>
-          <Suspense fallback={null}>
-            <Header />
-          </Suspense>
-          <main className="min-h-[70vh]">{children}</main>
-          <Footer />
-        </AppProviders>
-      </body>
-    </html>
+        <Suspense fallback={null}>
+          <Header />
+        </Suspense>
+        <main className="min-h-[70vh]">{children}</main>
+        <Suspense fallback={null}>
+          <ChatWidget />
+        </Suspense>
+        <Footer />
+      </AppProviders>
+    </body>
+  </html>
   );
 }
