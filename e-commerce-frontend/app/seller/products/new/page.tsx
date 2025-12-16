@@ -178,6 +178,11 @@ function NewProductContent() {
     };
 
     const onSubmit = async (data: ProductFormValues) => {
+        if (!user) {
+            addToast("Bạn chưa đăng nhập", "error");
+            return;
+        }
+
         if (images.length === 0) {
              methods.setError("images", { message: "Vui lòng tải lên ít nhất 1 hình ảnh (Ảnh bìa)" });
              return;

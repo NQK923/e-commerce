@@ -86,6 +86,7 @@ function SellerProductsContent() {
     };
 
     const handleRemove = async (product: Product) => {
+        if (!user) return;
         if (!confirm(`Bạn có chắc chắn muốn gỡ sản phẩm "${product.name}"? Thao tác này sẽ đặt số lượng sản phẩm về 0.`)) return;
         setProcessingId(product.id);
         try {

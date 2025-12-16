@@ -101,6 +101,7 @@ function SellerDashboardContent() {
   };
 
   const handleRemove = async (product: Product) => {
+    if (!user) return;
     if (!confirm(`Gỡ sản phẩm "${product.name}"?`)) return;
     setProcessingId(product.id);
     try {
