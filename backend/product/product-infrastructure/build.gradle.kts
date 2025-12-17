@@ -14,5 +14,5 @@ dependencies {
     implementation("org.springframework.kafka:spring-kafka")
     implementation("org.postgresql:postgresql")
     implementation("org.elasticsearch.client:elasticsearch-rest-client")
+    implementation("com.fasterxml.jackson.core:jackson-databind")
 }
-

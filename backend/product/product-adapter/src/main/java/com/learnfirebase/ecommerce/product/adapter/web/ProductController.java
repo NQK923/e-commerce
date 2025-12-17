@@ -22,7 +22,10 @@ import com.learnfirebase.ecommerce.product.application.port.in.ManageProductUseC
 import com.learnfirebase.ecommerce.product.application.port.in.QueryProductUseCase;
 import com.learnfirebase.ecommerce.inventory.application.port.in.QueryInventoryUseCase;
 import com.learnfirebase.ecommerce.inventory.application.dto.InventoryDto;
+import com.learnfirebase.ecommerce.product.application.dto.ProductSearchWithFacetsDto;
 
+import lombok.Builder;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -75,7 +78,7 @@ public class ProductController {
     }
 
     @GetMapping("/suggest")
-    public ResponseEntity<List<ProductDto>> suggest(
+    public ResponseEntity<List<String>> suggest(
         @RequestParam("prefix") String prefix,
         @RequestParam(name = "limit", defaultValue = "5") int limit
     ) {
@@ -88,6 +91,47 @@ public class ProductController {
         @RequestParam(name = "limit", defaultValue = "5") int limit
     ) {
         return ResponseEntity.ok(queryProductUseCase.similarProducts(id, limit));
+    }
+
+    @GetMapping("/search/advanced")
+    public ResponseEntity<ProductSearchResponse> searchAdvanced(
+        @RequestParam(name = "page", defaultValue = "0") int page,
+        @RequestParam(name = "size", defaultValue = "8") int size,
+        @RequestParam(name = "search", required = false) String search,
+        @RequestParam(name = "category", required = false) String category,
+        @RequestParam(name = "minPrice", required = false) BigDecimal minPrice,
+        @RequestParam(name = "maxPrice", required = false) BigDecimal maxPrice,
+        @RequestParam(name = "sellerId", required = false) String sellerId,
+        @RequestParam(name = "sort", required = false) String sort,
+        @RequestParam(name = "includeOutOfStock", defaultValue = "false") boolean includeOutOfStock) {
+
+        PageRequest pageRequest = PageRequest.builder().page(page).size(size).sort(sort).build();
+        ProductSearchQuery query = ProductSearchQuery.builder()
+            .search(search)
+            .category(category)
+            .minPrice(minPrice)
+            .maxPrice(maxPrice)
+            .sellerId(sellerId)
+            .sort(sort)
+            .size(size)
+            .build();
+
+        ProductSearchWithFacetsDto result = queryProductUseCase.searchProductsAdvanced(query, pageRequest);
+        List<ProductDto> enriched = result.getItems().stream()
+            .map(this::enrichWithInventory)
+            .filter(p -> includeOutOfStock || p.getQuantity() == null || p.getQuantity() > 0)
+            .toList();
+
+        ProductSearchResponse response = ProductSearchResponse.builder()
+            .items(enriched)
+            .totalElements(result.getTotalElements())
+            .totalPages(result.getTotalPages())
+            .page(result.getPage())
+            .size(result.getSize())
+            .categoryFacets(result.getCategoryFacets())
+            .suggestions(result.getSuggestions())
+            .build();
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")
@@ -169,5 +213,17 @@ public class ProductController {
             // If inventory service fails or no data, return product as is with 0 stock
             return product; 
         }
+    }
+
+    @Data
+    @Builder
+    public static class ProductSearchResponse {
+        private List<ProductDto> items;
+        private long totalElements;
+        private int totalPages;
+        private int page;
+        private int size;
+        private java.util.Map<String, Long> categoryFacets;
+        private List<String> suggestions;
     }
 }

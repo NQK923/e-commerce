@@ -63,3 +63,10 @@ vnpay:
   hash-secret: ${VNPAY_HASH_SECRET:demo}
   pay-url: ${VNPAY_PAY_URL:https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
   return-url: ${VNPAY_RETURN_URL:http://localhost:8080/api/payments/vnpay/return}
+
+search:
+  elasticsearch:
+    host: ${SEARCH_ELASTIC_HOST:http://localhost:9200}
+    username: ${SEARCH_ELASTIC_USERNAME:}
+    password: ${SEARCH_ELASTIC_PASSWORD:}
+    index: ${SEARCH_ELASTIC_INDEX:products}

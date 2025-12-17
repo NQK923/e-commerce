@@ -7,17 +7,22 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import com.learnfirebase.ecommerce.common.domain.valueobject.Money;
 import com.learnfirebase.ecommerce.common.application.pagination.PageRequest;
 import com.learnfirebase.ecommerce.common.application.pagination.PageResponse;
+import com.learnfirebase.ecommerce.common.domain.valueobject.Money;
 import com.learnfirebase.ecommerce.product.application.command.UpsertProductCommand;
 import com.learnfirebase.ecommerce.product.application.dto.ProductDto;
+import com.learnfirebase.ecommerce.product.application.dto.ProductSearchQuery;
+import com.learnfirebase.ecommerce.product.application.dto.ProductSearchResult;
+import com.learnfirebase.ecommerce.product.application.dto.ProductSearchWithFacetsDto;
+import com.learnfirebase.ecommerce.product.application.dto.SoldItemDto;
 import com.learnfirebase.ecommerce.product.application.port.in.ManageProductUseCase;
 import com.learnfirebase.ecommerce.product.application.port.in.QueryProductUseCase;
 import com.learnfirebase.ecommerce.product.application.port.out.ProductEventPublisher;
 import com.learnfirebase.ecommerce.product.application.port.out.ProductRepository;
 import com.learnfirebase.ecommerce.product.application.port.out.ProductSearchIndexPort;
 import com.learnfirebase.ecommerce.product.application.port.out.ProductSearchPort;
+import com.learnfirebase.ecommerce.product.domain.event.ProductCreatedEvent;
 import com.learnfirebase.ecommerce.product.domain.exception.ProductDomainException;
 import com.learnfirebase.ecommerce.product.domain.model.Category;
 import com.learnfirebase.ecommerce.product.domain.model.Product;
@@ -28,17 +33,12 @@ import com.learnfirebase.ecommerce.product.domain.model.ProductVariant;
 
 import lombok.RequiredArgsConstructor;
 
-import com.learnfirebase.ecommerce.product.application.dto.ProductSearchQuery;
-import com.learnfirebase.ecommerce.product.application.dto.ProductSearchResult;
-import com.learnfirebase.ecommerce.product.application.dto.SoldItemDto;
-import com.learnfirebase.ecommerce.product.domain.event.ProductCreatedEvent;
-
 @RequiredArgsConstructor
 public class ProductApplicationService implements ManageProductUseCase, QueryProductUseCase {
     private final ProductRepository productRepository;
     private final ProductSearchIndexPort productSearchIndexPort;
     private final ProductSearchPort productSearchPort;
-    private final ProductEventPublisher eventPublisher;
+    private final ProductEventPublisher productEventPublisher;
 
     public void handleOrderPaid(List<SoldItemDto> items) {
         if (items == null || items.isEmpty()) return;
@@ -77,6 +77,36 @@ public class ProductApplicationService implements ManageProductUseCase, QueryPro
             .totalPages(page.getTotalPages())
             .page(page.getPage())
             .size(page.getSize())
+            .build();
+    }
+
+    @Override
+    public ProductSearchWithFacetsDto searchProductsAdvanced(ProductSearchQuery query, PageRequest pageRequest) {
+        try {
+            if (productSearchPort != null) {
+                ProductSearchResult result = productSearchPort.search(query, pageRequest);
+                return ProductSearchWithFacetsDto.builder()
+                    .items(result.getProducts().stream().map(this::toDto).toList())
+                    .totalElements(result.getTotalElements())
+                    .totalPages(result.getTotalPages())
+                    .page(result.getPage())
+                    .size(result.getSize())
+                    .categoryFacets(result.getCategoryFacets())
+                    .suggestions(result.getSuggestions())
+                    .build();
+            }
+        } catch (Exception e) {
+            System.err.println("Search backend failed, fallback to DB: " + e.getMessage());
+        }
+        var page = productRepository.search(query, pageRequest);
+        return ProductSearchWithFacetsDto.builder()
+            .items(page.getContent().stream().map(this::toDto).toList())
+            .totalElements(page.getTotalElements())
+            .totalPages(page.getTotalPages())
+            .page(page.getPage())
+            .size(page.getSize())
+            .categoryFacets(Collections.emptyMap())
+            .suggestions(Collections.emptyList())
             .build();
     }
 
@@ -149,7 +179,7 @@ public class ProductApplicationService implements ManageProductUseCase, QueryPro
 
             if (existingProduct == null) {
                 System.out.println("DEBUG: Publishing event (New Product)");
-                eventPublisher.publish(ProductCreatedEvent.builder()
+                productEventPublisher.publish(ProductCreatedEvent.builder()
                     .productId(saved.getId().getValue())
                     .initialStock(command.getQuantity())
                     .variants(command.getVariants() != null ? command.getVariants().stream()
@@ -193,14 +223,14 @@ public class ProductApplicationService implements ManageProductUseCase, QueryPro
     }
 
     @Override
-    public List<ProductDto> suggestProducts(String prefix, int limit) {
+    public List<String> suggestProducts(String prefix, int limit) {
         List<String> suggestions = productSearchPort != null ? productSearchPort.suggest(prefix, limit) : java.util.Collections.emptyList();
-        if (suggestions.isEmpty()) {
-            return java.util.Collections.emptyList();
+        if (!suggestions.isEmpty()) {
+            return suggestions;
         }
         PageResponse<Product> page = productRepository.search(ProductSearchQuery.builder().search(prefix).build(),
             PageRequest.builder().page(0).size(limit).build());
-        return page.getContent().stream().map(this::toDto).toList();
+        return page.getContent().stream().map(Product::getName).distinct().toList();
     }
 
     @Override
