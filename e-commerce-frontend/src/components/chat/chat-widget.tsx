@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
@@ -9,6 +9,7 @@ import {
   Image as ImageIcon,
   Loader2,
   MessageCircle,
+  MessageSquareMore,
   Minimize2,
   MoreHorizontal,
   Phone,
@@ -28,6 +29,7 @@ import { useToast } from "@/src/components/ui/toast-provider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/src/components/ui/avatar";
 import { uploadToBucket } from "@/src/lib/storage";
 import { config } from "@/src/config/env";
+import { userApi } from "@/src/api/userApi";
 
 type ChatWidgetProps = {
   fullPage?: boolean;
@@ -70,9 +72,13 @@ const resolveParticipantName = (
   return (
     participant.storeName ||
     participant.displayName ||
-    participant.id ||
-    formatShopFallback(fallbackId)
+    formatShopFallback(participant.id || fallbackId)
   );
+};
+
+type ParticipantProfile = {
+  displayName?: string;
+  avatarUrl?: string;
 };
 
 const isImageContent = (content: string): boolean => {
@@ -172,11 +178,21 @@ const ConversationItem: React.FC<{
   active: boolean;
   onSelect: () => void;
   currentUserId?: string;
-}> = ({ conversation, active, onSelect, currentUserId }) => {
-  const other = getOtherParticipant(conversation, currentUserId);
+  participantProfiles: Record<string, ParticipantProfile>;
+}> = ({ conversation, active, onSelect, currentUserId, participantProfiles }) => {
+  const otherRaw = getOtherParticipant(conversation, currentUserId);
+  const profile = otherRaw?.id ? participantProfiles[otherRaw.id] : undefined;
+  const other =
+    otherRaw && (profile?.displayName || profile?.avatarUrl)
+      ? {
+          ...otherRaw,
+          displayName: otherRaw.displayName || otherRaw.storeName || profile?.displayName,
+          avatarUrl: otherRaw.avatarUrl || profile?.avatarUrl,
+        }
+      : otherRaw;
   const last = conversation.lastMessage;
   const isUnread = (conversation.unreadCount || 0) > 0;
-  const otherName = resolveParticipantName(other, conversation.id);
+  const otherName = resolveParticipantName(other, other?.id);
 
   return (
     <div
@@ -233,7 +249,7 @@ const ConversationItem: React.FC<{
 };
 
 export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initialTargetUserId }) => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   const { user} = useAuth();
   const isAuthenticated = Boolean(user);
   const router = useRouter();
@@ -252,12 +268,12 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
   } = useChat();
 
   const [filter, setFilter] = useState("");
-  // Initialize composeTarget and isOpen directly based on props
   const [composeTarget, setComposeTarget] = useState(initialTargetUserId ?? "");
   const [isOpen, setIsOpen] = useState(fullPage || Boolean(initialTargetUserId)); // isOpen can be true if fullPage or initialTargetUserId is present
 
   const [draft, setDraft] = useState(""); // Moved draft declaration here
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [participantProfiles, setParticipantProfiles] = useState<Record<string, ParticipantProfile>>({});
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -271,10 +287,17 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
     [activeConversationId, conversations],
   );
 
-  const otherParticipant = useMemo(
-    () => getOtherParticipant(activeConversation, user?.id),
-    [activeConversation, user?.id],
-  );
+  const otherParticipant = useMemo(() => {
+    const raw = getOtherParticipant(activeConversation, user?.id);
+    if (!raw) return null;
+    const profile = raw.id ? participantProfiles[raw.id] : undefined;
+    if (!profile) return raw;
+    return {
+      ...raw,
+      displayName: raw.displayName || raw.storeName || profile.displayName,
+      avatarUrl: raw.avatarUrl || profile.avatarUrl,
+    };
+  }, [activeConversation, participantProfiles, user?.id]);
 
   const derivedConversationKey = useMemo(
     () => activeConversationId ?? (composeTarget ? `temp:${composeTarget}` : null),
@@ -289,15 +312,24 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
   const filteredConversations = useMemo(
     () =>
       conversations.filter((conversation) => {
-        const other = getOtherParticipant(conversation, user?.id);
+        const otherRaw = getOtherParticipant(conversation, user?.id);
+        const profile = otherRaw?.id ? participantProfiles[otherRaw.id] : undefined;
+        const other = otherRaw
+          ? {
+              ...otherRaw,
+              displayName: otherRaw.displayName || otherRaw.storeName || profile?.displayName,
+              avatarUrl: otherRaw.avatarUrl || profile?.avatarUrl,
+            }
+          : otherRaw;
         if (!filter.trim()) return true;
         return (
           other?.displayName?.toLowerCase().includes(filter.toLowerCase()) ||
           other?.storeName?.toLowerCase().includes(filter.toLowerCase()) ||
+          profile?.displayName?.toLowerCase().includes(filter.toLowerCase()) ||
           other?.id?.toLowerCase().includes(filter.toLowerCase())
         );
       }),
-    [conversations, filter, user?.id],
+    [conversations, filter, participantProfiles, user?.id],
   );
 
   const unreadTotal = useMemo(
@@ -324,7 +356,6 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
 
   useEffect(() => {
     if (initialTargetUserId) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setComposeTarget(initialTargetUserId);
       if (!activeConversationId) {
 
@@ -340,6 +371,45 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length, activeConversationId]);
 
+  useEffect(() => {
+    const missingIds = new Set<string>();
+    conversations.forEach((conv) =>
+      conv.participants.forEach((p) => {
+        if (!p?.id) return;
+        const hasName = p.storeName || p.displayName || participantProfiles[p.id]?.displayName;
+        if (!hasName && !participantProfiles[p.id]) {
+          missingIds.add(p.id);
+        }
+      }),
+    );
+    if (missingIds.size === 0) return;
+    let cancelled = false;
+    const load = async () => {
+      const results = await Promise.all(
+        Array.from(missingIds).map(async (id) => {
+          try {
+            const profile = await userApi.getById(id);
+            return { id, displayName: profile.displayName, avatarUrl: profile.avatarUrl };
+          } catch {
+            return null;
+          }
+        }),
+      );
+      if (cancelled) return;
+      setParticipantProfiles((prev) => {
+        const next = { ...prev };
+        results.forEach((res) => {
+          if (res) next[res.id] = { displayName: res.displayName, avatarUrl: res.avatarUrl };
+        });
+        return next;
+      });
+    };
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [conversations, participantProfiles]);
+
   const resolveReceiverId = () => otherParticipant?.id || composeTarget;
 
   const sendContent = async (content: string) => {
@@ -352,7 +422,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
 
     const receiverId = resolveReceiverId();
     if (!receiverId) {
-      addToast("Chọn người nhận trước khi gửi", "error");
+      addToast("Please choose a recipient before sending", "error");
       return;
     }
 
@@ -451,6 +521,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
                         setActiveConversationId(conv.id);
                     }}
                     currentUserId={user?.id}
+                    participantProfiles={participantProfiles}
                 />
             ))
         )}
@@ -492,7 +563,10 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
          );
      }
 
-      const displayName = resolveParticipantName(otherParticipant, composeTarget || "Shop");
+      const displayName = resolveParticipantName(
+        otherParticipant,
+        otherParticipant?.id || composeTarget || "Shop",
+      );
      const isSeller = otherParticipant?.role === "SELLER";
 
      return (
@@ -564,7 +638,9 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
                         <div className="flex flex-col items-center py-8 gap-3 opacity-80 mb-6">
                               <Avatar className="h-20 w-20 ring-4 ring-white shadow-md">
                                 <AvatarImage src={otherParticipant?.avatarUrl} />
-                                <AvatarFallback className="text-2xl bg-zinc-100 text-zinc-400">{displayName.trim().charAt(0)}</AvatarFallback>
+                                <AvatarFallback className="text-2xl bg-zinc-100 text-zinc-400">
+                                  {displayName.trim().charAt(0)}
+                                </AvatarFallback>
                               </Avatar>
                              <div className="text-center">
                                  <h3 className="text-lg font-bold text-zinc-900">{displayName}</h3>
@@ -689,9 +765,9 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
                 )}
                 <Button
                     onClick={() => setIsOpen(true)}
-                    className="h-16 w-16 rounded-full shadow-2xl bg-linear-to-br from-emerald-500 to-emerald-700 hover:scale-110 transition-all duration-300 relative border-4 border-white/20"
+                    className="h-16 w-16 rounded-full shadow-2xl bg-linear-to-br from-emerald-500 to-emerald-700 hover:scale-110 transition-all duration-300 relative"
                 >
-                    <MessageCircle size={32} className="text-white fill-white/20" />
+                    <MessageSquareMore size={30} className="text-white" />
                     {unreadTotal > 0 && (
                         <span className="absolute 0 top-0 right-0 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 ring-4 ring-white text-[11px] font-bold text-white shadow-sm">
                             {unreadTotal}
@@ -750,3 +826,6 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
     </>
   );
 };
+
+
+

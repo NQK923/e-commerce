@@ -1,8 +1,8 @@
 'use client';
 
 import Link from "next/link";
-import React, { useEffect, useState } from "react";
 import Image from "next/image";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   ArrowRight,
   ShieldCheck,
@@ -14,55 +14,71 @@ import {
   BookOpen,
   Sparkles,
   Zap,
-  Star
+  Star,
 } from "lucide-react";
 import { productApi } from "@/src/api/productApi";
 import { ProductCard } from "@/src/components/product/product-card";
 import { Button } from "@/src/components/ui/button";
-import { Product } from "@/src/types/product";
-import { useTranslation } from "@/src/providers/language-provider";
 import { Skeleton } from "@/src/components/ui/skeleton";
+import { useTranslation } from "@/src/providers/language-provider";
+import { useToast } from "@/src/components/ui/toast-provider";
+import { Product } from "@/src/types/product";
 
 export default function HomePage() {
   const { t } = useTranslation();
+  const { addToast } = useToast();
 
   const [bestSellers, setBestSellers] = useState<Product[]>([]);
   const [newArrivals, setNewArrivals] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const [bestSellerData, newArrivalData] = await Promise.all([
+        productApi.list({ size: 4, sort: "soldCount,desc", page: 0 }),
+        productApi.list({ size: 8, sort: "createdAt,desc", page: 0 }),
+      ]);
+      setBestSellers(bestSellerData.items);
+      setNewArrivals(newArrivalData.items);
+    } catch (error) {
+      console.error(error);
+      const message = t.product.load_failed;
+      setLoadError(message);
+      addToast(message, "error");
+    } finally {
+      setLoading(false);
+    }
+  }, [addToast, t]);
 
   useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      try {
-        const [bestSellerData, newArrivalData] = await Promise.all([
-          productApi.list({ size: 4, sort: "soldCount,desc", page: 0 }),
-          productApi.list({ size: 8, sort: "createdAt,desc", page: 0 })
-        ]);
-        setBestSellers(bestSellerData.items);
-        setNewArrivals(newArrivalData.items);
-      } catch (error) {
-        console.error(error);
-        // Silent fail or toast
-      } finally {
-        setLoading(false);
-      }
-    };
     void loadData();
-  }, []);
+  }, [loadData]);
 
   const Categories = [
-    { name: "Điện tử", icon: Smartphone, color: "text-blue-600", bg: "bg-blue-50", href: "Điện tử" },
-    { name: "Thời trang", icon: Shirt, color: "text-rose-600", bg: "bg-rose-50", href: "Thời trang" },
-    { name: "Gia dụng", icon: HomeIcon, color: "text-amber-600", bg: "bg-amber-50", href: "Gia dụng" },
-    { name: "Sách", icon: BookOpen, color: "text-indigo-600", bg: "bg-indigo-50", href: "Sách" },
+    { name: t.home.categories.electronics, icon: Smartphone, color: "text-blue-600", bg: "bg-blue-50", href: "electronics" },
+    { name: t.home.categories.fashion, icon: Shirt, color: "text-rose-600", bg: "bg-rose-50", href: "fashion" },
+    { name: t.home.categories.home, icon: HomeIcon, color: "text-amber-600", bg: "bg-amber-50", href: "home" },
+    { name: t.home.categories.books, icon: BookOpen, color: "text-indigo-600", bg: "bg-indigo-50", href: "books" },
   ];
 
   const Benefits = [
-    { icon: Truck, title: t.home.features.shipping, desc: "Miễn phí vận chuyển cho đơn từ 500k" },
-    { icon: ShieldCheck, title: t.home.features.payment, desc: "Thanh toán bảo mật 100%" },
-    { icon: Clock, title: t.home.features.support, desc: "Hỗ trợ khách hàng 24/7" },
+    { icon: Truck, title: t.home.features.shipping, desc: t.home.features.shipping_desc },
+    { icon: ShieldCheck, title: t.home.features.payment, desc: t.home.features.payment_desc },
+    { icon: Clock, title: t.home.features.support, desc: t.home.features.support_desc },
     { icon: Star, title: "Chất lượng", desc: "Cam kết sản phẩm chính hãng" },
   ];
+
+  const renderErrorState = () => (
+    <div className="col-span-full rounded-xl border border-dashed border-rose-200 bg-rose-50 p-4 text-center">
+      <p className="text-sm font-medium text-rose-700">{loadError}</p>
+      <Button variant="outline" size="sm" className="mt-3" onClick={() => void loadData()}>
+        {t.common.retry}
+      </Button>
+    </div>
+  );
 
   return (
     <div className="flex flex-col gap-16 pb-20 bg-zinc-50/50">
@@ -81,21 +97,21 @@ export default function HomePage() {
             <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
               <div className="mb-6 inline-flex items-center rounded-full bg-emerald-800/50 px-3 py-1 text-sm font-medium text-emerald-100 border border-emerald-700/50 backdrop-blur-sm">
                 <Sparkles className="mr-2 h-4 w-4 text-yellow-400" />
-                <span>Chào mừng mùa mua sắm mới</span>
+                <span>{t.home.hero_badge}</span>
               </div>
               <h1 className="text-4xl font-bold tracking-tight text-white sm:text-6xl mb-6 leading-tight">
-                Khám phá thế giới <br/>
+                {t.home.hero_title} <br/>
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-200 to-teal-400">
-                  Mua sắm trực tuyến
+                  {t.home.hero_title_highlight}
                 </span>
               </h1>
               <p className="text-lg text-emerald-100/80 mb-8 max-w-lg">
-                Hàng ngàn sản phẩm chất lượng với mức giá ưu đãi đang chờ đón bạn. Trải nghiệm mua sắm tiện lợi và nhanh chóng ngay hôm nay.
+                {t.home.hero_desc}
               </p>
               <div className="flex flex-wrap gap-4 justify-center lg:justify-start">
                 <Link href="/products">
                   <Button size="lg" className="h-14 px-8 text-lg bg-white text-emerald-900 hover:bg-emerald-50 rounded-full font-bold shadow-xl shadow-emerald-900/20">
-                    Mua sắm ngay <ArrowRight className="ml-2 h-5 w-5" />
+                    {t.home.shop_now} <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
                 <Link href="/products?category=sale">
@@ -154,7 +170,7 @@ export default function HomePage() {
       {/* 3. Categories */}
       <section className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl font-bold text-zinc-900">Danh mục nổi bật</h2>
+            <h2 className="text-2xl font-bold text-zinc-900">{t.home.categories.title} nổi bật</h2>
         </div>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:gap-8">
           {Categories.map((cat, i) => (
@@ -199,14 +215,20 @@ export default function HomePage() {
             </div>
         ) : (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {bestSellers.map((product) => (
-                <ProductCard key={product.id} product={product} />
-            ))}
-             {bestSellers.length === 0 && (
-                <div className="col-span-full py-12 text-center text-zinc-500 bg-white rounded-xl border border-dashed">
-                   Chưa có dữ liệu sản phẩm bán chạy.
-                </div>
-             )}
+            {loadError ? (
+              renderErrorState()
+            ) : (
+              <>
+                {bestSellers.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+                {bestSellers.length === 0 && (
+                  <div className="col-span-full py-12 text-center text-zinc-500 bg-white rounded-xl border border-dashed">
+                     Chưa có dữ liệu sản phẩm bán chạy.
+                  </div>
+                )}
+              </>
+            )}
             </div>
         )}
       </section>
@@ -224,13 +246,13 @@ export default function HomePage() {
                     </span>
                     <h2 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
                         Giảm đến 50% cho <br/>
-                        <span className="text-purple-300">Flash Sales Mùa Hè</span>
+                        <span className="text-purple-300">Flash Sales mỗi ngày</span>
                     </h2>
                     <p className="max-w-md text-lg text-purple-100/80">
                         Đừng bỏ lỡ cơ hội sở hữu những món đồ thời thượng với giá cực hời. Số lượng có hạn!
                     </p>
                     <Button size="lg" className="bg-white text-purple-900 hover:bg-purple-50 border-0 font-bold">
-                        <Link href="/flash-sales">Săn Flash Sale Ngay</Link>
+                        <Link href="/flash-sales">Săn Flash Sale ngay</Link>
                     </Button>
                 </div>
                 {/* Decorative Element */}
@@ -246,7 +268,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 6. New Arrivals (Gợi ý / Mới nhất) */}
+      {/* 6. New Arrivals */}
       <section className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-2xl font-bold text-zinc-900">Sản phẩm mới nhất</h2>
@@ -269,9 +291,13 @@ export default function HomePage() {
             </div>
         ) : (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {newArrivals.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
+              {loadError ? (
+                renderErrorState()
+              ) : (
+                newArrivals.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))
+              )}
             </div>
         )}
         

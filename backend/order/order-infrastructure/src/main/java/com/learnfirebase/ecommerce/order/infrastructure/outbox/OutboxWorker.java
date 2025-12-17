@@ -1,5 +1,6 @@
 package com.learnfirebase.ecommerce.order.infrastructure.outbox;
 
+import java.time.Instant;
 import java.util.UUID;
 
 import org.springframework.kafka.core.KafkaTemplate;
@@ -17,22 +18,35 @@ import lombok.extern.slf4j.Slf4j;
 public class OutboxWorker {
     private final OutboxRepository outboxRepository;
     private final KafkaTemplate<String, String> kafkaTemplate;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
 
     @Scheduled(fixedDelay = 5000)
     public void publishPending() {
-        outboxRepository.findByStatus(OutboxStatus.PENDING).forEach(event -> {
-            try {
-                kafkaTemplate.send(event.getType(), event.getAggregateId(), event.getPayload()).get();
-                event.setStatus(OutboxStatus.PUBLISHED);
-                event.setUpdatedAt(java.time.Instant.now());
-                outboxRepository.save(event);
-            } catch (Exception ex) {
-                log.error("Failed to publish outbox event {}", event.getId(), ex);
-                event.setStatus(OutboxStatus.FAILED);
-                outboxRepository.save(event);
-            }
-        });
+        outboxRepository.findByStatus(OutboxStatus.PENDING).forEach(this::publishAsync);
+    }
+
+    private void publishAsync(OutboxEntity event) {
+        kafkaTemplate.send(event.getType(), event.getAggregateId(), event.getPayload())
+            .whenComplete((result, ex) -> {
+                if (ex == null) {
+                    markPublished(event);
+                } else {
+                    markFailed(event, ex);
+                }
+            });
+    }
+
+    private void markPublished(OutboxEntity event) {
+        event.setStatus(OutboxStatus.PUBLISHED);
+        event.setUpdatedAt(Instant.now());
+        outboxRepository.save(event);
+    }
+
+    private void markFailed(OutboxEntity event, Throwable ex) {
+        log.error("Failed to publish outbox event {}", event.getId(), ex);
+        event.setStatus(OutboxStatus.FAILED);
+        event.setUpdatedAt(Instant.now());
+        outboxRepository.save(event);
     }
 
     public void saveRawEvent(String aggregateId, String type, Object payload) {
@@ -43,8 +57,8 @@ public class OutboxWorker {
                 .type(type)
                 .payload(objectMapper.writeValueAsString(payload))
                 .status(OutboxStatus.PENDING)
-                .createdAt(java.time.Instant.now())
-                .updatedAt(java.time.Instant.now())
+                .createdAt(Instant.now())
+                .updatedAt(Instant.now())
                 .build();
             outboxRepository.save(entity);
         } catch (Exception e) {

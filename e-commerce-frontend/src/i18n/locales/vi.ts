@@ -78,7 +78,7 @@ export const vi = {
     currency: "₫",
     add_to_cart: "Thêm vào giỏ",
     view_details: "Xem",
-    sold: "đã bán",
+    sold: "Đã bán",
     flash_sale: "Flash Sale",
     discount: "Giảm",
     sale_ended: "Đã kết thúc",
@@ -88,12 +88,12 @@ export const vi = {
     availability: "Tình trạng",
     loading: "Đang tải sản phẩm...",
     load_failed: "Không thể tải sản phẩm",
-    added_to_cart: "đã thêm vào giỏ",
+    added_to_cart: "Đã thêm vào giỏ",
   },
   cart: {
     title: "Giỏ hàng của bạn",
     continue_shopping: "Tiếp tục mua sắm",
-    summary_title: "Tóm tắt đơn hàng",
+    summary_title: "Tạm tính đơn hàng",
     subtotal: "Tạm tính",
     shipping_estimate: "Phí vận chuyển",
     tax_estimate: "Thuế",
@@ -104,7 +104,7 @@ export const vi = {
     remove: "Xóa",
     qty: "SL",
     item_subtotal: "Thành tiền",
-    added: "đã thêm vào giỏ",
+    added: "Đã thêm vào giỏ",
   },
   checkout: {
     title: "Thanh toán",
@@ -144,11 +144,11 @@ export const vi = {
     title: "Đăng ký gian hàng",
     subtitle: "Chia sẻ về shop của bạn để bắt đầu bán hàng.",
     cta: "Gửi đăng ký",
-    success: "Chúng tôi đã nhận đơn đăng ký người bán.",
+    success: "Chúng tôi đã nhận được đăng ký người bán.",
     missing_fields: "Vui lòng điền đủ thông tin và đồng ý điều khoản.",
     highlights: [
-      { title: "Thẩm định nhanh", desc: "Hỗ trợ thiết lập sản phẩm và chính sách." },
-      { title: "Chiến dịch Marketing", desc: "Tham gia voucher, combo và khuyến mại." },
+      { title: "Thiết lập nhanh", desc: "Hỗ trợ thiết lập sản phẩm và chính sách." },
+      { title: "Chiến dịch Marketing", desc: "Tham gia voucher, combo và khuyến mãi." },
       { title: "Công cụ cho người bán", desc: "Quản lý đơn, kho, chat và báo cáo." },
     ],
     form: {
@@ -164,8 +164,8 @@ export const vi = {
     faq: {
       title: "Câu hỏi thường gặp",
       items: [
-        { q: "Xét duyệt bao lâu?", a: "Thường trong 1 ngày làm việc." },
-        { q: "Có cần pháp nhân?", a: "Bạn có thể bắt đầu với cá nhân, bổ sung sau." },
+        { q: "Xác duyệt bao lâu?", a: "Thường trong 1 ngày làm việc." },
+        { q: "Cần pháp nhân?", a: "Có thể bắt đầu với cá nhân, bổ sung sau." },
         { q: "Phí hợp tác gì?", a: "Phí dựa trên hoa hồng đơn hàng, không thu phí đăng sản phẩm." },
       ],
     },
