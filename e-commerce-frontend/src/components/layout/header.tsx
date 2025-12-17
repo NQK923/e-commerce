@@ -9,6 +9,7 @@ import { useCart } from "../../store/cart-store";
 import { cx } from "../../utils/cx";
 import { Button } from "../ui/button";
 import { useTranslation } from "../../providers/language-provider";
+import { NotificationBell } from "../notifications/notification-bell";
 
 export const Header: React.FC = () => {
   const pathname = usePathname();
@@ -93,6 +94,8 @@ export const Header: React.FC = () => {
           <button className="hidden p-2 text-zinc-500 transition-colors hover:bg-emerald-50 hover:text-emerald-600 sm:block sm:rounded-full">
             <Search size={20} />
           </button>
+
+          <NotificationBell />
 
           {/* Cart */}
           <Link href="/cart" className="group relative p-2 text-zinc-600 hover:text-emerald-600 transition-colors">

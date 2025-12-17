@@ -52,7 +52,7 @@ public class Order extends AggregateRoot<OrderId> {
                 .quantity(i.getQuantity())
                 .build())
             .toList();
-        registerEvent(new OrderPaid(id.getValue(), Instant.now(), eventItems));
+        registerEvent(new OrderPaid(id.getValue(), userId != null ? userId.getValue() : null, Instant.now(), eventItems));
     }
 
     public void cancel(String reason) {
@@ -60,7 +60,7 @@ public class Order extends AggregateRoot<OrderId> {
             throw new OrderDomainException("Cannot cancel order in status " + status);
         }
         this.status = OrderStatus.CANCELLED;
-        registerEvent(new OrderCancelled(id.getValue(), reason, Instant.now()));
+        registerEvent(new OrderCancelled(id.getValue(), userId != null ? userId.getValue() : null, reason, Instant.now()));
     }
 
     public void complete() {

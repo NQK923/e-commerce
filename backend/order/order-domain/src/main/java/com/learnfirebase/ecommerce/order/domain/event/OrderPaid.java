@@ -11,6 +11,7 @@ import lombok.Value;
 @Value
 public class OrderPaid implements DomainEvent {
     String orderId;
+    String userId;
     Instant paidAt;
     List<Item> items;
 

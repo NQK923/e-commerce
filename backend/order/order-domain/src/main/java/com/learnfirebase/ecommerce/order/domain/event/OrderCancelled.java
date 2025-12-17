@@ -9,6 +9,7 @@ import lombok.Value;
 @Value
 public class OrderCancelled implements DomainEvent {
     String orderId;
+    String userId;
     String reason;
     Instant cancelledAt;
 }

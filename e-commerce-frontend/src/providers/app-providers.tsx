@@ -6,6 +6,7 @@ import { ChatProvider } from "../store/chat-store";
 import { CartProvider } from "../store/cart-store";
 import { ToastProvider } from "../components/ui/toast-provider";
 import { LanguageProvider } from "./language-provider";
+import { NotificationProvider } from "../store/notification-store";
 
 type AppProvidersProps = {
   children: React.ReactNode;
@@ -17,11 +18,13 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children, initialLan
     <LanguageProvider initialLanguage={initialLanguage}>
       <ToastProvider>
         <AuthProvider>
-          <ChatProvider>
-            <CartProvider>
-              {children}
-            </CartProvider>
-          </ChatProvider>
+          <NotificationProvider>
+            <ChatProvider>
+              <CartProvider>
+                {children}
+              </CartProvider>
+            </ChatProvider>
+          </NotificationProvider>
         </AuthProvider>
       </ToastProvider>
     </LanguageProvider>
