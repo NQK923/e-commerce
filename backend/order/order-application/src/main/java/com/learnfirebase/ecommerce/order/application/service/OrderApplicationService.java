@@ -12,8 +12,15 @@ import com.learnfirebase.ecommerce.common.application.pagination.PageResponse;
 import com.learnfirebase.ecommerce.common.domain.valueobject.Money;
 import com.learnfirebase.ecommerce.order.application.command.CancelOrderCommand;
 import com.learnfirebase.ecommerce.order.application.command.CreateOrderCommand;
+import com.learnfirebase.ecommerce.order.application.command.HandlePaymentCallbackCommand;
+import com.learnfirebase.ecommerce.order.application.command.InitiatePaymentCommand;
 import com.learnfirebase.ecommerce.order.application.command.PayOrderCommand;
 import com.learnfirebase.ecommerce.order.application.dto.OrderDto;
+import com.learnfirebase.ecommerce.order.application.dto.PaymentInitResponse;
+import com.learnfirebase.ecommerce.order.application.model.PaymentRecord;
+import com.learnfirebase.ecommerce.order.application.model.PaymentStatus;
+import com.learnfirebase.ecommerce.order.application.port.in.HandlePaymentCallbackUseCase;
+import com.learnfirebase.ecommerce.order.application.port.in.InitiatePaymentUseCase;
 import com.learnfirebase.ecommerce.order.application.port.in.CancelOrderUseCase;
 import com.learnfirebase.ecommerce.order.application.port.in.CreateOrderUseCase;
 import com.learnfirebase.ecommerce.order.application.port.in.GetOrderUseCase;
@@ -24,9 +31,12 @@ import com.learnfirebase.ecommerce.order.application.port.out.LoadProductPort;
 import com.learnfirebase.ecommerce.order.application.port.out.OrderEventPublisher;
 import com.learnfirebase.ecommerce.order.application.port.out.OrderOutboxPort;
 import com.learnfirebase.ecommerce.order.application.port.out.OrderRepository;
+import com.learnfirebase.ecommerce.order.application.port.out.PaymentGatewayPort;
+import com.learnfirebase.ecommerce.order.application.port.out.PaymentTransactionPort;
 import com.learnfirebase.ecommerce.order.domain.model.Order;
 import com.learnfirebase.ecommerce.order.domain.model.OrderId;
 import com.learnfirebase.ecommerce.order.domain.model.OrderItem;
+import com.learnfirebase.ecommerce.order.domain.model.OrderStatus;
 import com.learnfirebase.ecommerce.order.domain.model.UserId;
 import com.learnfirebase.ecommerce.order.domain.service.OrderDomainService;
 import com.learnfirebase.ecommerce.order.domain.exception.OrderDomainException;
@@ -34,7 +44,7 @@ import com.learnfirebase.ecommerce.order.domain.exception.OrderDomainException;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseCase, CancelOrderUseCase, ListOrdersUseCase, GetOrderUseCase {
+public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseCase, CancelOrderUseCase, ListOrdersUseCase, GetOrderUseCase, InitiatePaymentUseCase, HandlePaymentCallbackUseCase {
 
     private final OrderRepository orderRepository;
     private final LoadProductPort loadProductPort;
@@ -42,6 +52,8 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
     private final InventoryReservationPort inventoryReservationPort;
     private final OrderOutboxPort orderOutboxPort;
     private final OrderEventPublisher eventPublisher;
+    private final PaymentGatewayPort paymentGatewayPort;
+    private final PaymentTransactionPort paymentTransactionPort;
     private final OrderDomainService domainService = new OrderDomainService();
 
     @Override
@@ -124,7 +136,10 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
             .orElseThrow(() -> new OrderDomainException("Order not found"));
         order.pay();
         Order saved = orderRepository.save(order);
-        order.getDomainEvents().forEach(eventPublisher::publish);
+        order.getDomainEvents().forEach(event -> {
+            orderOutboxPort.saveEvent(event);
+            eventPublisher.publish(event);
+        });
         return toDto(saved);
     }
 
@@ -140,7 +155,10 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
              .filter(item -> item.getFlashSaleId() != null)
              .forEach(item -> inventoryReservationPort.releaseFlashSale(item.getFlashSaleId(), item.getQuantity()));
 
-        order.getDomainEvents().forEach(eventPublisher::publish);
+        order.getDomainEvents().forEach(event -> {
+            orderOutboxPort.saveEvent(event);
+            eventPublisher.publish(event);
+        });
         return toDto(saved);
     }
 
@@ -166,6 +184,92 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
         Order order = orderRepository.findById(new OrderId(orderId))
             .orElseThrow(() -> new OrderDomainException("Order not found"));
         return toDto(order);
+    }
+
+    @Override
+    public PaymentInitResponse initiate(InitiatePaymentCommand command) {
+        Order order = orderRepository.findById(new OrderId(command.getOrderId()))
+            .orElseThrow(() -> new OrderDomainException("Order not found"));
+
+        if (order.getStatus() == OrderStatus.PAID) {
+            throw new OrderDomainException("Order already paid");
+        }
+
+        PaymentGatewayPort.PaymentSession session = paymentGatewayPort.initiatePayment(
+            PaymentGatewayPort.PaymentRequest.builder()
+                .orderId(order.getId().getValue())
+                .amount(order.getTotalAmount().getAmount())
+                .currency(order.getTotalAmount().getCurrency())
+                .description("Payment for order " + order.getId().getValue())
+                .returnUrl(command.getReturnUrl())
+                .clientIp(command.getClientIp())
+                .build()
+        );
+
+        paymentTransactionPort.save(PaymentRecord.builder()
+            .orderId(order.getId().getValue())
+            .reference(session.getReference())
+            .gateway("VNPAY")
+            .amount(order.getTotalAmount().getAmount())
+            .currency(order.getTotalAmount().getCurrency())
+            .status(PaymentStatus.PENDING)
+            .createdAt(java.time.Instant.now())
+            .updatedAt(java.time.Instant.now())
+            .build());
+
+        return PaymentInitResponse.builder()
+            .paymentUrl(session.getPaymentUrl())
+            .reference(session.getReference())
+            .build();
+    }
+
+    @Override
+    public OrderDto handleCallback(HandlePaymentCallbackCommand command) {
+        PaymentGatewayPort.PaymentVerification verification = paymentGatewayPort.verify(
+            PaymentGatewayPort.PaymentCallback.builder()
+                .parameters(command.getParameters())
+                .build()
+        );
+
+        if (!verification.isSuccess()) {
+            paymentTransactionPort.updateStatus(verification.getReference(), PaymentStatus.FAILED, verification.getTransactionNo(), verification.getRawPayload());
+            throw new OrderDomainException(verification.getErrorMessage() == null ? "Payment failed" : verification.getErrorMessage());
+        }
+
+        Order order = orderRepository.findById(new OrderId(verification.getOrderId()))
+            .orElseThrow(() -> new OrderDomainException("Order not found"));
+
+        if (paymentTransactionPort.findByReference(verification.getReference()).isEmpty()) {
+            paymentTransactionPort.save(PaymentRecord.builder()
+                .reference(verification.getReference())
+                .orderId(order.getId().getValue())
+                .gateway("VNPAY")
+                .amount(verification.getAmount())
+                .currency(order.getTotalAmount().getCurrency())
+                .status(PaymentStatus.PENDING)
+                .createdAt(java.time.Instant.now())
+                .updatedAt(java.time.Instant.now())
+                .rawPayload(verification.getRawPayload())
+                .build());
+        }
+
+        if (order.getStatus() == OrderStatus.CREATED) {
+            order.confirm();
+        }
+        if (order.getStatus() == OrderStatus.CONFIRMED) {
+            order.pay();
+        }
+
+        Order saved = orderRepository.save(order);
+
+        paymentTransactionPort.updateStatus(verification.getReference(), PaymentStatus.SUCCESS, verification.getTransactionNo(), verification.getRawPayload());
+
+        saved.getDomainEvents().forEach(event -> {
+            orderOutboxPort.saveEvent(event);
+            eventPublisher.publish(event);
+        });
+
+        return toDto(saved);
     }
 
     private OrderDto toDto(Order order) {
