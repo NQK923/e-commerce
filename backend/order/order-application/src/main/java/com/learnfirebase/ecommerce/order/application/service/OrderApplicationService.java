@@ -2,6 +2,7 @@ package com.learnfirebase.ecommerce.order.application.service;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -62,7 +63,7 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
         
         Set<String> standardProductIds = command.getItems().stream()
             .filter(item -> item.getFlashSaleId() == null)
-            .map(CreateOrderCommand.OrderItemCommand::getProductId)
+            .map(this::resolveInventoryKey)
             .collect(Collectors.toSet());
 
         Map<String, String> standardPrices = loadProductPort.loadProductPrices(command.getCurrency(), standardProductIds);
@@ -88,12 +89,13 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
 
                 price = flashSale.getPrice().getAmount();
             } else {
-                String fetched = standardPrices.get(itemCmd.getProductId());
+                String fetched = standardPrices.get(resolveInventoryKey(itemCmd));
                 price = (fetched != null) ? new BigDecimal(fetched) : new BigDecimal(itemCmd.getPrice());
             }
             
             items.add(OrderItem.builder()
                 .productId(itemCmd.getProductId())
+                .variantSku(itemCmd.getVariantSku())
                 .flashSaleId(itemCmd.getFlashSaleId())
                 .quantity(itemCmd.getQuantity())
                 .price(Money.builder().amount(price).currency(command.getCurrency()).build())
@@ -104,12 +106,15 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
         Order saved = orderRepository.save(order);
 
         // Standard Reservations
-        Map<String, Integer> standardReservations = command.getItems().stream()
+        Map<String, Integer> standardReservations = buildReservationMap(order.getItems().stream()
             .filter(i -> i.getFlashSaleId() == null)
-            .collect(Collectors.toMap(CreateOrderCommand.OrderItemCommand::getProductId, CreateOrderCommand.OrderItemCommand::getQuantity));
+            .toList());
             
         if (!standardReservations.isEmpty()) {
-            inventoryReservationPort.reserve(saved.getId().getValue(), standardReservations);
+            boolean ok = inventoryReservationPort.reserve(saved.getId().getValue(), standardReservations);
+            if (!ok) {
+                throw new OrderDomainException("Insufficient stock for one or more items");
+            }
         }
 
         // Flash Sale Reservations
@@ -136,6 +141,7 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
             .orElseThrow(() -> new OrderDomainException("Order not found"));
         order.pay();
         Order saved = orderRepository.save(order);
+        inventoryReservationPort.confirm(order.getId().getValue());
         order.getDomainEvents().forEach(event -> {
             orderOutboxPort.saveEvent(event);
             eventPublisher.publish(event);
@@ -154,6 +160,12 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
         saved.getItems().stream()
              .filter(item -> item.getFlashSaleId() != null)
              .forEach(item -> inventoryReservationPort.releaseFlashSale(item.getFlashSaleId(), item.getQuantity()));
+        Map<String, Integer> standardReservations = buildReservationMap(saved.getItems().stream()
+            .filter(item -> item.getFlashSaleId() == null)
+            .toList());
+        if (!standardReservations.isEmpty()) {
+            inventoryReservationPort.release(order.getId().getValue(), standardReservations);
+        }
 
         order.getDomainEvents().forEach(event -> {
             orderOutboxPort.saveEvent(event);
@@ -263,6 +275,7 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
         Order saved = orderRepository.save(order);
 
         paymentTransactionPort.updateStatus(verification.getReference(), PaymentStatus.SUCCESS, verification.getTransactionNo(), verification.getRawPayload());
+        inventoryReservationPort.confirm(order.getId().getValue());
 
         saved.getDomainEvents().forEach(event -> {
             orderOutboxPort.saveEvent(event);
@@ -284,10 +297,29 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
             .items(order.getItems().stream()
                 .map(item -> OrderDto.OrderItemDto.builder()
                     .productId(item.getProductId())
+                    .variantSku(item.getVariantSku())
+                    .flashSaleId(item.getFlashSaleId())
                     .quantity(item.getQuantity())
                     .price(item.getPrice().getAmount().toPlainString())
                     .build())
                 .collect(Collectors.toList()))
             .build();
+    }
+
+    private Map<String, Integer> buildReservationMap(List<OrderItem> items) {
+        Map<String, Integer> reservations = new HashMap<>();
+        for (OrderItem item : items) {
+            String key = resolveInventoryKey(item.getProductId(), item.getVariantSku());
+            reservations.merge(key, item.getQuantity(), Integer::sum);
+        }
+        return reservations;
+    }
+
+    private String resolveInventoryKey(CreateOrderCommand.OrderItemCommand itemCmd) {
+        return resolveInventoryKey(itemCmd.getProductId(), itemCmd.getVariantSku());
+    }
+
+    private String resolveInventoryKey(String productId, String variantSku) {
+        return variantSku != null && !variantSku.isBlank() ? variantSku : productId;
     }
 }

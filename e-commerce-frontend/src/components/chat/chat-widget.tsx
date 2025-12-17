@@ -9,7 +9,6 @@ import {
   Image as ImageIcon,
   Loader2,
   MessageCircle,
-  MessageSquareMore,
   Minimize2,
   MoreHorizontal,
   Phone,
@@ -35,6 +34,12 @@ type ChatWidgetProps = {
   fullPage?: boolean;
   initialTargetUserId?: string | null;
 };
+
+type ParticipantProfile = {
+  displayName?: string;
+  avatarUrl?: string;
+};
+type ParticipantProfileMap = Record<string, ParticipantProfile>;
 
 // --- Helpers ---
 
@@ -74,11 +79,6 @@ const resolveParticipantName = (
     participant.displayName ||
     formatShopFallback(participant.id || fallbackId)
   );
-};
-
-type ParticipantProfile = {
-  displayName?: string;
-  avatarUrl?: string;
 };
 
 const isImageContent = (content: string): boolean => {
@@ -178,7 +178,7 @@ const ConversationItem: React.FC<{
   active: boolean;
   onSelect: () => void;
   currentUserId?: string;
-  participantProfiles: Record<string, ParticipantProfile>;
+  participantProfiles: ParticipantProfileMap;
 }> = ({ conversation, active, onSelect, currentUserId, participantProfiles }) => {
   const otherRaw = getOtherParticipant(conversation, currentUserId);
   const profile = otherRaw?.id ? participantProfiles[otherRaw.id] : undefined;
@@ -273,7 +273,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
 
   const [draft, setDraft] = useState(""); // Moved draft declaration here
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [participantProfiles, setParticipantProfiles] = useState<Record<string, ParticipantProfile>>({});
+  const [participantProfiles, setParticipantProfiles] = useState<ParticipantProfileMap>({});
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -758,18 +758,19 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
         {/* Toggle Button */}
         {!isOpen && (
             <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3 group">
-                 {unreadTotal > 0 && (
+                {unreadTotal > 0 && (
                     <div className="bg-white px-4 py-2 rounded-xl shadow-lg border border-zinc-100 mb-2 animate-in slide-in-from-bottom-2 fade-in duration-300 origin-bottom-right">
                         <p className="text-sm font-semibold text-zinc-800">You have <span className="text-emerald-600">{unreadTotal}</span> new messages</p>
                     </div>
                 )}
                 <Button
                     onClick={() => setIsOpen(true)}
-                    className="h-16 w-16 rounded-full shadow-2xl bg-linear-to-br from-emerald-500 to-emerald-700 hover:scale-110 transition-all duration-300 relative"
+                    variant="primary"
+                    className="relative h-14 w-14 rounded-full shadow-xl bg-linear-to-br from-emerald-500 to-emerald-600 hover:shadow-2xl hover:scale-110 transition-all duration-300 border border-emerald-400/30 focus:ring-0 focus:ring-offset-0"
                 >
-                    <MessageSquareMore size={30} className="text-white" />
+                    <MessageCircle size={26} className="text-white" />
                     {unreadTotal > 0 && (
-                        <span className="absolute 0 top-0 right-0 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 ring-4 ring-white text-[11px] font-bold text-white shadow-sm">
+                        <span className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 ring-2 ring-white/90 text-[11px] font-bold text-white shadow-md">
                             {unreadTotal}
                         </span>
                     )}

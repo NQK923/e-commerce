@@ -18,6 +18,9 @@ type Props = {
 export const CartSummary: React.FC<Props> = ({ cart, onCheckout, actionLabel, disableAction }) => {
   const { t } = useTranslation();
   const label = actionLabel || t.cart.proceed_checkout;
+  const lowStockItems = (cart.items || []).filter(
+    (item) => item.product.stock !== undefined && item.product.stock <= 5 && item.product.stock > 0,
+  );
 
   return (
     <div className="sticky top-24 rounded-2xl border border-zinc-100 bg-white p-6 shadow-lg shadow-zinc-200/50">
@@ -25,6 +28,12 @@ export const CartSummary: React.FC<Props> = ({ cart, onCheckout, actionLabel, di
         <Receipt className="h-5 w-5 text-emerald-600" />
         {t.cart.summary_title}
       </h3>
+
+      {lowStockItems.length > 0 && (
+        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700">
+          Only {lowStockItems.map((i) => `${i.product.stock}x ${i.product.name}`).join(", ")} left—checkout soon.
+        </div>
+      )}
 
       <div className="space-y-4">
         {/* Coupon Input */}

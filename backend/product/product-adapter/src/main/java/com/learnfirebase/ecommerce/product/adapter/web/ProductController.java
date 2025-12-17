@@ -179,7 +179,7 @@ public class ProductController {
             InventoryDto inventory = queryInventoryUseCase.getInventoryByProductId(product.getId());
             Integer totalStock = inventory.getItems().stream()
                 .filter(item -> item.getProductId().equals(product.getId()))
-                .map(InventoryDto.ItemDto::getAvailable)
+                .map(item -> Math.max(0, item.getAvailable() - item.getReserved()))
                 .findFirst()
                 .orElse(product.getQuantity() != null ? product.getQuantity() : 0);
 
@@ -203,7 +203,7 @@ public class ProductController {
                         .price(v.getPrice())
                         .quantity(inventory.getItems().stream()
                             .filter(item -> item.getProductId().equals(v.getSku()))
-                            .map(InventoryDto.ItemDto::getAvailable)
+                            .map(item -> Math.max(0, item.getAvailable() - item.getReserved()))
                             .findFirst()
                             .orElse(v.getQuantity() != null ? v.getQuantity() : 0))
                         .build()

@@ -18,6 +18,7 @@ public class CreateOrderCommand {
     @Builder
     public static class OrderItemCommand {
         String productId;
+        String variantSku;
         String flashSaleId;
         int quantity;
         String price;

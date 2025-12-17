@@ -12,9 +12,10 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(of = {"productId"})
+@EqualsAndHashCode(of = {"productId", "variantSku"})
 public class OrderItem {
     private String productId;
+    private String variantSku;
     private String flashSaleId;
     private int quantity;
     private Money price;

@@ -23,12 +23,14 @@ public class InventoryApplicationService implements ManageInventoryUseCase, Quer
     private final InventoryRepository inventoryRepository;
     private final InventoryRedisScriptPort redisScriptPort;
     private final InventoryEventPublisher eventPublisher;
+    private static final String DEFAULT_INVENTORY_ID = "DEFAULT_INVENTORY";
 
     @Override
     public InventoryDto execute(AdjustInventoryCommand command) {
-        Inventory inventory = inventoryRepository.findById(new InventoryId(command.getInventoryId()))
+        String inventoryId = command.getInventoryId() != null ? command.getInventoryId() : DEFAULT_INVENTORY_ID;
+        Inventory inventory = inventoryRepository.findById(new InventoryId(inventoryId))
             .orElse(Inventory.builder()
-                .id(new InventoryId(command.getInventoryId() != null ? command.getInventoryId() : UUID.randomUUID().toString()))
+                .id(new InventoryId(inventoryId != null ? inventoryId : UUID.randomUUID().toString()))
                 .warehouse(Warehouse.builder().id("default").name("Default").build())
                 .build());
         inventory.adjust(command.getProductId(), command.getDelta());
@@ -43,7 +45,7 @@ public class InventoryApplicationService implements ManageInventoryUseCase, Quer
         // Since we only have a default inventory for now, we scan for it.
         // Ideally we should have a lookup table or index by productId
         // For now, we'll fetch the default inventory
-        Inventory inventory = inventoryRepository.findById(new InventoryId("DEFAULT_INVENTORY"))
+        Inventory inventory = inventoryRepository.findById(new InventoryId(DEFAULT_INVENTORY_ID))
              .orElseThrow(() -> new InventoryDomainException("Default inventory not found"));
         
         return toDto(inventory);
@@ -59,10 +61,26 @@ public class InventoryApplicationService implements ManageInventoryUseCase, Quer
             .items(inventory.getItems().stream()
                 .map(item -> InventoryDto.ItemDto.builder()
                     .productId(item.getProductId())
-                    .available(item.getAvailable())
-                    .reserved(item.getReserved())
+                    .available(resolveAvailable(inventory.getId(), item))
+                    .reserved(resolveReserved(inventory.getId(), item))
                     .build())
                 .collect(Collectors.toList()))
             .build();
+    }
+
+    private int resolveAvailable(InventoryId inventoryId, com.learnfirebase.ecommerce.inventory.domain.model.InventoryItem item) {
+        int available = redisScriptPort.getAvailable(inventoryId.getValue(), item.getProductId());
+        if (available == 0) {
+            available = item.getAvailable();
+        }
+        return available;
+    }
+
+    private int resolveReserved(InventoryId inventoryId, com.learnfirebase.ecommerce.inventory.domain.model.InventoryItem item) {
+        int reserved = redisScriptPort.getReserved(inventoryId.getValue(), item.getProductId());
+        if (reserved == 0) {
+            reserved = item.getReserved();
+        }
+        return reserved;
     }
 }

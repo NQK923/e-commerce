@@ -24,6 +24,8 @@ public class OrderDto {
     @Builder
     public static class OrderItemDto {
         String productId;
+        String variantSku;
+        String flashSaleId;
         int quantity;
         String price;
     }

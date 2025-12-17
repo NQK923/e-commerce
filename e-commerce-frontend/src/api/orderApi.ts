@@ -5,6 +5,8 @@ import { Order } from "../types/order";
 
 type BackendOrderItem = {
   productId: string;
+  variantSku?: string;
+  flashSaleId?: string;
   quantity: number;
   price: string;
 };
@@ -37,8 +39,10 @@ const mapOrder = (dto: BackendOrder): Order => ({
   createdAt: dto.createdAt,
   updatedAt: dto.updatedAt,
   items: dto.items.map(i => ({
-    id: `${dto.id}-${i.productId}`, // Generate a fake ID for item as backend doesn't send it in this DTO
+    id: `${dto.id}-${i.variantSku || i.productId}`, // Generate a fake ID for item as backend doesn't send it in this DTO
     productId: i.productId,
+    variantSku: i.variantSku,
+    flashSaleId: i.flashSaleId,
     quantity: i.quantity,
     price: parseFloat(i.price),
     subtotal: parseFloat(i.price) * i.quantity
@@ -47,6 +51,7 @@ const mapOrder = (dto: BackendOrder): Order => ({
 
 type CreateOrderItem = {
   productId: string;
+  variantSku?: string;
   flashSaleId?: string;
   quantity: number;
   price: number;

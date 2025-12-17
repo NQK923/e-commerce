@@ -21,6 +21,8 @@ public class JpaOrderItemEntity {
     @Id
     private String id;
     private String productId;
+    @jakarta.persistence.Column(name = "variant_sku")
+    private String variantSku;
     private String flashSaleId;
     private int quantity;
     private String price;

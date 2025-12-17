@@ -34,16 +34,16 @@ public class OrderNotificationListener {
             String body;
             switch (topic) {
                 case "OrderCreated" -> {
-                    title = "Đơn hàng đã tạo";
-                    body = "Đơn hàng " + event.orderId + " đã được tạo.";
+                    title = "Order created";
+                    body = "Order " + event.orderId + " has been created.";
                 }
                 case "OrderPaid" -> {
-                    title = "Thanh toán thành công";
-                    body = "Đơn hàng " + event.orderId + " đã thanh toán thành công.";
+                    title = "Order paid";
+                    body = "Order " + event.orderId + " was paid successfully.";
                 }
                 case "OrderCancelled" -> {
-                    title = "Đơn hàng bị hủy";
-                    body = "Đơn hàng " + event.orderId + " đã bị hủy.";
+                    title = "Order cancelled";
+                    body = "Order " + event.orderId + " has been cancelled.";
                 }
                 default -> {
                     return;

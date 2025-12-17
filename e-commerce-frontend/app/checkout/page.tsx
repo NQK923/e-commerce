@@ -75,17 +75,18 @@ function CheckoutContent() {
     event.preventDefault();
     setSubmitting(true);
     try {
-      const order = await orderApi.create({
-        userId: user?.id,
-        currency: filteredCart.currency ?? "USD",
-        address,
-        paymentMethod: "COD", // Placeholder as no UI for payment method yet
-        items: filteredCart.items.map((item) => ({
-          productId: item.product.id,
-          quantity: item.quantity,
-          price: item.unitPrice,
-        })),
-      });
+        const order = await orderApi.create({
+          userId: user?.id,
+          currency: filteredCart.currency ?? "USD",
+          address,
+          paymentMethod: "COD", // Placeholder as no UI for payment method yet
+          items: filteredCart.items.map((item) => ({
+            productId: item.product.id,
+            variantSku: item.variantSku,
+            quantity: item.quantity,
+            price: item.unitPrice,
+          })),
+        });
       await clearCart();
       addToast(t.checkout.success, "success");
       router.replace(`/orders/${order.id}`);

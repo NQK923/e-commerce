@@ -161,6 +161,11 @@ export default function ProductDetailPage() {
     [displayProduct?.stock],
   );
 
+  const lowStock = useMemo(
+    () => (displayProduct?.stock !== undefined ? displayProduct.stock > 0 && displayProduct.stock <= 5 : false),
+    [displayProduct?.stock],
+  );
+
   const handleAdd = async () => {
     if (!displayProduct) return;
     if (outOfStock) {
@@ -284,6 +289,11 @@ export default function ProductDetailPage() {
                                 <FlashSaleCountdown endAt={displayProduct.flashSaleEndAt} />
                             </div>
                         )}
+                        {lowStock && (
+                            <div className="mt-3 inline-flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 border border-red-100">
+                                Only {displayProduct.stock} left in stock
+                            </div>
+                        )}
                     </div>
 
                     {/* Variant Selection */}
@@ -336,7 +346,11 @@ export default function ProductDetailPage() {
                                 </button>
                              </div>
                              <p className="text-xs text-zinc-500">
-                                {displayProduct.stock ? `${displayProduct.stock} sản phẩm có sẵn` : 'Hết hàng'}
+                                {displayProduct.stock !== undefined
+                                  ? lowStock
+                                    ? `Only ${displayProduct.stock} left`
+                                    : `${displayProduct.stock} in stock`
+                                  : "Out of stock"}
                              </p>
                         </div>
 

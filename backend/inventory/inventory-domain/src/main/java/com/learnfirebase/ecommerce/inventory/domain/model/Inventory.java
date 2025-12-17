@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.learnfirebase.ecommerce.common.domain.AggregateRoot;
+import com.learnfirebase.ecommerce.inventory.domain.exception.InventoryDomainException;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -29,7 +30,11 @@ public class Inventory extends AggregateRoot<InventoryId> {
 
         if (itemOptional.isPresent()) {
             InventoryItem item = itemOptional.get();
-            item.setAvailable(item.getAvailable() + delta);
+            int next = item.getAvailable() + delta;
+            if (next < 0) {
+                throw new InventoryDomainException("Insufficient stock for product " + productId);
+            }
+            item.setAvailable(next);
         } else {
             items.add(InventoryItem.builder()
                 .productId(productId)

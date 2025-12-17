@@ -1,6 +1,8 @@
 export type OrderItem = {
   id: string;
   productId: string;
+  variantSku?: string;
+  flashSaleId?: string;
   quantity: number;
   price: number;
   subtotal: number;
@@ -34,6 +36,8 @@ export type CreateOrderRequest = {
   address?: Address;
   items: Array<{
     productId: string;
+    variantSku?: string;
+    flashSaleId?: string;
     quantity: number;
     price: number;
   }>;
