@@ -1,5 +1,6 @@
 package com.learnfirebase.ecommerce.order.application.port.in;
 
+import com.learnfirebase.ecommerce.common.application.UseCase;
 import com.learnfirebase.ecommerce.order.application.command.InitiatePaymentCommand;
 import com.learnfirebase.ecommerce.order.application.dto.PaymentInitResponse;
 

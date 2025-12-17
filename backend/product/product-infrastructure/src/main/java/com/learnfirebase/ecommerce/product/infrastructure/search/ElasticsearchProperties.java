@@ -7,9 +7,7 @@ import lombok.Data;
 @Data
 @ConfigurationProperties(prefix = "search.elasticsearch")
 public class ElasticsearchProperties {
-    /**
-     * Elasticsearch endpoint, e.g. http://localhost:9200
-     */
+
     private String host = "http://localhost:9200";
     private String username;
     private String password;

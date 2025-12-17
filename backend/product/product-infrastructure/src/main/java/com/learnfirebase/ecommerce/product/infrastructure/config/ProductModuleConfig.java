@@ -1,12 +1,8 @@
 package com.learnfirebase.ecommerce.product.infrastructure.config;
 
 import org.springframework.boot.autoconfigure.domain.EntityScan;
-import org.apache.hc.client5.http.auth.AuthScope;
-import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider;
-import org.apache.hc.client5.http.impl.nio.BasicHttpAsyncClientBuilder;
-import org.apache.hc.core5.http.HttpHost;
 import org.elasticsearch.client.RestClient;
-import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.apache.http.HttpHost;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,15 +28,7 @@ import com.learnfirebase.ecommerce.product.infrastructure.search.ElasticsearchPr
 public class ProductModuleConfig {
     @Bean
     public RestClient elasticsearchRestClient(ElasticsearchProperties properties) {
-        RestClient.Builder builder = RestClient.builder(HttpHost.create(properties.getHost()));
-        if (properties.getUsername() != null && !properties.getUsername().isBlank()) {
-            BasicCredentialsProvider creds = new BasicCredentialsProvider();
-            creds.setCredentials(AuthScope.ANY, new org.apache.hc.client5.http.auth.UsernamePasswordCredentials(properties.getUsername(), properties.getPassword().toCharArray()));
-            builder.setHttpClientConfigCallback((BasicHttpAsyncClientBuilder httpClientBuilder) ->
-                httpClientBuilder.setDefaultCredentialsProvider(creds)
-            );
-        }
-        return builder.build();
+        return RestClient.builder(HttpHost.create(properties.getHost())).build();
     }
 
     @Bean
