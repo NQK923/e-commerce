@@ -13,4 +13,6 @@ public class ProductSearchQuery {
     BigDecimal minPrice;
     BigDecimal maxPrice;
     String sellerId;
+    String sort;
+    Integer size;
 }

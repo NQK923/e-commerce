@@ -10,6 +10,7 @@ import com.learnfirebase.ecommerce.product.application.port.out.ProductReportRep
 import com.learnfirebase.ecommerce.product.application.port.out.ProductRepository;
 import com.learnfirebase.ecommerce.product.application.port.out.ProductReviewRepositoryPort;
 import com.learnfirebase.ecommerce.product.application.port.out.ProductSearchIndexPort;
+import com.learnfirebase.ecommerce.product.application.port.out.ProductSearchPort;
 import com.learnfirebase.ecommerce.product.application.service.ProductApplicationService;
 import com.learnfirebase.ecommerce.product.application.service.ProductReportApplicationService;
 import com.learnfirebase.ecommerce.product.application.service.ProductReviewService;
@@ -21,8 +22,8 @@ import com.learnfirebase.ecommerce.product.infrastructure.persistence.ProductJpa
 @EntityScan(basePackageClasses = ProductEntity.class)
 public class ProductModuleConfig {
     @Bean
-    public ProductApplicationService productApplicationService(ProductRepository productRepository, ProductSearchIndexPort productSearchIndexPort, ProductEventPublisher productEventPublisher) {
-        return new ProductApplicationService(productRepository, productSearchIndexPort, productEventPublisher);
+    public ProductApplicationService productApplicationService(ProductRepository productRepository, ProductSearchIndexPort productSearchIndexPort, ProductSearchPort productSearchPort, ProductEventPublisher productEventPublisher) {
+        return new ProductApplicationService(productRepository, productSearchIndexPort, productSearchPort, productEventPublisher);
     }
 
     @Bean

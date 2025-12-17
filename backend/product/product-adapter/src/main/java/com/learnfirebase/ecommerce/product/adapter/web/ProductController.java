@@ -52,6 +52,8 @@ public class ProductController {
             .minPrice(minPrice)
             .maxPrice(maxPrice)
             .sellerId(sellerId)
+            .sort(sort)
+            .size(size)
             .build();
             
         PageResponse<ProductDto> products = queryProductUseCase.searchProducts(query, pageRequest);
@@ -70,6 +72,22 @@ public class ProductController {
             .totalPages(products.getTotalPages())
             .build();
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/suggest")
+    public ResponseEntity<List<ProductDto>> suggest(
+        @RequestParam("prefix") String prefix,
+        @RequestParam(name = "limit", defaultValue = "5") int limit
+    ) {
+        return ResponseEntity.ok(queryProductUseCase.suggestProducts(prefix, limit));
+    }
+
+    @GetMapping("/{id}/similar")
+    public ResponseEntity<List<ProductDto>> similar(
+        @PathVariable("id") String id,
+        @RequestParam(name = "limit", defaultValue = "5") int limit
+    ) {
+        return ResponseEntity.ok(queryProductUseCase.similarProducts(id, limit));
     }
 
     @GetMapping("/{id}")

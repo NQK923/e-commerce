@@ -17,6 +17,7 @@ import com.learnfirebase.ecommerce.product.application.port.in.QueryProductUseCa
 import com.learnfirebase.ecommerce.product.application.port.out.ProductEventPublisher;
 import com.learnfirebase.ecommerce.product.application.port.out.ProductRepository;
 import com.learnfirebase.ecommerce.product.application.port.out.ProductSearchIndexPort;
+import com.learnfirebase.ecommerce.product.application.port.out.ProductSearchPort;
 import com.learnfirebase.ecommerce.product.domain.exception.ProductDomainException;
 import com.learnfirebase.ecommerce.product.domain.model.Category;
 import com.learnfirebase.ecommerce.product.domain.model.Product;
@@ -28,6 +29,7 @@ import com.learnfirebase.ecommerce.product.domain.model.ProductVariant;
 import lombok.RequiredArgsConstructor;
 
 import com.learnfirebase.ecommerce.product.application.dto.ProductSearchQuery;
+import com.learnfirebase.ecommerce.product.application.dto.ProductSearchResult;
 import com.learnfirebase.ecommerce.product.application.dto.SoldItemDto;
 import com.learnfirebase.ecommerce.product.domain.event.ProductCreatedEvent;
 
@@ -35,6 +37,7 @@ import com.learnfirebase.ecommerce.product.domain.event.ProductCreatedEvent;
 public class ProductApplicationService implements ManageProductUseCase, QueryProductUseCase {
     private final ProductRepository productRepository;
     private final ProductSearchIndexPort productSearchIndexPort;
+    private final ProductSearchPort productSearchPort;
     private final ProductEventPublisher eventPublisher;
 
     public void handleOrderPaid(List<SoldItemDto> items) {
@@ -52,6 +55,21 @@ public class ProductApplicationService implements ManageProductUseCase, QueryPro
 
     @Override
     public PageResponse<ProductDto> searchProducts(ProductSearchQuery query, PageRequest pageRequest) {
+        try {
+            if (productSearchPort != null && (query.getSearch() != null || query.getCategory() != null)) {
+                ProductSearchResult result = productSearchPort.search(query, pageRequest);
+                return PageResponse.<ProductDto>builder()
+                    .content(result.getProducts().stream().map(this::toDto).toList())
+                    .totalElements(result.getTotalElements())
+                    .totalPages(result.getTotalPages())
+                    .page(result.getPage())
+                    .size(result.getSize())
+                    .build();
+            }
+        } catch (Exception e) {
+            System.err.println("Search backend failed, falling back to DB search: " + e.getMessage());
+        }
+
         PageResponse<Product> page = productRepository.search(query, pageRequest);
         return PageResponse.<ProductDto>builder()
             .content(page.getContent().stream().map(this::toDto).toList())
@@ -172,6 +190,37 @@ public class ProductApplicationService implements ManageProductUseCase, QueryPro
         Product product = productRepository.findById(productId)
             .orElseThrow(() -> new ProductDomainException("Product not found: " + id));
         return toDto(product);
+    }
+
+    @Override
+    public List<ProductDto> suggestProducts(String prefix, int limit) {
+        List<String> suggestions = productSearchPort != null ? productSearchPort.suggest(prefix, limit) : java.util.Collections.emptyList();
+        if (suggestions.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+        PageResponse<Product> page = productRepository.search(ProductSearchQuery.builder().search(prefix).build(),
+            PageRequest.builder().page(0).size(limit).build());
+        return page.getContent().stream().map(this::toDto).toList();
+    }
+
+    @Override
+    public List<ProductDto> similarProducts(String productId, int limit) {
+        List<Product> results = productSearchPort != null ? productSearchPort.similarProducts(productId, limit) : java.util.Collections.emptyList();
+        if (results.isEmpty()) {
+            Product product = productRepository.findById(new ProductId(productId)).orElse(null);
+            if (product == null || product.getCategory() == null) {
+                return java.util.Collections.emptyList();
+            }
+            PageResponse<Product> fallback = productRepository.search(
+                ProductSearchQuery.builder().category(product.getCategory().getId()).build(),
+                PageRequest.builder().page(0).size(limit).build());
+            results = fallback.getContent();
+        }
+        return results.stream()
+            .filter(p -> !p.getId().getValue().equals(productId))
+            .limit(limit)
+            .map(this::toDto)
+            .toList();
     }
 
     private ProductDto toDto(Product product) {
