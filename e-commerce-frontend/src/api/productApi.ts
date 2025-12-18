@@ -10,6 +10,11 @@ export type Review = {
   userName: string;
   rating: number;
   comment: string;
+  verifiedPurchase?: boolean;
+  abuseReportCount?: number;
+  sellerResponse?: string | null;
+  sellerRespondedAt?: string | null;
+  updatedAt?: string;
   createdAt: string;
 };
 
@@ -18,6 +23,27 @@ export type CreateReviewRequest = {
   userName: string;
   rating: number;
   comment: string;
+};
+
+export type UpdateReviewRequest = {
+  userId: string;
+  rating: number;
+  comment: string;
+};
+
+export type DeleteReviewRequest = {
+  userId: string;
+};
+
+export type ReportReviewRequest = {
+  reporterUserId: string;
+  reason?: string;
+  description?: string;
+};
+
+export type RespondReviewRequest = {
+  sellerId: string;
+  response: string;
 };
 
 type BackendPageResponse<T> = {
@@ -178,6 +204,30 @@ export const productApi = {
 
   addReview: (productId: string, payload: CreateReviewRequest) =>
     apiRequest<Review>(`/api/products/${productId}/reviews`, {
+      method: "POST",
+      body: payload,
+    }),
+
+  updateReview: (productId: string, reviewId: string, payload: UpdateReviewRequest) =>
+    apiRequest<Review>(`/api/products/${productId}/reviews/${reviewId}`, {
+      method: "PUT",
+      body: payload,
+    }),
+
+  deleteReview: (productId: string, reviewId: string, payload: DeleteReviewRequest) =>
+    apiRequest<void>(`/api/products/${productId}/reviews/${reviewId}`, {
+      method: "DELETE",
+      body: payload,
+    }),
+
+  reportReview: (productId: string, reviewId: string, payload: ReportReviewRequest) =>
+    apiRequest<void>(`/api/products/${productId}/reviews/${reviewId}/report`, {
+      method: "POST",
+      body: payload,
+    }),
+
+  respondToReview: (productId: string, reviewId: string, payload: RespondReviewRequest) =>
+    apiRequest<Review>(`/api/products/${productId}/reviews/${reviewId}/response`, {
       method: "POST",
       body: payload,
     }),

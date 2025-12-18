@@ -13,5 +13,10 @@ public class ProductReviewDto {
     private String userName;
     private Integer rating;
     private String comment;
+    private boolean verifiedPurchase;
+    private int abuseReportCount;
+    private String sellerResponse;
+    private Instant sellerRespondedAt;
+    private Instant updatedAt;
     private Instant createdAt;
 }

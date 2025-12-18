@@ -462,7 +462,7 @@ export default function ProductDetailPage() {
                  </div>
 
                  <div className="rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm">
-                    <ProductReviews productId={displayProduct.id} />
+                    <ProductReviews productId={displayProduct.id} sellerId={displayProduct.sellerId} />
                  </div>
                  
             </div>

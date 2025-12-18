@@ -11,9 +11,11 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import com.learnfirebase.ecommerce.product.application.port.out.ProductEventPublisher;
 import com.learnfirebase.ecommerce.product.application.port.out.ProductReportRepository;
 import com.learnfirebase.ecommerce.product.application.port.out.ProductRepository;
+import com.learnfirebase.ecommerce.product.application.port.out.ProductReviewReportRepositoryPort;
 import com.learnfirebase.ecommerce.product.application.port.out.ProductReviewRepositoryPort;
 import com.learnfirebase.ecommerce.product.application.port.out.ProductSearchIndexPort;
 import com.learnfirebase.ecommerce.product.application.port.out.ProductSearchPort;
+import com.learnfirebase.ecommerce.product.application.port.out.PurchaseVerificationPort;
 import com.learnfirebase.ecommerce.product.application.service.ProductApplicationService;
 import com.learnfirebase.ecommerce.product.application.service.ProductReportApplicationService;
 import com.learnfirebase.ecommerce.product.application.service.ProductReviewService;
@@ -42,7 +44,15 @@ public class ProductModuleConfig {
     }
 
     @Bean
-    public ProductReviewService productReviewService(ProductReviewRepositoryPort productReviewRepositoryPort) {
-        return new ProductReviewService(productReviewRepositoryPort);
+    public ProductReviewService productReviewService(
+        ProductReviewRepositoryPort productReviewRepositoryPort,
+        ProductReviewReportRepositoryPort productReviewReportRepositoryPort,
+        PurchaseVerificationPort purchaseVerificationPort,
+        ProductRepository productRepository) {
+        return new ProductReviewService(
+            productReviewRepositoryPort,
+            productReviewReportRepositoryPort,
+            purchaseVerificationPort,
+            productRepository);
     }
 }

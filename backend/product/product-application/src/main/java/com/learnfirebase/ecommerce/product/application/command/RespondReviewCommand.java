@@ -9,11 +9,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CreateReviewCommand {
+public class RespondReviewCommand {
+    private String reviewId;
     private String productId;
-    private String userId;
-    private String userName;
-    private Integer rating;
-    private String comment;
-    private boolean verifiedPurchase;
+    private String sellerId;
+    private String response;
 }
