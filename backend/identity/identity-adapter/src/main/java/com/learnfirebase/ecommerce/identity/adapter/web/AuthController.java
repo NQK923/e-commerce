@@ -14,37 +14,55 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.learnfirebase.ecommerce.identity.application.command.LoginCommand;
 import com.learnfirebase.ecommerce.identity.application.command.RegisterUserCommand;
+import com.learnfirebase.ecommerce.identity.application.command.ResetPasswordCommand;
 import com.learnfirebase.ecommerce.identity.application.dto.AuthTokenDto;
+import com.learnfirebase.ecommerce.identity.application.dto.OtpChallengeDto;
 import com.learnfirebase.ecommerce.identity.application.dto.UserDto;
 import com.learnfirebase.ecommerce.identity.application.port.in.AuthenticateUserUseCase;
+import com.learnfirebase.ecommerce.identity.application.port.in.RequestLoginOtpUseCase;
+import com.learnfirebase.ecommerce.identity.application.port.in.RotateRefreshTokenUseCase;
 import com.learnfirebase.ecommerce.identity.application.port.in.RegisterUserUseCase;
+import com.learnfirebase.ecommerce.identity.application.port.in.ResetPasswordUseCase;
 import com.learnfirebase.ecommerce.identity.application.port.in.UserQueryUseCase;
-import com.learnfirebase.ecommerce.identity.application.port.out.TokenProvider;
 import com.learnfirebase.ecommerce.identity.domain.exception.IdentityDomainException;
 
 import lombok.Builder;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
+import lombok.NoArgsConstructor;
 
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
     private final AuthenticateUserUseCase authenticateUserUseCase;
+    private final RequestLoginOtpUseCase requestLoginOtpUseCase;
     private final RegisterUserUseCase registerUserUseCase;
+    private final ResetPasswordUseCase resetPasswordUseCase;
     private final UserQueryUseCase userQueryUseCase;
-    private final TokenProvider tokenProvider;
+    private final RotateRefreshTokenUseCase rotateRefreshTokenUseCase;
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@RequestBody RegisterUserCommand command) {
-        UserDto user = registerUserUseCase.execute(command);
-        AuthTokenDto tokens = authenticateUserUseCase.execute(LoginCommand.builder()
-            .email(command.getEmail())
-            .password(command.getPassword())
-            .deviceId(command.getDeviceId())
-            .build());
-        return ResponseEntity.ok(toResponse(user, tokens));
+        try {
+            UserDto user = registerUserUseCase.execute(command);
+            AuthTokenDto tokens = authenticateUserUseCase.execute(LoginCommand.builder()
+                .email(command.getEmail())
+                .password(command.getPassword())
+                .deviceId(command.getDeviceId())
+                .skipOtp(true)
+                .build());
+            return ResponseEntity.ok(toResponse(user, tokens));
+        } catch (IdentityDomainException ex) {
+            if ("OTP_REQUIRED".equals(ex.getMessage())) {
+                return ResponseEntity.status(428).body(ErrorResponse.builder()
+                    .code("OTP_REQUIRED")
+                    .message("OTP required to verify email for registration.")
+                    .build());
+            }
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     @PostMapping("/login")
@@ -61,6 +79,41 @@ public class AuthController {
         }
     }
 
+    @PostMapping("/otp/request")
+    public ResponseEntity<OtpChallengeDto> requestOtp(@RequestBody OtpRequest request) {
+        OtpChallengeDto challenge = requestLoginOtpUseCase.request(request.getEmail());
+        return ResponseEntity.accepted().body(challenge);
+    }
+
+    @PostMapping("/password/forgot")
+    public ResponseEntity<OtpChallengeDto> forgotPassword(@RequestBody EmailRequest request) {
+        try {
+            OtpChallengeDto challenge = resetPasswordUseCase.requestReset(request.getEmail());
+            return ResponseEntity.accepted().body(challenge);
+        } catch (IdentityDomainException ex) {
+            // Avoid leaking whether the email exists; return accepted without details.
+            return ResponseEntity.accepted().build();
+        }
+    }
+
+    @PostMapping("/password/reset")
+    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
+        try {
+            resetPasswordUseCase.resetPassword(ResetPasswordCommand.builder()
+                .email(request.getEmail())
+                .newPassword(request.getNewPassword())
+                .challengeId(request.getChallengeId())
+                .otpCode(request.getOtpCode())
+                .build());
+            return ResponseEntity.noContent().build();
+        } catch (IdentityDomainException ex) {
+            return ResponseEntity.badRequest().body(ErrorResponse.builder()
+                .code("RESET_FAILED")
+                .message(ex.getMessage())
+                .build());
+        }
+    }
+
     @GetMapping("/me")
     public ResponseEntity<AuthUserResponse> me(@RequestHeader(name = "Authorization", required = false) String authorization) {
         String email = extractEmailFromAccessToken(authorization);
@@ -73,22 +126,18 @@ public class AuthController {
 
     @PostMapping("/refresh-token")
     public ResponseEntity<AuthTokenDto> refresh(@RequestBody RefreshRequest request) {
-        String email = extractEmailFromRefreshToken(request.getRefreshToken());
-        String userId = extractUserIdFromRefreshToken(request.getRefreshToken());
-        String deviceId = extractDeviceIdFromRefreshToken(request.getRefreshToken());
-        if (email == null || userId == null || deviceId == null) {
+        try {
+            return ResponseEntity.ok(rotateRefreshTokenUseCase.rotate(request.getRefreshToken()));
+        } catch (IdentityDomainException ex) {
             return ResponseEntity.status(401).build();
         }
-        String newAccess = tokenProvider.generateAccessToken(userId, email);
-        return ResponseEntity.ok(AuthTokenDto.builder()
-            .accessToken(newAccess)
-            .refreshToken(request.getRefreshToken())
-            .build());
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout() {
-        // No server-side session to invalidate in this simplified setup.
+    public ResponseEntity<Void> logout(@RequestBody RefreshRequest request) {
+        if (request.getRefreshToken() != null) {
+            rotateRefreshTokenUseCase.revoke(request.getRefreshToken());
+        }
         return ResponseEntity.noContent().build();
     }
 
@@ -133,36 +182,31 @@ public class AuthController {
         return null;
     }
 
-    private String extractUserIdFromRefreshToken(String refreshToken) {
-        return extractRefreshParts(refreshToken, 0);
-    }
-
-    private String extractEmailFromRefreshToken(String refreshToken) {
-        return extractRefreshParts(refreshToken, 1);
-    }
-
-    private String extractDeviceIdFromRefreshToken(String refreshToken) {
-        return extractRefreshParts(refreshToken, 2);
-    }
-
-    private String extractRefreshParts(String token, int index) {
-        if (token == null) {
-            return null;
-        }
-        try {
-            String decoded = new String(Base64.getDecoder().decode(token), StandardCharsets.UTF_8);
-            String[] parts = decoded.split(":");
-            if (parts.length >= 4 && "refresh".equals(parts[3])) {
-                return parts[index];
-            }
-        } catch (IllegalArgumentException ignored) {
-        }
-        return null;
+    @Data
+    @NoArgsConstructor
+    private static class RefreshRequest {
+        private String refreshToken;
     }
 
     @Data
-    private static class RefreshRequest {
-        private String refreshToken;
+    @NoArgsConstructor
+    private static class OtpRequest {
+        private String email;
+    }
+
+    @Data
+    @NoArgsConstructor
+    private static class EmailRequest {
+        private String email;
+    }
+
+    @Data
+    @NoArgsConstructor
+    private static class ResetPasswordRequest {
+        private String email;
+        private String newPassword;
+        private String otpCode;
+        private String challengeId;
     }
 
     @Value

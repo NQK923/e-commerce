@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -11,16 +11,38 @@ import { useTranslation } from "@/src/providers/language-provider";
 import { AuthLayout } from "@/src/components/auth/auth-layout";
 import { Spinner } from "@/src/components/ui/spinner";
 import { ArrowRight } from "lucide-react";
+import { authApi } from "@/src/api/authApi";
 
 export default function RegisterPage() {
   const router = useRouter();
   const { register } = useAuth();
   const { addToast } = useToast();
   const { t } = useTranslation();
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [form, setForm] = useState({ email: "", password: "", otpCode: "" });
   const [confirmPassword, setConfirmPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [challengeId, setChallengeId] = useState<string | null>(null);
+  const [otpExpiresAt, setOtpExpiresAt] = useState<string | null>(null);
+  const [otpSending, setOtpSending] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const handleSendOtp = async () => {
+    if (!form.email) {
+      addToast("Please enter your email before requesting an OTP.", "error");
+      return;
+    }
+    setOtpSending(true);
+    try {
+      const challenge = await authApi.requestOtp(form.email);
+      setChallengeId(challenge.id);
+      setOtpExpiresAt(challenge.expiresAt);
+      addToast("Verification code sent to your email.", "success");
+    } catch (error) {
+      addToast("Could not send OTP right now. Please try again.", "error");
+    } finally {
+      setOtpSending(false);
+    }
+  };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -28,9 +50,19 @@ export default function RegisterPage() {
       addToast(t.auth.passwords_do_not_match, "error");
       return;
     }
+    if (!challengeId || !form.otpCode) {
+      addToast("Please verify your email with the OTP before continuing.", "error");
+      return;
+    }
     setLoading(true);
     try {
-      await register({ email: form.email, password: form.password, displayName: displayName });
+      await register({
+        email: form.email,
+        password: form.password,
+        displayName: displayName,
+        otpCode: form.otpCode,
+        challengeId: challengeId,
+      });
       addToast(t.auth.account_created_success, "success");
       router.replace("/");
     } catch (error) {
@@ -69,7 +101,7 @@ export default function RegisterPage() {
                 label={t.auth.password_label}
                 type="password"
                 required
-                placeholder="••••••••"
+                placeholder="********"
                 value={form.password}
                 onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
                 className="h-10"
@@ -78,11 +110,30 @@ export default function RegisterPage() {
                 label={t.auth.confirm_password_label}
                 type="password"
                 required
-                placeholder="••••••••"
+                placeholder="********"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 className="h-10"
             />
+        </div>
+
+        <div className="space-y-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3">
+          <div className="flex items-center justify-between text-sm font-medium text-zinc-700">
+            <span>Email verification</span>
+            <Button type="button" size="sm" variant="secondary" onClick={handleSendOtp} disabled={otpSending}>
+              {otpSending ? <Spinner className="mr-2 h-4 w-4" /> : null}
+              {otpSending ? "Sending..." : "Send OTP"}
+            </Button>
+          </div>
+          <Input
+            label="Enter verification code"
+            placeholder="6-digit code"
+            value={form.otpCode}
+            onChange={(e) => setForm((prev) => ({ ...prev, otpCode: e.target.value }))}
+          />
+          {otpExpiresAt ? (
+            <p className="text-xs text-zinc-500">Code expires at {new Date(otpExpiresAt).toLocaleTimeString()}</p>
+          ) : null}
         </div>
 
         <div className="pt-2">

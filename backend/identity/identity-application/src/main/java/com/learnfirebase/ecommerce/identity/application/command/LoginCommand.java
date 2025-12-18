@@ -13,4 +13,8 @@ public class LoginCommand {
     String email;
     String password;
     String deviceId;
+    String otpCode;
+    String challengeId;
+    @Builder.Default
+    boolean skipOtp = false;
 }

@@ -27,16 +27,31 @@ export type AuthTokens = {
 export type LoginRequest = {
   email: string;
   password: string;
+  otpCode?: string;
+  challengeId?: string;
 };
 
 export type RegisterRequest = {
   email: string;
   password: string;
   displayName: string;
+  otpCode: string;
+  challengeId: string;
+};
+
+export type ResetPasswordRequest = {
+  email: string;
+  newPassword: string;
+  otpCode: string;
+  challengeId: string;
 };
 
 export type AuthResponse = {
   user: User;
   accessToken: string;
   refreshToken: string;
+  mfaRequired?: boolean;
+  challengeId?: string;
+  challengeExpiresAt?: string;
+  maskedEmail?: string;
 };

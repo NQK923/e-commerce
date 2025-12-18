@@ -48,12 +48,23 @@ public class IdentityController {
 
     @PostMapping
     public ResponseEntity<UserDto> register(@RequestBody RegisterUserCommand command) {
-        return ResponseEntity.ok(registerUserUseCase.execute(command));
+        try {
+            return ResponseEntity.ok(registerUserUseCase.execute(command));
+        } catch (com.learnfirebase.ecommerce.identity.domain.exception.IdentityDomainException ex) {
+            if ("OTP_REQUIRED".equals(ex.getMessage())) {
+                return ResponseEntity.status(428).build();
+            }
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     @PostMapping("/login")
     public ResponseEntity<AuthTokenDto> login(@RequestBody LoginCommand command) {
-        return ResponseEntity.ok(authenticateUserUseCase.execute(command));
+        try {
+            return ResponseEntity.ok(authenticateUserUseCase.execute(command));
+        } catch (com.learnfirebase.ecommerce.identity.domain.exception.IdentityDomainException ex) {
+            return ResponseEntity.status(401).build();
+        }
     }
 
     @GetMapping("/me")

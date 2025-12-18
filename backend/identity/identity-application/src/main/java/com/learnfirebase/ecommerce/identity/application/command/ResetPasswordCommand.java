@@ -9,11 +9,9 @@ import lombok.Value;
 @Builder
 @NoArgsConstructor(force = true)
 @AllArgsConstructor
-public class RegisterUserCommand {
+public class ResetPasswordCommand {
     String email;
-    String password;
-    String displayName;
-    String deviceId;
+    String newPassword;
     String otpCode;
     String challengeId;
 }
