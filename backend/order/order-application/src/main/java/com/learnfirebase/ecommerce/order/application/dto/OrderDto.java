@@ -15,6 +15,16 @@ public class OrderDto {
     String status;
     String currency;
     String totalAmount;
+    String trackingNumber;
+    String trackingCarrier;
+    Instant shippedAt;
+    Instant deliveredAt;
+    String returnStatus;
+    String returnReason;
+    String returnNote;
+    Instant returnRequestedAt;
+    Instant returnResolvedAt;
+    String refundAmount;
     Instant createdAt;
     Instant updatedAt;
     @Singular

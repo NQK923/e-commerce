@@ -28,6 +28,16 @@ public class JpaOrderEntity {
     private String status;
     private String currency;
     private String totalAmount;
+    private String trackingNumber;
+    private String trackingCarrier;
+    private Instant shippedAt;
+    private Instant deliveredAt;
+    private String returnStatus;
+    private String returnReason;
+    private String returnNote;
+    private Instant returnRequestedAt;
+    private Instant returnResolvedAt;
+    private String refundAmount;
     private Instant createdAt;
     private Instant updatedAt;
 

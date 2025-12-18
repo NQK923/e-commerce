@@ -21,6 +21,8 @@ public class OrderDomainService {
             .userId(userId)
             .items(items)
             .totalAmount(total)
+            .status(com.learnfirebase.ecommerce.order.domain.model.OrderStatus.PENDING)
+            .returnStatus(com.learnfirebase.ecommerce.order.domain.model.ReturnStatus.NONE)
             .createdAt(Instant.now())
             .updatedAt(Instant.now())
             .build();

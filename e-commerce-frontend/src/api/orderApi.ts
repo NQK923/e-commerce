@@ -19,6 +19,16 @@ type BackendOrder = {
   totalAmount: string;
   createdAt: string;
   updatedAt: string;
+  trackingNumber?: string;
+  trackingCarrier?: string;
+  shippedAt?: string;
+  deliveredAt?: string;
+  returnStatus?: string;
+  returnReason?: string;
+  returnNote?: string;
+  returnRequestedAt?: string;
+  returnResolvedAt?: string;
+  refundAmount?: string;
   items: BackendOrderItem[];
 };
 
@@ -36,6 +46,16 @@ const mapOrder = (dto: BackendOrder): Order => ({
   status: dto.status,
   currency: dto.currency,
   total: parseFloat(dto.totalAmount),
+  trackingNumber: dto.trackingNumber,
+  trackingCarrier: dto.trackingCarrier,
+  shippedAt: dto.shippedAt,
+  deliveredAt: dto.deliveredAt,
+  returnStatus: dto.returnStatus,
+  returnReason: dto.returnReason,
+  returnNote: dto.returnNote,
+  returnRequestedAt: dto.returnRequestedAt,
+  returnResolvedAt: dto.returnResolvedAt,
+  refundAmount: dto.refundAmount ? parseFloat(dto.refundAmount) : undefined,
   createdAt: dto.createdAt,
   updatedAt: dto.updatedAt,
   items: dto.items.map(i => ({
@@ -88,4 +108,14 @@ export const orderApi = {
   },
   get: (id: string) => apiRequest<BackendOrder>(`/api/orders/${id}`).then(mapOrder),
   create: (data: CreateOrderRequest) => apiRequest<BackendOrder>("/api/orders", { method: "POST", body: data }).then(mapOrder),
+  ship: (orderId: string, payload: { trackingNumber: string; trackingCarrier?: string }) =>
+    apiRequest<BackendOrder>(`/api/orders/${orderId}/ship`, { method: "POST", body: payload }).then(mapOrder),
+  markDelivered: (orderId: string) =>
+    apiRequest<BackendOrder>(`/api/orders/${orderId}/deliver`, { method: "POST" }).then(mapOrder),
+  requestReturn: (orderId: string, payload: { userId?: string; reason?: string; note?: string }) =>
+    apiRequest<BackendOrder>(`/api/orders/${orderId}/return`, { method: "POST", body: payload }).then(mapOrder),
+  approveReturn: (orderId: string, payload: { refundAmount?: string; currency?: string; note?: string }) =>
+    apiRequest<BackendOrder>(`/api/orders/${orderId}/returns/approve`, { method: "POST", body: payload }).then(mapOrder),
+  rejectReturn: (orderId: string, payload: { note?: string }) =>
+    apiRequest<BackendOrder>(`/api/orders/${orderId}/returns/reject`, { method: "POST", body: payload }).then(mapOrder),
 };

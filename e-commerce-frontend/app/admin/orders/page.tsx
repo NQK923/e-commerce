@@ -69,7 +69,13 @@ function OrdersContent() {
                           <div className="font-medium text-zinc-900">{order.userId}</div>
                         </td>
                         <td className="px-6 py-4">
-                            <Badge tone={order.status === "PAID" ? "success" : order.status === "CANCELLED" ? "danger" : "warning"}>
+                            <Badge tone={
+                              order.status === "PAID" ? "success" :
+                              order.status === "SHIPPING" ? "warning" :
+                              order.status === "DELIVERED" ? "default" :
+                              order.status === "RETURNED" ? "default" :
+                              order.status === "CANCELLED" ? "danger" : "warning"
+                            }>
                                 {order.status}
                             </Badge>
                         </td>

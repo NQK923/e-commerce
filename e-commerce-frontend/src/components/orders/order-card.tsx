@@ -7,6 +7,18 @@ import { formatCurrency, formatDate } from "../../utils/format";
 import { Badge } from "../ui/badge";
 
 export const OrderCard: React.FC<{ order: Order }> = ({ order }) => {
+  const tone: "success" | "warning" | "danger" | "default" =
+    order.status === "PAID"
+      ? "success"
+      : order.status === "SHIPPING"
+        ? "warning"
+        : order.status === "DELIVERED"
+          ? "default"
+          : order.status === "RETURNED"
+            ? "default"
+            : order.status === "CANCELLED"
+              ? "danger"
+              : "warning";
   return (
     <Link
       href={`/orders/${order.id}`}
@@ -19,7 +31,7 @@ export const OrderCard: React.FC<{ order: Order }> = ({ order }) => {
           <span className="text-sm text-zinc-600">{formatDate(order.createdAt)}</span>
         </div>
         <div className="text-right">
-          <Badge>{order.status}</Badge>
+          <Badge tone={tone}>{order.status}</Badge>
           <div className="mt-2 text-lg font-bold text-black">
             {formatCurrency(order.total, order.currency ?? "USD")}
           </div>

@@ -16,6 +16,16 @@ export type Order = {
   updatedAt?: string;
   total: number;
   currency?: string;
+  trackingNumber?: string | null;
+  trackingCarrier?: string | null;
+  shippedAt?: string | null;
+  deliveredAt?: string | null;
+  returnStatus?: string | null;
+  returnReason?: string | null;
+  returnNote?: string | null;
+  returnRequestedAt?: string | null;
+  returnResolvedAt?: string | null;
+  refundAmount?: number | null;
   items: OrderItem[];
 };
 

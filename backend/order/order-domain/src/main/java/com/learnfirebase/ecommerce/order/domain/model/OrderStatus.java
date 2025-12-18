@@ -1,9 +1,10 @@
 package com.learnfirebase.ecommerce.order.domain.model;
 
 public enum OrderStatus {
-    CREATED,
-    CONFIRMED,
+    PENDING,
     PAID,
-    CANCELLED,
-    COMPLETED
+    SHIPPING,
+    DELIVERED,
+    RETURNED,
+    CANCELLED
 }

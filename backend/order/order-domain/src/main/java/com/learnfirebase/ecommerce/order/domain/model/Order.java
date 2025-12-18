@@ -26,10 +26,21 @@ public class Order extends AggregateRoot<OrderId> {
     private OrderId id;
     private UserId userId;
     @Builder.Default
-    private OrderStatus status = OrderStatus.CREATED;
+    private OrderStatus status = OrderStatus.PENDING;
     @Builder.Default
     private List<OrderItem> items = new ArrayList<>();
     private Money totalAmount;
+    private String trackingNumber;
+    private String trackingCarrier;
+    private Instant shippedAt;
+    private Instant deliveredAt;
+    @Builder.Default
+    private ReturnStatus returnStatus = ReturnStatus.NONE;
+    private String returnReason;
+    private String returnNote;
+    private Instant returnRequestedAt;
+    private Instant returnResolvedAt;
+    private Money refundAmount;
     private Instant createdAt;
     private Instant updatedAt;
 
@@ -38,13 +49,8 @@ public class Order extends AggregateRoot<OrderId> {
         recalculateTotal();
     }
 
-    public void confirm() {
-        ensureState(OrderStatus.CREATED);
-        this.status = OrderStatus.CONFIRMED;
-    }
-
     public void pay() {
-        ensureState(OrderStatus.CONFIRMED);
+        ensureState(OrderStatus.PENDING);
         this.status = OrderStatus.PAID;
         List<OrderPaid.Item> eventItems = items.stream()
             .map(i -> OrderPaid.Item.builder()
@@ -53,19 +59,70 @@ public class Order extends AggregateRoot<OrderId> {
                 .build())
             .toList();
         registerEvent(new OrderPaid(id.getValue(), userId != null ? userId.getValue() : null, Instant.now(), eventItems));
+        this.updatedAt = Instant.now();
+    }
+
+    public void ship(String trackingNumber, String trackingCarrier) {
+        ensureState(OrderStatus.PAID);
+        if (trackingNumber == null || trackingNumber.isBlank()) {
+            throw new OrderDomainException("Tracking number is required");
+        }
+        this.status = OrderStatus.SHIPPING;
+        this.trackingNumber = trackingNumber;
+        this.trackingCarrier = trackingCarrier;
+        this.shippedAt = Instant.now();
+        this.updatedAt = Instant.now();
+    }
+
+    public void markDelivered() {
+        ensureState(OrderStatus.SHIPPING);
+        this.status = OrderStatus.DELIVERED;
+        this.deliveredAt = Instant.now();
+        this.updatedAt = Instant.now();
+    }
+
+    public void requestReturn(String reason, String note) {
+        if (this.status != OrderStatus.DELIVERED) {
+            throw new OrderDomainException("Only delivered orders can be returned");
+        }
+        if (this.returnStatus == ReturnStatus.REQUESTED) {
+            throw new OrderDomainException("Return already requested");
+        }
+        if (this.returnStatus == ReturnStatus.APPROVED || this.returnStatus == ReturnStatus.REJECTED) {
+            throw new OrderDomainException("Return already resolved");
+        }
+        this.returnStatus = ReturnStatus.REQUESTED;
+        this.returnReason = reason;
+        this.returnNote = note;
+        this.returnRequestedAt = Instant.now();
+        this.updatedAt = Instant.now();
+    }
+
+    public void approveReturn(Money refund, String note) {
+        ensureReturnState(ReturnStatus.REQUESTED);
+        this.status = OrderStatus.RETURNED;
+        this.returnStatus = ReturnStatus.APPROVED;
+        this.returnNote = note;
+        this.refundAmount = refund;
+        this.returnResolvedAt = Instant.now();
+        this.updatedAt = Instant.now();
+    }
+
+    public void rejectReturn(String note) {
+        ensureReturnState(ReturnStatus.REQUESTED);
+        this.returnStatus = ReturnStatus.REJECTED;
+        this.returnNote = note;
+        this.returnResolvedAt = Instant.now();
+        this.updatedAt = Instant.now();
     }
 
     public void cancel(String reason) {
-        if (this.status == OrderStatus.CANCELLED || this.status == OrderStatus.COMPLETED) {
+        if (this.status == OrderStatus.CANCELLED || this.status == OrderStatus.SHIPPING || this.status == OrderStatus.DELIVERED || this.status == OrderStatus.RETURNED) {
             throw new OrderDomainException("Cannot cancel order in status " + status);
         }
         this.status = OrderStatus.CANCELLED;
         registerEvent(new OrderCancelled(id.getValue(), userId != null ? userId.getValue() : null, reason, Instant.now()));
-    }
-
-    public void complete() {
-        ensureState(OrderStatus.PAID);
-        this.status = OrderStatus.COMPLETED;
+        this.updatedAt = Instant.now();
     }
 
     public void markCreated() {
@@ -87,6 +144,12 @@ public class Order extends AggregateRoot<OrderId> {
     private void ensureState(OrderStatus expected) {
         if (this.status != expected) {
             throw new OrderDomainException("Order must be in state " + expected + " but is " + status);
+        }
+    }
+
+    private void ensureReturnState(ReturnStatus expected) {
+        if (this.returnStatus != expected) {
+            throw new OrderDomainException("Return must be in state " + expected + " but is " + returnStatus);
         }
     }
 }

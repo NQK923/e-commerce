@@ -11,11 +11,16 @@ import java.util.stream.Collectors;
 import com.learnfirebase.ecommerce.common.application.pagination.PageRequest;
 import com.learnfirebase.ecommerce.common.application.pagination.PageResponse;
 import com.learnfirebase.ecommerce.common.domain.valueobject.Money;
+import com.learnfirebase.ecommerce.order.application.command.ApproveReturnCommand;
 import com.learnfirebase.ecommerce.order.application.command.CancelOrderCommand;
 import com.learnfirebase.ecommerce.order.application.command.CreateOrderCommand;
 import com.learnfirebase.ecommerce.order.application.command.HandlePaymentCallbackCommand;
 import com.learnfirebase.ecommerce.order.application.command.InitiatePaymentCommand;
+import com.learnfirebase.ecommerce.order.application.command.MarkDeliveredCommand;
 import com.learnfirebase.ecommerce.order.application.command.PayOrderCommand;
+import com.learnfirebase.ecommerce.order.application.command.RejectReturnCommand;
+import com.learnfirebase.ecommerce.order.application.command.RequestReturnCommand;
+import com.learnfirebase.ecommerce.order.application.command.ShipOrderCommand;
 import com.learnfirebase.ecommerce.order.application.dto.OrderDto;
 import com.learnfirebase.ecommerce.order.application.dto.PaymentInitResponse;
 import com.learnfirebase.ecommerce.order.application.model.PaymentRecord;
@@ -27,6 +32,11 @@ import com.learnfirebase.ecommerce.order.application.port.in.CreateOrderUseCase;
 import com.learnfirebase.ecommerce.order.application.port.in.GetOrderUseCase;
 import com.learnfirebase.ecommerce.order.application.port.in.ListOrdersUseCase;
 import com.learnfirebase.ecommerce.order.application.port.in.PayOrderUseCase;
+import com.learnfirebase.ecommerce.order.application.port.in.ShipOrderUseCase;
+import com.learnfirebase.ecommerce.order.application.port.in.MarkDeliveredUseCase;
+import com.learnfirebase.ecommerce.order.application.port.in.RequestReturnUseCase;
+import com.learnfirebase.ecommerce.order.application.port.in.ApproveReturnUseCase;
+import com.learnfirebase.ecommerce.order.application.port.in.RejectReturnUseCase;
 import com.learnfirebase.ecommerce.order.application.port.out.InventoryReservationPort;
 import com.learnfirebase.ecommerce.order.application.port.out.LoadProductPort;
 import com.learnfirebase.ecommerce.order.application.port.out.OrderEventPublisher;
@@ -39,13 +49,14 @@ import com.learnfirebase.ecommerce.order.domain.model.OrderId;
 import com.learnfirebase.ecommerce.order.domain.model.OrderItem;
 import com.learnfirebase.ecommerce.order.domain.model.OrderStatus;
 import com.learnfirebase.ecommerce.order.domain.model.UserId;
+import com.learnfirebase.ecommerce.order.domain.model.ReturnStatus;
 import com.learnfirebase.ecommerce.order.domain.service.OrderDomainService;
 import com.learnfirebase.ecommerce.order.domain.exception.OrderDomainException;
 
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseCase, CancelOrderUseCase, ListOrdersUseCase, GetOrderUseCase, InitiatePaymentUseCase, HandlePaymentCallbackUseCase {
+public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseCase, CancelOrderUseCase, ListOrdersUseCase, GetOrderUseCase, InitiatePaymentUseCase, HandlePaymentCallbackUseCase, ShipOrderUseCase, MarkDeliveredUseCase, RequestReturnUseCase, ApproveReturnUseCase, RejectReturnUseCase {
 
     private final OrderRepository orderRepository;
     private final LoadProductPort loadProductPort;
@@ -139,6 +150,12 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
     public OrderDto execute(PayOrderCommand command) {
         Order order = orderRepository.findById(new OrderId(command.getOrderId()))
             .orElseThrow(() -> new OrderDomainException("Order not found"));
+        if (order.getStatus() == OrderStatus.CANCELLED) {
+            throw new OrderDomainException("Cannot pay a cancelled order");
+        }
+        if (order.getStatus() == OrderStatus.PAID || order.getStatus() == OrderStatus.SHIPPING || order.getStatus() == OrderStatus.DELIVERED || order.getStatus() == OrderStatus.RETURNED) {
+            return toDto(order);
+        }
         order.pay();
         Order saved = orderRepository.save(order);
         inventoryReservationPort.confirm(order.getId().getValue());
@@ -203,8 +220,11 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
         Order order = orderRepository.findById(new OrderId(command.getOrderId()))
             .orElseThrow(() -> new OrderDomainException("Order not found"));
 
-        if (order.getStatus() == OrderStatus.PAID) {
+        if (order.getStatus() == OrderStatus.PAID || order.getStatus() == OrderStatus.SHIPPING || order.getStatus() == OrderStatus.DELIVERED || order.getStatus() == OrderStatus.RETURNED) {
             throw new OrderDomainException("Order already paid");
+        }
+        if (order.getStatus() == OrderStatus.CANCELLED) {
+            throw new OrderDomainException("Cancelled order cannot be paid");
         }
 
         PaymentGatewayPort.PaymentSession session = paymentGatewayPort.initiatePayment(
@@ -251,6 +271,10 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
         Order order = orderRepository.findById(new OrderId(verification.getOrderId()))
             .orElseThrow(() -> new OrderDomainException("Order not found"));
 
+        if (order.getStatus() == OrderStatus.CANCELLED) {
+            throw new OrderDomainException("Payment callback for cancelled order");
+        }
+
         if (paymentTransactionPort.findByReference(verification.getReference()).isEmpty()) {
             paymentTransactionPort.save(PaymentRecord.builder()
                 .reference(verification.getReference())
@@ -265,10 +289,7 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
                 .build());
         }
 
-        if (order.getStatus() == OrderStatus.CREATED) {
-            order.confirm();
-        }
-        if (order.getStatus() == OrderStatus.CONFIRMED) {
+        if (order.getStatus() == OrderStatus.PENDING) {
             order.pay();
         }
 
@@ -285,6 +306,58 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
         return toDto(saved);
     }
 
+    @Override
+    public OrderDto ship(ShipOrderCommand command) {
+        Order order = orderRepository.findById(new OrderId(command.getOrderId()))
+            .orElseThrow(() -> new OrderDomainException("Order not found"));
+        order.ship(command.getTrackingNumber(), command.getTrackingCarrier());
+        Order saved = orderRepository.save(order);
+        return toDto(saved);
+    }
+
+    @Override
+    public OrderDto markDelivered(MarkDeliveredCommand command) {
+        Order order = orderRepository.findById(new OrderId(command.getOrderId()))
+            .orElseThrow(() -> new OrderDomainException("Order not found"));
+        order.markDelivered();
+        Order saved = orderRepository.save(order);
+        return toDto(saved);
+    }
+
+    @Override
+    public OrderDto requestReturn(RequestReturnCommand command) {
+        Order order = orderRepository.findById(new OrderId(command.getOrderId()))
+            .orElseThrow(() -> new OrderDomainException("Order not found"));
+        if (order.getUserId() != null && command.getUserId() != null && !order.getUserId().getValue().equals(command.getUserId())) {
+            throw new OrderDomainException("Only order owner can request a return");
+        }
+        order.requestReturn(command.getReason(), command.getNote());
+        Order saved = orderRepository.save(order);
+        return toDto(saved);
+    }
+
+    @Override
+    public OrderDto approveReturn(ApproveReturnCommand command) {
+        Order order = orderRepository.findById(new OrderId(command.getOrderId()))
+            .orElseThrow(() -> new OrderDomainException("Order not found"));
+        String currency = command.getCurrency() != null ? command.getCurrency() : order.getTotalAmount().getCurrency();
+        java.math.BigDecimal refundAmount = command.getRefundAmount() != null && !command.getRefundAmount().isBlank()
+            ? new java.math.BigDecimal(command.getRefundAmount())
+            : order.getTotalAmount().getAmount();
+        order.approveReturn(Money.builder().amount(refundAmount).currency(currency).build(), command.getNote());
+        Order saved = orderRepository.save(order);
+        return toDto(saved);
+    }
+
+    @Override
+    public OrderDto rejectReturn(RejectReturnCommand command) {
+        Order order = orderRepository.findById(new OrderId(command.getOrderId()))
+            .orElseThrow(() -> new OrderDomainException("Order not found"));
+        order.rejectReturn(command.getNote());
+        Order saved = orderRepository.save(order);
+        return toDto(saved);
+    }
+
     private OrderDto toDto(Order order) {
         return OrderDto.builder()
             .id(order.getId().getValue())
@@ -292,6 +365,16 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
             .status(order.getStatus().name())
             .currency(order.getTotalAmount().getCurrency())
             .totalAmount(order.getTotalAmount().getAmount().toPlainString())
+            .trackingNumber(order.getTrackingNumber())
+            .trackingCarrier(order.getTrackingCarrier())
+            .shippedAt(order.getShippedAt())
+            .deliveredAt(order.getDeliveredAt())
+            .returnStatus(order.getReturnStatus() != null ? order.getReturnStatus().name() : ReturnStatus.NONE.name())
+            .returnReason(order.getReturnReason())
+            .returnNote(order.getReturnNote())
+            .returnRequestedAt(order.getReturnRequestedAt())
+            .returnResolvedAt(order.getReturnResolvedAt())
+            .refundAmount(order.getRefundAmount() != null ? order.getRefundAmount().getAmount().toPlainString() : null)
             .createdAt(order.getCreatedAt())
             .updatedAt(order.getUpdatedAt())
             .items(order.getItems().stream()

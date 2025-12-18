@@ -23,7 +23,7 @@ public class PurchaseVerificationAdapter implements PurchaseVerificationPort {
             JOIN order_items oi ON o.id = oi.order_id
             WHERE o.user_id = :userId
             AND oi.product_id = :productId
-            AND o.status IN ('PAID', 'COMPLETED')
+            AND o.status IN ('PAID', 'SHIPPING', 'DELIVERED', 'RETURNED')
             """;
         Number count = (Number) entityManager.createNativeQuery(sql)
             .setParameter("userId", userId)

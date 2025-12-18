@@ -14,6 +14,7 @@ import com.learnfirebase.ecommerce.order.domain.model.Order;
 import com.learnfirebase.ecommerce.order.domain.model.OrderId;
 import com.learnfirebase.ecommerce.order.domain.model.OrderItem;
 import com.learnfirebase.ecommerce.order.domain.model.OrderStatus;
+import com.learnfirebase.ecommerce.order.domain.model.ReturnStatus;
 import com.learnfirebase.ecommerce.order.domain.model.UserId;
 
 import lombok.RequiredArgsConstructor;
@@ -54,6 +55,16 @@ public class OrderRepositoryImpl implements OrderRepository {
             .status(order.getStatus().name())
             .currency(order.getTotalAmount().getCurrency())
             .totalAmount(order.getTotalAmount().getAmount().toPlainString())
+            .trackingNumber(order.getTrackingNumber())
+            .trackingCarrier(order.getTrackingCarrier())
+            .shippedAt(order.getShippedAt())
+            .deliveredAt(order.getDeliveredAt())
+            .returnStatus(order.getReturnStatus() != null ? order.getReturnStatus().name() : null)
+            .returnReason(order.getReturnReason())
+            .returnNote(order.getReturnNote())
+            .returnRequestedAt(order.getReturnRequestedAt())
+            .returnResolvedAt(order.getReturnResolvedAt())
+            .refundAmount(order.getRefundAmount() != null ? order.getRefundAmount().getAmount().toPlainString() : null)
             .createdAt(order.getCreatedAt())
             .updatedAt(order.getUpdatedAt())
             .build();
@@ -73,7 +84,7 @@ public class OrderRepositoryImpl implements OrderRepository {
         return Order.builder()
             .id(new OrderId(entity.getId()))
             .userId(new UserId(entity.getUserId()))
-            .status(OrderStatus.valueOf(entity.getStatus()))
+            .status(mapStatus(entity.getStatus()))
             .items(entity.getItems().stream()
                 .map(item -> OrderItem.builder()
                     .productId(item.getProductId())
@@ -84,8 +95,29 @@ public class OrderRepositoryImpl implements OrderRepository {
                     .build())
                 .collect(Collectors.toList()))
             .totalAmount(Money.builder().amount(new java.math.BigDecimal(entity.getTotalAmount())).currency(entity.getCurrency()).build())
+            .trackingNumber(entity.getTrackingNumber())
+            .trackingCarrier(entity.getTrackingCarrier())
+            .shippedAt(entity.getShippedAt())
+            .deliveredAt(entity.getDeliveredAt())
+            .returnStatus(entity.getReturnStatus() != null ? ReturnStatus.valueOf(entity.getReturnStatus()) : ReturnStatus.NONE)
+            .returnReason(entity.getReturnReason())
+            .returnNote(entity.getReturnNote())
+            .returnRequestedAt(entity.getReturnRequestedAt())
+            .returnResolvedAt(entity.getReturnResolvedAt())
+            .refundAmount(entity.getRefundAmount() != null ? Money.builder().amount(new java.math.BigDecimal(entity.getRefundAmount())).currency(entity.getCurrency()).build() : null)
             .createdAt(entity.getCreatedAt())
             .updatedAt(entity.getUpdatedAt())
             .build();
+    }
+
+    private OrderStatus mapStatus(String status) {
+        if (status == null) {
+            return OrderStatus.PENDING;
+        }
+        return switch (status) {
+            case "CREATED", "CONFIRMED" -> OrderStatus.PENDING;
+            case "COMPLETED" -> OrderStatus.DELIVERED;
+            default -> OrderStatus.valueOf(status);
+        };
     }
 }

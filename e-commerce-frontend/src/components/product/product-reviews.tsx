@@ -68,7 +68,7 @@ export function ProductReviews({ productId, sellerId }: ProductReviewsProps) {
       const userOrdersResponse = await orderApi.list({ page: 0, size: 50, sort: "createdAt,desc" });
       const purchased = userOrdersResponse.items.some(
         (order) =>
-          (order.status === "PAID" || order.status === "COMPLETED") &&
+        (order.status === "PAID" || order.status === "SHIPPING" || order.status === "DELIVERED" || order.status === "RETURNED") &&
           order.items.some((item) => item.productId === productId),
       );
       setHasPurchased(purchased);
