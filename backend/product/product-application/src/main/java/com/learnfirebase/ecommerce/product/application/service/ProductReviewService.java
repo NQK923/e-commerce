@@ -16,6 +16,7 @@ import com.learnfirebase.ecommerce.product.application.port.out.ProductRepositor
 import com.learnfirebase.ecommerce.product.application.port.out.ProductReviewReportRepositoryPort;
 import com.learnfirebase.ecommerce.product.application.port.out.ProductReviewRepositoryPort;
 import com.learnfirebase.ecommerce.product.application.port.out.PurchaseVerificationPort;
+import com.learnfirebase.ecommerce.product.domain.model.Product;
 import com.learnfirebase.ecommerce.product.domain.model.ProductId;
 import com.learnfirebase.ecommerce.product.domain.model.ReportReason;
 
@@ -140,7 +141,7 @@ public class ProductReviewService {
             return null;
         }
         return productRepository.findById(new ProductId(productId))
-            .map(p -> p.getSellerId())
+            .map(Product::getSellerId)
             .orElse(null);
     }
 }
