@@ -48,35 +48,3 @@ public class ProductReviewReportEntity {
     private Instant updatedAt;
 }
 
-@Repository
-public interface ProductReviewReportJpaRepository extends JpaRepository<ProductReviewReportEntity, String> {
-    boolean existsByReviewIdAndReporterUserId(String reviewId, String reporterUserId);
-}
-
-@Component
-@RequiredArgsConstructor
-public class ProductReviewReportRepositoryAdapter implements ProductReviewReportRepositoryPort {
-    private final ProductReviewReportJpaRepository jpaRepository;
-
-    @Transactional
-    @Override
-    public void saveReport(ReportReviewCommand command) {
-        Instant now = Instant.now();
-        ProductReviewReportEntity entity = ProductReviewReportEntity.builder()
-            .id(UUID.randomUUID().toString())
-            .reviewId(command.getReviewId())
-            .reporterUserId(command.getReporterUserId())
-            .reason(command.getReason())
-            .description(command.getDescription())
-            .status(ReportStatus.PENDING)
-            .createdAt(now)
-            .updatedAt(now)
-            .build();
-        jpaRepository.save(entity);
-    }
-
-    @Override
-    public boolean hasReported(String reviewId, String reporterUserId) {
-        return jpaRepository.existsByReviewIdAndReporterUserId(reviewId, reporterUserId);
-    }
-}
