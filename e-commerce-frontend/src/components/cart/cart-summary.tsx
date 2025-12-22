@@ -31,7 +31,7 @@ export const CartSummary: React.FC<Props> = ({ cart, onCheckout, actionLabel, di
 
       {lowStockItems.length > 0 && (
         <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700">
-          Only {lowStockItems.map((i) => `${i.product.stock}x ${i.product.name}`).join(", ")} left—checkout soon.
+          {t.cart.low_stock_warning.replace("{{items}}", lowStockItems.map((i) => `${i.product.stock}x ${i.product.name}`).join(", "))}
         </div>
       )}
 
@@ -40,10 +40,10 @@ export const CartSummary: React.FC<Props> = ({ cart, onCheckout, actionLabel, di
         <div className="flex gap-2">
             <div className="relative flex-1">
                 <Tag className="absolute left-2.5 top-2.5 h-4 w-4 text-zinc-400" />
-                <Input placeholder="Mã giảm giá" className="pl-9 bg-zinc-50 border-zinc-200 focus-visible:ring-emerald-500" />
+                <Input placeholder={t.cart.coupon_placeholder} className="pl-9 bg-zinc-50 border-zinc-200 focus-visible:ring-emerald-500" />
             </div>
             <Button variant="outline" size="sm" className="shrink-0 text-emerald-700 border-emerald-200 hover:bg-emerald-50">
-                Áp dụng
+                {t.cart.apply}
             </Button>
         </div>
 
@@ -57,14 +57,14 @@ export const CartSummary: React.FC<Props> = ({ cart, onCheckout, actionLabel, di
             
             {cart.discountTotal !== undefined && cart.discountTotal > 0 && (
             <div className="flex justify-between items-center text-emerald-600">
-                <dt className="flex items-center gap-1.5"><Tag size={14} /> Giảm giá</dt>
+                <dt className="flex items-center gap-1.5"><Tag size={14} /> {t.cart.discount}</dt>
                 <dd>-{formatCurrency(cart.discountTotal ?? 0, cart.currency ?? "USD")}</dd>
             </div>
             )}
             
             <div className="flex justify-between items-center text-zinc-500">
             <dt className="flex items-center gap-1.5"><Truck size={14} /> {t.cart.shipping_estimate}</dt>
-            <dd>{cart.shippingEstimate ? formatCurrency(cart.shippingEstimate, cart.currency ?? "USD") : "Chưa tính"}</dd>
+            <dd>{cart.shippingEstimate ? formatCurrency(cart.shippingEstimate, cart.currency ?? "USD") : t.cart.shipping_pending}</dd>
             </div>
 
             <div className="h-px bg-zinc-100 my-2" />
@@ -76,7 +76,7 @@ export const CartSummary: React.FC<Props> = ({ cart, onCheckout, actionLabel, di
             </dd>
             </div>
             <div className="text-xs text-right text-zinc-400 mt-1">
-                (Đã bao gồm VAT nếu có)
+                {t.cart.vat_included}
             </div>
         </dl>
       </div>
@@ -94,7 +94,7 @@ export const CartSummary: React.FC<Props> = ({ cart, onCheckout, actionLabel, di
             
             <div className="flex items-center justify-center gap-2 text-xs text-zinc-400 bg-zinc-50 py-2 rounded-lg">
                 <ShieldCheck size={14} className="text-emerald-500" />
-                Bảo mật thanh toán 100%
+                {t.cart.secure_payment}
             </div>
         </div>
       )}

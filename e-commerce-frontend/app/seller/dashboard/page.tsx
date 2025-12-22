@@ -20,6 +20,7 @@ import { Card } from "@/src/components/ui/card";
 import { useRequireAuth } from "@/src/hooks/use-require-auth";
 import { Product } from "@/src/types/product";
 import { useToast } from "@/src/components/ui/toast-provider";
+import { useTranslation } from "@/src/providers/language-provider";
 
 // Helper to format currency
 const formatMoney = (amount: number, currency = "VND") => {
@@ -34,6 +35,7 @@ function SellerDashboardContent() {
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'selling' | 'out_of_stock'>('selling');
   const { addToast } = useToast();
+  const { t } = useTranslation();
 
   React.useEffect(() => {
     if (!user || !user.roles?.includes("SELLER")) return;
@@ -51,12 +53,12 @@ function SellerDashboardContent() {
         setOrders(ordRes.items ?? []);
       } catch (e) {
         console.error("Failed to load dashboard data", e);
-        addToast("Failed to load dashboard data", "error");
+        addToast(t.seller.dashboard.failed_load, "error");
       }
     };
       
     void loadData();
-    }, [user, addToast]);
+    }, [user, addToast, t]);
 
   React.useEffect(() => {
     if (initializing) return;
@@ -102,7 +104,7 @@ function SellerDashboardContent() {
 
   const handleRemove = async (product: Product) => {
     if (!user) return;
-    if (!confirm(`Gỡ sản phẩm "${product.name}"?`)) return;
+    if (!confirm(t.seller.dashboard.confirm_remove.replace("{{name}}", product.name))) return;
     setProcessingId(product.id);
     try {
       await productApi.update(product.id, {
@@ -120,10 +122,10 @@ function SellerDashboardContent() {
       });
       // Update local state to reflect change (mark as 0 stock)
       setProducts((prev) => prev.map((p) => p.id === product.id ? { ...p, stock: 0 } : p));
-      addToast("Đã cập nhật tồn kho về 0", "success");
+      addToast(t.seller.dashboard.update_success, "success");
     } catch (error) {
       console.error("Failed to remove product", error);
-      addToast("Failed to update product", "error");
+      addToast(t.seller.dashboard.failed_update, "error");
     } finally {
       setProcessingId(null);
     }
@@ -133,7 +135,7 @@ function SellerDashboardContent() {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-sm text-zinc-600">
         <Spinner size="lg" />
-        <span className="animate-pulse">Loading dashboard...</span>
+        <span className="animate-pulse">{t.seller.dashboard.loading}</span>
       </div>
     );
   }
@@ -158,14 +160,14 @@ function SellerDashboardContent() {
             <Sparkles size={14} className="text-yellow-300" />
             Seller Dashboard
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">Xin chào, {user.displayName ?? "Seller"}</h1>
-          <p className="text-emerald-100/80 font-medium">Tổng quan hoạt động kinh doanh của bạn hôm nay.</p>
+          <h1 className="text-3xl font-bold tracking-tight">{t.seller.dashboard.welcome.replace("{{name}}", user.displayName ?? "Seller")}</h1>
+          <p className="text-emerald-100/80 font-medium">{t.seller.dashboard.overview}</p>
         </div>
         <div className="flex gap-3 relative z-10">
           <Link href="/seller/products/new">
             <Button size="lg" className="bg-white text-emerald-900 font-bold shadow-xl hover:bg-emerald-50 border-0 transition-transform hover:-translate-y-0.5">
               <Plus size={20} className="mr-2" />
-              Thêm sản phẩm
+              {t.seller.dashboard.add_product}
             </Button>
           </Link>
         </div>
@@ -174,10 +176,10 @@ function SellerDashboardContent() {
       {/* Stats Cards */}
       <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {[
-          { label: "Doanh thu", value: formatMoney(totalRevenue), sub: "50 đơn gần nhất", icon: Wallet, color: "text-emerald-600", bg: "bg-emerald-100" },
-          { label: "Tổng đơn hàng", value: totalOrdersDisplay, sub: "Đơn hàng", icon: ShoppingBag, color: "text-blue-600", bg: "bg-blue-100" },
-          { label: "Sản phẩm", value: totalProducts, sub: "Đang bán", icon: Package2, color: "text-purple-600", bg: "bg-purple-100" },
-          { label: "Đơn trung bình", value: orders.length ? formatMoney(totalRevenue / orders.length) : "0 ₫", sub: "Giá trị trung bình", icon: TrendingUp, color: "text-amber-600", bg: "bg-amber-100" },
+          { label: t.seller.dashboard.revenue, value: formatMoney(totalRevenue), sub: t.seller.dashboard.recent_50_orders, icon: Wallet, color: "text-emerald-600", bg: "bg-emerald-100" },
+          { label: t.seller.dashboard.total_orders, value: totalOrdersDisplay, sub: t.seller.dashboard.orders_label, icon: ShoppingBag, color: "text-blue-600", bg: "bg-blue-100" },
+          { label: t.seller.dashboard.products_label, value: totalProducts, sub: t.seller.dashboard.selling_label, icon: Package2, color: "text-purple-600", bg: "bg-purple-100" },
+          { label: t.seller.dashboard.avg_order, value: orders.length ? formatMoney(totalRevenue / orders.length) : "0 ₫", sub: t.seller.dashboard.avg_value, icon: TrendingUp, color: "text-amber-600", bg: "bg-amber-100" },
         ].map((stat, i) => (
           <Card key={i} className="p-6 flex items-center gap-5 border-zinc-100 shadow-sm hover:shadow-md transition-shadow">
             <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ${stat.bg} ${stat.color}`}>
@@ -198,8 +200,8 @@ function SellerDashboardContent() {
           <Card className="p-6 border-zinc-200 shadow-sm">
             <div className="mb-8 flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-bold text-zinc-900">Biểu đồ doanh thu</h3>
-                <p className="text-sm text-zinc-500">Xu hướng doanh thu theo ngày</p>
+                <h3 className="text-lg font-bold text-zinc-900">{t.seller.dashboard.revenue_chart}</h3>
+                <p className="text-sm text-zinc-500">{t.seller.dashboard.revenue_trend}</p>
               </div>
               <div className="rounded-lg bg-zinc-50 p-2 text-zinc-400">
                 <BarChart3 size={20} />
@@ -231,7 +233,7 @@ function SellerDashboardContent() {
                     />
                     <Tooltip 
                       contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.15)' }}
-                      formatter={(value: number) => [formatMoney(value), "Doanh thu"]}
+                      formatter={(value: number) => [formatMoney(value), t.seller.dashboard.revenue]}
                       cursor={{ stroke: '#10b981', strokeWidth: 1, strokeDasharray: '4 4' }}
                     />
                     <Area 
@@ -248,7 +250,7 @@ function SellerDashboardContent() {
               ) : (
                 <div className="flex h-full flex-col items-center justify-center text-zinc-400">
                   <BarChart3 size={48} className="mb-2 opacity-20" />
-                  <p>Chưa có dữ liệu doanh thu</p>
+                  <p>{t.seller.dashboard.no_revenue_data}</p>
                 </div>
               )}
             </div>
@@ -257,19 +259,19 @@ function SellerDashboardContent() {
           {/* Recent Orders Table */}
           <Card className="overflow-hidden border-zinc-200 shadow-sm">
             <div className="flex items-center justify-between border-b border-zinc-100 bg-zinc-50/50 p-6">
-              <h3 className="font-bold text-zinc-900">Đơn hàng gần đây</h3>
+              <h3 className="font-bold text-zinc-900">{t.seller.dashboard.recent_orders}</h3>
               <Link href="/seller/orders" className="flex items-center text-sm font-medium text-emerald-600 hover:text-emerald-700 hover:underline">
-                Xem tất cả <ArrowRight size={16} className="ml-1" />
+                {t.seller.dashboard.view_all} <ArrowRight size={16} className="ml-1" />
               </Link>
             </div>
             <div className="overflow-x-auto">
               <table className="min-w-full text-left text-sm">
                 <thead className="bg-zinc-50 text-zinc-500">
                   <tr>
-                    <th className="px-6 py-3 font-semibold">Mã đơn</th>
-                    <th className="px-6 py-3 font-semibold">Ngày tạo</th>
-                    <th className="px-6 py-3 font-semibold">Tổng tiền</th>
-                    <th className="px-6 py-3 font-semibold">Trạng thái</th>
+                    <th className="px-6 py-3 font-semibold">{t.seller.dashboard.order_id}</th>
+                    <th className="px-6 py-3 font-semibold">{t.seller.dashboard.created_at}</th>
+                    <th className="px-6 py-3 font-semibold">{t.seller.dashboard.total_amount}</th>
+                    <th className="px-6 py-3 font-semibold">{t.seller.dashboard.status}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100">
@@ -298,7 +300,7 @@ function SellerDashboardContent() {
                   ))}
                   {!orders.length && (
                     <tr>
-                      <td colSpan={4} className="p-12 text-center text-zinc-500">Chưa có đơn hàng nào</td>
+                      <td colSpan={4} className="p-12 text-center text-zinc-500">{t.seller.dashboard.no_orders}</td>
                     </tr>
                   )}
                 </tbody>
@@ -312,7 +314,7 @@ function SellerDashboardContent() {
            {/* Top Selling Products */}
            <Card className="overflow-hidden border-zinc-200 shadow-sm">
              <div className="border-b border-zinc-100 bg-zinc-50/50 p-5">
-               <h3 className="font-bold text-zinc-900">Sản phẩm bán chạy</h3>
+               <h3 className="font-bold text-zinc-900">{t.seller.dashboard.top_products}</h3>
              </div>
              <div className="divide-y divide-zinc-100">
                {topSellingProducts.length > 0 ? (
@@ -323,7 +325,7 @@ function SellerDashboardContent() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="truncate font-medium text-zinc-900">{p.name}</p>
-                        <p className="text-xs text-zinc-500">{p.soldCount ?? 0} đã bán</p>
+                        <p className="text-xs text-zinc-500">{t.seller.dashboard.sold_count.replace("{{count}}", (p.soldCount ?? 0).toString())}</p>
                       </div>
                       <div className="text-sm font-semibold text-zinc-900">
                         {formatMoney(p.price, p.currency)}
@@ -331,18 +333,18 @@ function SellerDashboardContent() {
                    </div>
                  ))
                ) : (
-                  <div className="p-8 text-center text-sm text-zinc-500">Chưa có dữ liệu bán hàng</div>
+                  <div className="p-8 text-center text-sm text-zinc-500">{t.seller.dashboard.no_sales_data}</div>
                )}
              </div>
            </Card>
 
            {/* Quick Stats or Tips */}
            <Card className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white p-6 shadow-lg">
-              <h3 className="font-bold text-lg mb-2">Mẹo bán hàng</h3>
+              <h3 className="font-bold text-lg mb-2">{t.seller.dashboard.sales_tips}</h3>
               <ul className="space-y-2 text-sm text-indigo-100 list-disc list-inside">
-                 <li>Cập nhật hình ảnh sản phẩm chất lượng cao.</li>
-                 <li>Tham gia các chương trình Flash Sale.</li>
-                 <li>Trả lời tin nhắn khách hàng nhanh chóng.</li>
+                 <li>{t.seller.dashboard.tip_1}</li>
+                 <li>{t.seller.dashboard.tip_2}</li>
+                 <li>{t.seller.dashboard.tip_3}</li>
               </ul>
            </Card>
         </aside>
@@ -360,7 +362,7 @@ function SellerDashboardContent() {
                         : 'text-zinc-500 hover:text-zinc-700 hover:bg-zinc-200/50'
                 }`}
               >
-                  Đang bán
+                  {t.seller.dashboard.selling_tab}
               </button>
               <button
                 onClick={() => setActiveTab('out_of_stock')}
@@ -370,11 +372,11 @@ function SellerDashboardContent() {
                         : 'text-zinc-500 hover:text-zinc-700 hover:bg-zinc-200/50'
                 }`}
               >
-                  Hết hàng
+                  {t.seller.dashboard.out_of_stock_tab}
               </button>
           </div>
           <Button variant="outline" size="sm" onClick={() => router.push('/seller/products')}>
-            Quản lý tất cả
+            {t.seller.dashboard.manage_all}
           </Button>
         </div>
 
@@ -382,11 +384,11 @@ function SellerDashboardContent() {
           <table className="min-w-full text-left text-sm">
             <thead className="bg-zinc-50 text-zinc-500">
               <tr>
-                <th className="px-6 py-3 font-semibold">Sản phẩm</th>
-                <th className="px-6 py-3 font-semibold">Danh mục</th>
-                <th className="px-6 py-3 font-semibold">Giá</th>
-                <th className="px-6 py-3 font-semibold">Tồn kho</th>
-                <th className="px-6 py-3 font-semibold">Hành động</th>
+                <th className="px-6 py-3 font-semibold">{t.seller.dashboard.product_col}</th>
+                <th className="px-6 py-3 font-semibold">{t.seller.dashboard.category_col}</th>
+                <th className="px-6 py-3 font-semibold">{t.seller.dashboard.price_col}</th>
+                <th className="px-6 py-3 font-semibold">{t.seller.dashboard.stock_col}</th>
+                <th className="px-6 py-3 font-semibold">{t.seller.dashboard.action_col}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
@@ -398,13 +400,13 @@ function SellerDashboardContent() {
                   </td>
                   <td className="px-6 py-3">
                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-zinc-100 text-zinc-800">
-                        {product.category ?? "Khác"}
+                        {product.category ?? t.seller.dashboard.others}
                      </span>
                   </td>
                   <td className="px-6 py-3 font-medium text-zinc-700">{formatMoney(product.price, product.currency)}</td>
                   <td className="px-6 py-3">
                     <span className={!product.stock ? "text-red-600 font-bold bg-red-50 px-2 py-1 rounded-full text-xs" : "text-zinc-700"}>
-                      {product.stock ? product.stock : "Hết hàng"}
+                      {product.stock ? product.stock : t.seller.dashboard.out_of_stock}
                     </span>
                   </td>
                   <td className="px-6 py-3">
@@ -415,7 +417,7 @@ function SellerDashboardContent() {
                         onClick={() => handleEdit(product.id)}
                         className="h-8 px-3 text-zinc-600 hover:text-emerald-700 hover:border-emerald-200 hover:bg-emerald-50"
                       >
-                        Sửa
+                        {t.seller.dashboard.edit}
                       </Button>
                       <Button
                         size="sm"
@@ -423,7 +425,7 @@ function SellerDashboardContent() {
                         className="h-8 w-8 p-0 text-zinc-400 hover:text-red-600 hover:bg-red-50"
                         onClick={() => handleRemove(product)}
                         disabled={processingId === product.id}
-                        title="Gỡ sản phẩm"
+                        title={t.seller.dashboard.remove_tooltip}
                       >
                         {processingId === product.id ? <Spinner size="sm" /> : <Trash2 size={16} />}
                       </Button>
@@ -435,7 +437,7 @@ function SellerDashboardContent() {
                 <tr>
                   <td colSpan={5} className="px-6 py-12 text-center text-zinc-500 flex flex-col items-center justify-center">
                     <Package2 size={32} className="mb-2 opacity-20" />
-                    {activeTab === 'selling' ? 'Không có sản phẩm đang bán.' : 'Không có sản phẩm hết hàng.'}
+                    {activeTab === 'selling' ? t.seller.dashboard.no_products_selling : t.seller.dashboard.no_products_out_of_stock}
                   </td>
                 </tr>
               )}
@@ -448,11 +450,12 @@ function SellerDashboardContent() {
 }
 
 export default function SellerDashboardPage() {
+  const { t } = useTranslation();
   return (
     <Suspense fallback={
       <div className="flex min-h-[60vh] items-center justify-center gap-3 text-sm text-zinc-600">
         <Spinner />
-        Loading dashboard...
+        {t.seller.dashboard.loading}
       </div>
     }>
       <SellerDashboardContent />

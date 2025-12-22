@@ -12,22 +12,24 @@ import { Button } from "@/src/components/ui/button";
 import { Badge } from "@/src/components/ui/badge";
 import { useToast } from "@/src/components/ui/toast-provider";
 import { Spinner } from "@/src/components/ui/spinner";
+import { useTranslation } from "@/src/providers/language-provider";
 
 interface ProductReviewsProps {
   productId: string;
   sellerId?: string;
 }
 
-const reportReasons = [
-  { value: "INAPPROPRIATE", label: "Inappropriate or abusive" },
-  { value: "FAKE", label: "Spam or fake review" },
-  { value: "SCAM", label: "Scam / misleading" },
-  { value: "OTHER", label: "Other" },
-];
-
 export function ProductReviews({ productId, sellerId }: ProductReviewsProps) {
   const { user } = useAuth();
   const { addToast } = useToast();
+  const { t } = useTranslation();
+
+  const reportReasons = [
+    { value: "INAPPROPRIATE", label: t.product.reviews.report_reasons.inappropriate },
+    { value: "FAKE", label: t.product.reviews.report_reasons.fake },
+    { value: "SCAM", label: t.product.reviews.report_reasons.scam },
+    { value: "OTHER", label: t.product.reviews.report_reasons.other },
+  ];
 
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,11 +55,11 @@ export function ProductReviews({ productId, sellerId }: ProductReviewsProps) {
       setReviews(resp.items);
     } catch (error) {
       console.error("Failed to load reviews", error);
-      addToast("Unable to load reviews right now.", "error");
+      addToast(t.product.load_failed, "error");
     } finally {
       setLoading(false);
     }
-  }, [addToast, productId]);
+  }, [addToast, productId, t]); // Added t to dependency
 
   const checkIfUserPurchasedProduct = React.useCallback(async () => {
     if (!user?.id) {
@@ -98,11 +100,11 @@ export function ProductReviews({ productId, sellerId }: ProductReviewsProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
-      addToast("Please sign in to leave a review.", "error");
+      addToast(t.product.reviews.login_required, "error");
       return;
     }
     if (!editingReviewId && !hasPurchased) {
-      addToast("Only verified buyers can leave a review.", "error");
+      addToast(t.product.reviews.buyer_only, "error");
       return;
     }
     setSubmitting(true);
@@ -113,7 +115,7 @@ export function ProductReviews({ productId, sellerId }: ProductReviewsProps) {
           rating,
           comment,
         });
-        addToast("Review updated.", "success");
+        addToast(t.product.reviews.messages.updated, "success");
       } else {
         await productApi.addReview(productId, {
           userId: user.id,
@@ -121,16 +123,16 @@ export function ProductReviews({ productId, sellerId }: ProductReviewsProps) {
           rating,
           comment,
         });
-        addToast("Thanks for sharing your experience!", "success");
+        addToast(t.product.reviews.messages.submitted, "success");
       }
       resetForm();
       await fetchReviews();
     } catch (error) {
       console.error("Failed to submit review", error);
       if (error instanceof ApiError && error.status === 429) {
-        addToast("You are posting reviews too quickly. Please wait a bit.", "error");
+        addToast(t.product.reviews.messages.too_fast, "error");
       } else {
-        addToast(editingReviewId ? "Unable to update review." : "Unable to submit review.", "error");
+        addToast(t.common.error, "error");
       }
     } finally {
       setSubmitting(false);
@@ -139,7 +141,7 @@ export function ProductReviews({ productId, sellerId }: ProductReviewsProps) {
 
   const handleDelete = async (reviewId: string) => {
     if (!user) {
-      addToast("Please sign in to manage your review.", "error");
+      addToast(t.product.reviews.login_required, "error");
       return;
     }
     setActionInProgress(reviewId);
@@ -149,10 +151,10 @@ export function ProductReviews({ productId, sellerId }: ProductReviewsProps) {
       if (editingReviewId === reviewId) {
         resetForm();
       }
-      addToast("Review removed.", "success");
+      addToast(t.product.reviews.messages.deleted, "success");
     } catch (error) {
       console.error("Failed to delete review", error);
-      addToast("Unable to delete review.", "error");
+      addToast(t.common.error, "error");
     } finally {
       setActionInProgress(null);
     }
@@ -161,7 +163,7 @@ export function ProductReviews({ productId, sellerId }: ProductReviewsProps) {
   const handleReport = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !reportingReviewId) {
-      addToast("Please sign in to report a review.", "error");
+      addToast(t.product.reviews.login_required, "error");
       return;
     }
     setActionInProgress(reportingReviewId);
@@ -171,12 +173,12 @@ export function ProductReviews({ productId, sellerId }: ProductReviewsProps) {
         reason: reportReason,
         description: reportDescription,
       });
-      addToast("Review reported for moderation.", "success");
+      addToast(t.product.reviews.messages.reported, "success");
       setReportingReviewId(null);
       setReportDescription("");
     } catch (error) {
       console.error("Failed to report review", error);
-      addToast("Unable to report this review right now.", "error");
+      addToast(t.common.error, "error");
     } finally {
       setActionInProgress(null);
     }
@@ -192,13 +194,13 @@ export function ProductReviews({ productId, sellerId }: ProductReviewsProps) {
         sellerId,
         response: responseText,
       });
-      addToast("Response posted.", "success");
+      addToast(t.product.reviews.messages.response_posted, "success");
       setRespondingReviewId(null);
       setResponseText("");
       await fetchReviews();
     } catch (error) {
       console.error("Failed to respond to review", error);
-      addToast("Unable to post a response.", "error");
+      addToast(t.common.error, "error");
     } finally {
       setActionInProgress(null);
     }
@@ -228,27 +230,27 @@ export function ProductReviews({ productId, sellerId }: ProductReviewsProps) {
     <div className="space-y-6 border-t border-zinc-100 pt-8">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-xl font-bold text-zinc-900">Reviews ({reviews.length})</h3>
-          <p className="text-sm text-zinc-500">Quality, fit, and seller experience from real buyers.</p>
+          <h3 className="text-xl font-bold text-zinc-900">{t.product.reviews.title} ({reviews.length})</h3>
+          <p className="text-sm text-zinc-500">{t.product.reviews.subtitle}</p>
         </div>
         {user && !showForm && (hasPurchased || userHasReview) && (
           <Button variant="outline" onClick={() => setShowForm(true)}>
-            {userHasReview ? "Edit review" : "Write a review"}
+            {userHasReview ? t.product.reviews.edit : t.product.reviews.write}
           </Button>
         )}
       </div>
 
       {!user ? (
-        <p className="py-4 text-zinc-500">Sign in to read and write reviews.</p>
+        <p className="py-4 text-zinc-500">{t.product.reviews.login_required}</p>
       ) : !hasPurchased && !userHasReview && !showForm ? (
-        <p className="py-4 text-zinc-500">Only verified buyers can leave a review.</p>
+        <p className="py-4 text-zinc-500">{t.product.reviews.buyer_only}</p>
       ) : null}
 
       {showForm && (
         <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border border-zinc-200 bg-zinc-50 p-6">
           <div>
             <label className="mb-2 block text-sm font-medium text-zinc-700">
-              {editingReviewId ? "Update your review" : "Your review"}
+              {editingReviewId ? t.product.reviews.update_review : t.product.reviews.your_review}
             </label>
             <div className="flex gap-1">
               {[1, 2, 3, 4, 5].map((star) => (
@@ -257,7 +259,7 @@ export function ProductReviews({ productId, sellerId }: ProductReviewsProps) {
                   type="button"
                   onClick={() => setRating(star)}
                   className="focus:outline-none"
-                  aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
+                  aria-label={`${t.product.rating} ${star}`}
                 >
                   <Star
                     className={clsx(
@@ -270,10 +272,10 @@ export function ProductReviews({ productId, sellerId }: ProductReviewsProps) {
             </div>
           </div>
           <div>
-            <label className="mb-2 block text-sm font-medium text-zinc-700">Comment</label>
+            <label className="mb-2 block text-sm font-medium text-zinc-700">{t.product.reviews.comment_label}</label>
             <textarea
               className="w-full min-h-[100px] rounded-lg border border-zinc-300 p-3 outline-none focus:ring-2 focus:ring-emerald-500"
-              placeholder="What worked well? What could be improved?"
+              placeholder={t.product.reviews.comment_placeholder}
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               required
@@ -281,11 +283,11 @@ export function ProductReviews({ productId, sellerId }: ProductReviewsProps) {
           </div>
           <div className="flex justify-end gap-3">
             <Button type="button" variant="ghost" onClick={resetForm}>
-              Cancel
+              {t.common.cancel}
             </Button>
             <Button type="submit" disabled={submitting} className="bg-emerald-600 hover:bg-emerald-700">
               {submitting ? <Spinner className="mr-2 h-4 w-4" /> : null}
-              {editingReviewId ? "Save changes" : "Submit review"}
+              {editingReviewId ? t.common.save_changes : t.common.submit}
             </Button>
           </div>
         </form>
@@ -296,7 +298,7 @@ export function ProductReviews({ productId, sellerId }: ProductReviewsProps) {
           <Spinner />
         </div>
       ) : reviews.length === 0 ? (
-        <p className="py-4 text-zinc-500">No reviews yet. Be the first to share your thoughts.</p>
+        <p className="py-4 text-zinc-500">{t.product.reviews.no_reviews}</p>
       ) : (
         <div className="space-y-4">
           {reviews.map((review) => {
@@ -315,20 +317,20 @@ export function ProductReviews({ productId, sellerId }: ProductReviewsProps) {
                         {review.verifiedPurchase ? (
                           <Badge tone="success" className="inline-flex items-center gap-1">
                             <Shield className="h-3 w-3" />
-                            Verified buyer
+                            {t.product.reviews.verified_buyer}
                           </Badge>
                         ) : null}
                         {review.abuseReportCount && review.abuseReportCount > 0 ? (
                           <Badge tone="warning" className="inline-flex items-center gap-1">
                             <Flag className="h-3 w-3" />
-                            {review.abuseReportCount} report{review.abuseReportCount > 1 ? "s" : ""}
+                            {review.abuseReportCount} {t.common.report}
                           </Badge>
                         ) : null}
                       </div>
                       <p className="text-xs text-zinc-500">
-                        {new Date(review.createdAt).toLocaleDateString("en-US")}
+                        {new Date(review.createdAt).toLocaleDateString("vi-VN")}
                         {review.updatedAt && review.updatedAt !== review.createdAt
-                          ? ` · updated ${new Date(review.updatedAt).toLocaleDateString("en-US")}`
+                          ? ` · ${t.common.updated} ${new Date(review.updatedAt).toLocaleDateString("vi-VN")}`
                           : ""}
                       </p>
                     </div>
@@ -349,10 +351,10 @@ export function ProductReviews({ productId, sellerId }: ProductReviewsProps) {
                 {review.sellerResponse ? (
                   <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-3 text-sm text-emerald-800">
                     <div className="mb-1 flex items-center gap-2 font-semibold">
-                      <MessageSquare className="h-4 w-4" /> Seller response
+                      <MessageSquare className="h-4 w-4" /> {t.product.reviews.seller_response}
                       {review.sellerRespondedAt ? (
                         <span className="text-xs font-normal text-emerald-700/80">
-                          {new Date(review.sellerRespondedAt).toLocaleDateString("en-US")}
+                          {new Date(review.sellerRespondedAt).toLocaleDateString("vi-VN")}
                         </span>
                       ) : null}
                     </div>
@@ -369,7 +371,7 @@ export function ProductReviews({ productId, sellerId }: ProductReviewsProps) {
                         onClick={() => startEdit(review)}
                         disabled={actionInProgress === review.id}
                       >
-                        Edit
+                        {t.common.edit}
                       </button>
                       <span className="text-zinc-300">•</span>
                       <button
@@ -378,7 +380,7 @@ export function ProductReviews({ productId, sellerId }: ProductReviewsProps) {
                         onClick={() => handleDelete(review.id)}
                         disabled={actionInProgress === review.id}
                       >
-                        {actionInProgress === review.id ? "Removing..." : "Delete"}
+                        {actionInProgress === review.id ? t.common.removing : t.common.delete}
                       </button>
                     </>
                   ) : null}
@@ -393,7 +395,7 @@ export function ProductReviews({ productId, sellerId }: ProductReviewsProps) {
                         disabled={actionInProgress === review.id}
                       >
                         <Flag className="h-3 w-3" />
-                        Report abuse
+                        {t.product.reviews.report_abuse}
                       </button>
                     </>
                   ) : null}
@@ -408,7 +410,7 @@ export function ProductReviews({ productId, sellerId }: ProductReviewsProps) {
                         disabled={actionInProgress === review.id}
                       >
                         <CheckCircle2 className="h-3 w-3" />
-                        Respond
+                        {t.common.respond}
                       </button>
                     </>
                   ) : null}
@@ -435,17 +437,17 @@ export function ProductReviews({ productId, sellerId }: ProductReviewsProps) {
                     </div>
                     <textarea
                       className="w-full rounded-lg border border-amber-200 p-2 text-sm outline-none focus:ring-2 focus:ring-amber-500"
-                      placeholder="Tell us what's wrong with this review."
+                      placeholder={t.product.reviews.report_placeholder}
                       value={reportDescription}
                       onChange={(e) => setReportDescription(e.target.value)}
                     />
                     <div className="flex justify-end gap-2">
                       <Button type="button" variant="ghost" onClick={() => setReportingReviewId(null)}>
-                        Cancel
+                        {t.common.cancel}
                       </Button>
                       <Button type="submit" disabled={actionInProgress === review.id} className="bg-amber-600 hover:bg-amber-700">
                         {actionInProgress === review.id ? <Spinner className="mr-2 h-4 w-4" /> : null}
-                        Submit report
+                        {t.product.reviews.submit_report}
                       </Button>
                     </div>
                   </form>
@@ -455,13 +457,13 @@ export function ProductReviews({ productId, sellerId }: ProductReviewsProps) {
                   <div className="space-y-2 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
                     <textarea
                       className="w-full rounded-lg border border-emerald-200 p-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500"
-                      placeholder="Share a quick reply to this review."
+                      placeholder={t.product.reviews.comment_placeholder}
                       value={responseText}
                       onChange={(e) => setResponseText(e.target.value)}
                     />
                     <div className="flex justify-end gap-2">
                       <Button type="button" variant="ghost" onClick={() => setRespondingReviewId(null)}>
-                        Cancel
+                        {t.common.cancel}
                       </Button>
                       <Button
                         type="button"
@@ -470,7 +472,7 @@ export function ProductReviews({ productId, sellerId }: ProductReviewsProps) {
                         onClick={handleRespond}
                       >
                         {actionInProgress === review.id ? <Spinner className="mr-2 h-4 w-4" /> : null}
-                        Post response
+                        {t.common.submit}
                       </Button>
                     </div>
                   </div>

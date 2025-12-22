@@ -216,11 +216,11 @@ export default function ProductDetailPage() {
       <div className="border-b border-zinc-200 bg-white">
         <div className="mx-auto flex max-w-7xl items-center gap-2 px-4 py-3 text-sm text-zinc-500">
             <Link href="/" className="flex items-center hover:text-emerald-600">
-                <Home size={14} className="mr-1"/> Trang chủ
+                <Home size={14} className="mr-1"/> {t.nav.home}
             </Link>
             <ChevronRight size={14} />
             <Link href={`/search?category=${product.category}`} className="hover:text-emerald-600">
-                {product.category || "Sản phẩm"}
+                {product.category || t.nav.products}
             </Link>
             <ChevronRight size={14} />
             <span className="truncate font-medium text-zinc-900 max-w-[200px]">{product.name}</span>
@@ -251,19 +251,19 @@ export default function ProductDetailPage() {
                                 {displayProduct.soldCount !== undefined && displayProduct.soldCount >= 0 && (
                                     <>
                                         <span className="text-zinc-300">|</span>
-                                        <span className="text-zinc-500">Đã bán {displayProduct.soldCount}</span>
+                                        <span className="text-zinc-500">{t.product.sold} {displayProduct.soldCount}</span>
                                     </>
                                 )}
                                 {displayProduct.sku && (
                                     <>
                                         <span className="text-zinc-300">|</span>
-                                        <span className="text-zinc-500">SKU: {displayProduct.sku}</span>
+                                        <span className="text-zinc-500">{t.common.sku}: {displayProduct.sku}</span>
                                     </>
                                 )}
                             </div>
                         </div>
                         <ReportProductDialog productId={displayProduct.id} productName={displayProduct.name}>
-                            <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-red-500" title="Báo cáo sản phẩm">
+                            <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-red-500" title={t.common.report}>
                                 <Flag size={20} />
                             </Button>
                         </ReportProductDialog>
@@ -291,7 +291,7 @@ export default function ProductDetailPage() {
                         )}
                         {lowStock && (
                             <div className="mt-3 inline-flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 border border-red-100">
-                                Only {displayProduct.stock} left in stock
+                                {t.product.only_left.replace("{{count}}", (displayProduct.stock || 0).toString())}
                             </div>
                         )}
                     </div>
@@ -299,7 +299,7 @@ export default function ProductDetailPage() {
                     {/* Variant Selection */}
                     {product.variants && product.variants.length > 0 && (
                         <div className="mt-6 space-y-3">
-                            <span className="text-sm font-medium text-zinc-900">Phân loại:</span>
+                            <span className="text-sm font-medium text-zinc-900">{t.product.variant_select}</span>
                             <div className="flex flex-wrap gap-2">
                                 {product.variants.map((v, idx) => (
                                     <button
@@ -322,7 +322,7 @@ export default function ProductDetailPage() {
                     {/* Quantity & Actions */}
                     <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-end">
                         <div className="space-y-3">
-                             <span className="text-sm font-medium text-zinc-900">Số lượng:</span>
+                             <span className="text-sm font-medium text-zinc-900">{t.product.quantity_select}</span>
                              <div className="flex items-center rounded-lg border border-zinc-200 bg-white w-fit">
                                 <button 
                                     onClick={() => adjustQuantity(-1)}
@@ -348,9 +348,9 @@ export default function ProductDetailPage() {
                              <p className="text-xs text-zinc-500">
                                 {displayProduct.stock !== undefined
                                   ? lowStock
-                                    ? `Only ${displayProduct.stock} left`
-                                    : `${displayProduct.stock} in stock`
-                                  : "Out of stock"}
+                                    ? t.product.only_left.replace("{{count}}", displayProduct.stock.toString())
+                                    : t.product.left_in_stock.replace("{{count}}", displayProduct.stock.toString())
+                                  : t.common.out_of_stock}
                              </p>
                         </div>
 
@@ -384,22 +384,22 @@ export default function ProductDetailPage() {
                                 <div className="flex-1">
                                     <h4 className="font-bold text-zinc-900">{seller.displayName}</h4>
                                     <div className="flex items-center gap-2 text-xs text-zinc-500">
-                                        <span className="flex items-center gap-1"><Store size={12}/> Online</span>
+                                        <span className="flex items-center gap-1"><Store size={12}/> {t.common.online}</span>
                                         <span>•</span>
-                                        <span>Đánh giá 4.9 (1k+)</span>
+                                        <span>{t.product.rating} 4.9 (1k+)</span>
                                     </div>
                                 </div>
                                 <div className="flex flex-col gap-2 sm:flex-row">
                                     {displayProduct.sellerId && displayProduct.sellerId !== user?.id && (
                                         <Link href={`/chat?userId=${displayProduct.sellerId}`}>
                                             <Button variant="outline" size="sm" className="w-full text-emerald-600 hover:bg-emerald-50 border-emerald-200">
-                                                <MessageSquare size={16} className="mr-2"/> Chat
+                                                <MessageSquare size={16} className="mr-2"/> {t.product.chat}
                                             </Button>
                                         </Link>
                                     )}
                                     <Link href={`/shop/${seller.id}`}>
                                         <Button variant="secondary" size="sm" className="w-full">
-                                            Xem Shop
+                                            {t.product.view_shop}
                                         </Button>
                                     </Link>
                                 </div>
@@ -411,14 +411,14 @@ export default function ProductDetailPage() {
                                     <Store size={24} className="text-zinc-400" />
                                 </div>
                                 <div className="flex-1">
-                                    <h4 className="font-bold text-zinc-900">Cửa hàng chính hãng</h4>
+                                    <h4 className="font-bold text-zinc-900">{t.product.official_store}</h4>
                                     <div className="flex items-center gap-2 text-xs text-zinc-500">
-                                        <span className="flex items-center gap-1"><ShieldCheck size={12} className="text-emerald-500"/> Verified</span>
+                                        <span className="flex items-center gap-1"><ShieldCheck size={12} className="text-emerald-500"/> {t.product.verified}</span>
                                     </div>
                                 </div>
                                 <div className="flex flex-col gap-2 sm:flex-row">
                                    <Button variant="secondary" size="sm" disabled>
-                                        Xem Shop
+                                        {t.product.view_shop}
                                     </Button>
                                 </div>
                             </div>
@@ -432,19 +432,19 @@ export default function ProductDetailPage() {
                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
                             <ShieldCheck size={20} />
                         </div>
-                        <span className="text-xs font-medium text-zinc-600">Hàng chính hãng 100%</span>
+                        <span className="text-xs font-medium text-zinc-600">{t.product.genuine_100}</span>
                     </div>
                     <div className="flex flex-col items-center gap-2 border-l border-zinc-100">
                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
                             <Truck size={20} />
                         </div>
-                        <span className="text-xs font-medium text-zinc-600">Miễn phí vận chuyển</span>
+                        <span className="text-xs font-medium text-zinc-600">{t.product.free_shipping}</span>
                     </div>
                     <div className="flex flex-col items-center gap-2 border-l border-zinc-100">
                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
                             <RefreshCcw size={20} />
                         </div>
-                        <span className="text-xs font-medium text-zinc-600">Đổi trả trong 7 ngày</span>
+                        <span className="text-xs font-medium text-zinc-600">{t.product.return_7_days}</span>
                     </div>
                 </div>
              </div>
@@ -455,7 +455,7 @@ export default function ProductDetailPage() {
         <div className="mt-10 grid gap-8 lg:grid-cols-12">
             <div className="lg:col-span-12 space-y-8">
                  <div className="rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm">
-                    <h3 className="mb-6 text-xl font-bold text-zinc-900 border-b border-zinc-100 pb-4">Mô tả chi tiết</h3>
+                    <h3 className="mb-6 text-xl font-bold text-zinc-900 border-b border-zinc-100 pb-4">{t.product.description}</h3>
                     <div className="prose prose-sm max-w-none text-zinc-700 leading-normal">
                         <p className="whitespace-pre-line">{displayProduct.description}</p>
                     </div>
@@ -471,7 +471,7 @@ export default function ProductDetailPage() {
         {/* Related Products */}
         {relatedProducts.length > 0 && (
             <div className="mt-12 border-t border-zinc-200 pt-10">
-                <h2 className="mb-6 text-2xl font-bold text-zinc-900">Sản phẩm tương tự</h2>
+                <h2 className="mb-6 text-2xl font-bold text-zinc-900">{t.product.similar_products}</h2>
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4">
                     {relatedProducts.map(p => (
                         <ProductCardSimple key={p.id} product={p} />

@@ -8,6 +8,7 @@ import { Spinner } from "@/src/components/ui/spinner";
 import { useRequireAuth } from "@/src/hooks/use-require-auth";
 import { Order } from "@/src/types/order";
 import { useToast } from "@/src/components/ui/toast-provider";
+import { useTranslation } from "@/src/providers/language-provider";
 
 function OrdersContent() {
   const { isAuthenticated, initializing } = useRequireAuth();
@@ -15,6 +16,7 @@ function OrdersContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { addToast } = useToast();
+  const { t } = useTranslation();
 
   const loadOrders = useCallback(async () => {
     setLoading(true);
@@ -23,13 +25,13 @@ function OrdersContent() {
       setOrders(response.items);
       setError(null);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to load orders";
+      const message = err instanceof Error ? err.message : t.orders.load_failed;
       setError(message);
       addToast(message, "error");
     } finally {
       setLoading(false);
     }
-  }, [addToast]);
+  }, [addToast, t]);
 
   useEffect(() => {
     if (initializing || !isAuthenticated) return;
@@ -40,7 +42,7 @@ function OrdersContent() {
     return (
       <div className="flex min-h-[60vh] items-center justify-center gap-3 text-sm text-zinc-600">
         <Spinner />
-        Loading orders...
+        {t.orders.loading}
       </div>
     );
   }
@@ -49,18 +51,18 @@ function OrdersContent() {
     <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-10">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-black">Orders</h1>
-          <p className="text-sm text-zinc-600">Track your order history and status.</p>
+          <h1 className="text-3xl font-bold text-black">{t.orders.title}</h1>
+          <p className="text-sm text-zinc-600">{t.orders.subtitle}</p>
         </div>
         <Button variant="secondary" onClick={loadOrders} disabled={loading}>
-          Refresh
+          {t.orders.refresh}
         </Button>
       </div>
 
       {loading && (
         <div className="flex items-center gap-3 text-sm text-zinc-600">
           <Spinner />
-          Loading orders...
+          {t.orders.loading}
         </div>
       )}
 
@@ -74,7 +76,7 @@ function OrdersContent() {
         ))}
         {!orders.length && !loading && (
           <div className="rounded-xl border border-dashed border-zinc-200 bg-white p-6 text-sm text-zinc-600">
-            No orders yet. Place your first order to see it here.
+            {t.orders.empty}
           </div>
         )}
       </div>
@@ -83,11 +85,12 @@ function OrdersContent() {
 }
 
 export default function OrdersPage() {
+  const { t } = useTranslation();
   return (
     <Suspense fallback={
       <div className="flex min-h-[60vh] items-center justify-center gap-3 text-sm text-zinc-600">
         <Spinner />
-        Loading orders...
+        {t.common.loading}
       </div>
     }>
       <OrdersContent />

@@ -13,11 +13,13 @@ import { Spinner } from "@/src/components/ui/spinner";
 import { User } from "@/src/types/auth";
 import { Product } from "@/src/types/product";
 import { useAuth } from "@/src/store/auth-store";
+import { useTranslation } from "@/src/providers/language-provider";
 
 export default function ShopPage() {
   const params = useParams<{ id: string }>();
   const sellerId = params?.id;
   const { user: currentUser } = useAuth();
+  const { t } = useTranslation();
   
   const [seller, setSeller] = useState<User | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
@@ -49,7 +51,7 @@ export default function ShopPage() {
     return (
       <div className="flex min-h-[60vh] items-center justify-center gap-3 text-sm text-zinc-600">
         <Spinner />
-        Loading Shop...
+        {t.shop.loading}
       </div>
     );
   }
@@ -57,9 +59,9 @@ export default function ShopPage() {
   if (error || !seller) {
     return (
       <div className="mx-auto flex max-w-3xl flex-col items-center gap-3 px-4 py-10 text-center">
-        <p className="text-lg font-semibold text-zinc-900">Shop not found</p>
+        <p className="text-lg font-semibold text-zinc-900">{t.shop.not_found}</p>
         <Button variant="secondary" onClick={() => window.location.reload()}>
-          Retry
+          {t.common.retry}
         </Button>
       </div>
     );
@@ -84,16 +86,16 @@ export default function ShopPage() {
                         <div className="mt-2 flex flex-wrap justify-center md:justify-start gap-4 text-sm text-zinc-500">
                             <div className="flex items-center gap-1">
                                 <Store size={16} />
-                                <span>{products.length} Sản phẩm</span>
+                                <span>{t.shop.product_count.replace("{{count}}", products.length.toString())}</span>
                             </div>
                             {/* Placeholder for rating - could be calculated if we had aggregation */}
                             <div className="flex items-center gap-1">
                                 <Star size={16} className="text-amber-400" />
-                                <span>4.9 Đánh giá</span>
+                                <span>{t.shop.rating_count.replace("{{rating}}", "4.9")}</span>
                             </div>
                             <div className="flex items-center gap-1">
                                 <Calendar size={16} />
-                                <span>Tham gia 2024</span>
+                                <span>{t.shop.joined.replace("{{year}}", "2024")}</span>
                             </div>
                         </div>
                     </div>
@@ -102,11 +104,11 @@ export default function ShopPage() {
                             <Link href={`/chat?userId=${seller.id}`}>
                                 <Button className="bg-emerald-600 hover:bg-emerald-700">
                                     <MessageSquare size={18} className="mr-2" />
-                                    Chat ngay
+                                    {t.product.chat}
                                 </Button>
                             </Link>
                          )}
-                         <Button variant="outline">Theo dõi</Button>
+                         <Button variant="outline">{t.shop.follow}</Button>
                     </div>
                 </div>
             </div>
@@ -114,7 +116,7 @@ export default function ShopPage() {
 
         {/* Shop Products */}
         <div className="mx-auto max-w-7xl px-4 py-8">
-            <h2 className="mb-6 text-xl font-bold text-zinc-900">Sản phẩm của Shop</h2>
+            <h2 className="mb-6 text-xl font-bold text-zinc-900">{t.shop.shop_products}</h2>
             
             {products.length > 0 ? (
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
@@ -124,7 +126,7 @@ export default function ShopPage() {
                 </div>
             ) : (
                 <div className="text-center py-20 text-zinc-500">
-                    Shop này chưa có sản phẩm nào.
+                    {t.shop.no_products}
                 </div>
             )}
         </div>

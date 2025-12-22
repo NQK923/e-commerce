@@ -9,10 +9,12 @@ import { Button } from "@/src/components/ui/button";
 import { Spinner } from "@/src/components/ui/spinner";
 import { useToast } from "@/src/components/ui/toast-provider";
 import { authApi } from "@/src/api/authApi";
+import { useTranslation } from "@/src/providers/language-provider";
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
   const { addToast } = useToast();
+  const { t } = useTranslation();
   const [form, setForm] = useState({ email: "", otpCode: "", newPassword: "" });
   const [confirmPassword, setConfirmPassword] = useState("");
   const [challengeId, setChallengeId] = useState<string | null>(null);
@@ -22,7 +24,7 @@ export default function ForgotPasswordPage() {
 
   const handleSendOtp = async () => {
     if (!form.email) {
-      addToast("Please enter your email before requesting an OTP.", "error");
+      addToast(t.auth.enter_email_warning, "error");
       return;
     }
     setOtpSending(true);
@@ -30,9 +32,9 @@ export default function ForgotPasswordPage() {
       const challenge = await authApi.forgotPassword(form.email);
       setChallengeId(challenge.id ?? null);
       setOtpExpiresAt(challenge.expiresAt ?? null);
-      addToast("If an account exists, a reset code has been sent to your email.", "success");
+      addToast(t.auth.if_account_exists, "success");
     } catch (error) {
-      addToast("Could not send OTP right now. Please try again.", "error");
+      addToast(t.auth.otp_send_failed, "error");
     } finally {
       setOtpSending(false);
     }
@@ -41,11 +43,11 @@ export default function ForgotPasswordPage() {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (form.newPassword !== confirmPassword) {
-      addToast("Passwords do not match.", "error");
+      addToast(t.auth.passwords_do_not_match, "error");
       return;
     }
     if (!challengeId || !form.otpCode) {
-      addToast("Please provide the OTP sent to your email.", "error");
+      addToast(t.auth.provide_otp_error, "error");
       return;
     }
     setLoading(true);
@@ -56,10 +58,10 @@ export default function ForgotPasswordPage() {
         otpCode: form.otpCode,
         challengeId: challengeId,
       });
-      addToast("Password updated. You can now sign in.", "success");
+      addToast(t.auth.password_updated_success, "success");
       router.push("/login");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Could not reset password.";
+      const message = error instanceof Error ? error.message : t.auth.reset_failed;
       addToast(message, "error");
     } finally {
       setLoading(false);
@@ -67,10 +69,10 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <AuthLayout title="Reset your password" subtitle="Verify your email to set a new password.">
+    <AuthLayout title={t.auth.reset_password_title} subtitle={t.auth.reset_password_subtitle}>
       <form className="space-y-4" onSubmit={handleSubmit}>
         <Input
-          label="Email"
+          label={t.auth.email_label}
           type="email"
           required
           placeholder="name@example.com"
@@ -81,26 +83,26 @@ export default function ForgotPasswordPage() {
 
         <div className="space-y-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3">
           <div className="flex items-center justify-between text-sm font-medium text-zinc-700">
-            <span>Email verification</span>
+            <span>{t.auth.email_verification_label}</span>
             <Button type="button" size="sm" variant="secondary" onClick={handleSendOtp} disabled={otpSending}>
               {otpSending ? <Spinner className="mr-2 h-4 w-4" /> : null}
-              {otpSending ? "Sending..." : "Send OTP"}
+              {otpSending ? t.auth.sending_otp : t.auth.send_otp}
             </Button>
           </div>
           <Input
-            label="Verification code"
+            label={t.auth.enter_code_label}
             placeholder="6-digit code"
             value={form.otpCode}
             onChange={(e) => setForm((prev) => ({ ...prev, otpCode: e.target.value }))}
           />
           {otpExpiresAt ? (
-            <p className="text-xs text-zinc-500">Code expires at {new Date(otpExpiresAt).toLocaleTimeString()}</p>
+            <p className="text-xs text-zinc-500">{t.auth.code_expires_at} {new Date(otpExpiresAt).toLocaleTimeString()}</p>
           ) : null}
         </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Input
-            label="New password"
+            label={t.auth.new_password_label}
             type="password"
             required
             placeholder="********"
@@ -109,7 +111,7 @@ export default function ForgotPasswordPage() {
             className="h-10"
           />
           <Input
-            label="Confirm new password"
+            label={t.auth.confirm_new_password_label}
             type="password"
             required
             placeholder="********"
@@ -125,14 +127,14 @@ export default function ForgotPasswordPage() {
           className="w-full h-10 bg-emerald-600 hover:bg-emerald-700 text-sm font-semibold shadow-lg shadow-emerald-600/20"
         >
           {loading ? <Spinner size="sm" className="mr-2 text-white" /> : null}
-          {loading ? "Updating..." : "Reset password"}
+          {loading ? t.auth.updating : t.auth.reset_password_button}
         </Button>
       </form>
 
       <p className="mt-6 text-center text-xs text-zinc-600">
-        Remembered your password?{" "}
+        {t.auth.remembered_password}{" "}
         <Link className="font-semibold text-emerald-600 hover:text-emerald-500 hover:underline transition-all" href="/login">
-          Back to login
+          {t.auth.back_to_login}
         </Link>
       </p>
     </AuthLayout>

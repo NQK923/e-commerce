@@ -91,7 +91,7 @@ function CartContent() {
   const handleVariantChange = async (itemId: string, newVariantSku: string) => {
     try {
       await changeVariant(itemId, newVariantSku);
-      addToast("Variant updated", "success");
+      addToast(t.cart.variant_updated, "success");
     } catch (error) {
         const message = error instanceof Error ? error.message : t.common.error;
         addToast(message, "error");
@@ -132,7 +132,7 @@ function CartContent() {
         <div className="space-y-2">
             <h2 className="text-2xl font-bold text-zinc-900">{t.cart.empty}</h2>
             <p className="text-zinc-500 max-w-sm mx-auto">
-                Giỏ hàng của bạn đang trống. Hãy thêm sản phẩm để tiếp tục mua sắm.
+                {t.cart.empty_description}
             </p>
         </div>
         <Link href="/products">
@@ -151,7 +151,7 @@ function CartContent() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-zinc-200 pb-6 gap-4">
             <div className="flex items-baseline gap-3">
                  <h1 className="text-3xl font-bold text-zinc-900">{t.cart.title}</h1>
-                 <span className="text-sm font-medium text-zinc-500">({cart.items.length} sản phẩm)</span>
+                 <span className="text-sm font-medium text-zinc-500">({cart.items.length} {t.nav.products.toLowerCase()})</span>
             </div>
             <Link href="/products">
                 <Button variant="ghost" className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 -ml-4 sm:ml-0">

@@ -29,6 +29,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/src/components/ui/avatar"
 import { uploadToBucket } from "@/src/lib/storage";
 import { config } from "@/src/config/env";
 import { userApi } from "@/src/api/userApi";
+import { useTranslation } from "@/src/providers/language-provider";
 
 type ChatWidgetProps = {
   fullPage?: boolean;
@@ -180,6 +181,7 @@ const ConversationItem: React.FC<{
   currentUserId?: string;
   participantProfiles: ParticipantProfileMap;
 }> = ({ conversation, active, onSelect, currentUserId, participantProfiles }) => {
+  const { t } = useTranslation();
   const otherRaw = getOtherParticipant(conversation, currentUserId);
   const profile = otherRaw?.id ? participantProfiles[otherRaw.id] : undefined;
   const other =
@@ -230,11 +232,11 @@ const ConversationItem: React.FC<{
           <p className={`truncate text-[13px] leading-tight flex-1 ${isUnread ? "font-semibold text-zinc-900" : "text-zinc-500"}`}>
             {last ? (
               <>
-                {last.senderId === currentUserId && "You: "}
-                {isImageContent(last.content) ? "Photo" : last.content}
+                {last.senderId === currentUserId && t.chat.you}
+                {isImageContent(last.content) ? t.chat.photo : last.content}
               </>
             ) : (
-              <span className="italic opacity-80">Start a conversation</span>
+              <span className="italic opacity-80">{t.chat.start_conversation}</span>
             )}
           </p>
           {isUnread && (
@@ -255,6 +257,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
   const router = useRouter();
   const pathname = usePathname();
   const { addToast } = useToast();
+  const { t } = useTranslation();
   
   const {
     conversations,
@@ -417,12 +420,12 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
     if (!trimmed) return;
 
     if (connectionStatus !== "connected") {
-      addToast("Connecting...", "info");
+      addToast(t.chat.connecting, "info");
     }
 
     const receiverId = resolveReceiverId();
     if (!receiverId) {
-      addToast("Please choose a recipient before sending", "error");
+      addToast(t.chat.select_recipient, "error");
       return;
     }
 
@@ -435,7 +438,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
       setDraft("");
       inputRef.current?.focus();
     } catch (_error: unknown) { // eslint-disable-line @typescript-eslint/no-unused-vars
-      addToast("Failed to send", "error");
+      addToast(t.chat.send_failed, "error");
     }
   };
 
@@ -450,7 +453,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
       const imageUrl = await uploadToBucket(config.supabaseChatBucket, file);
       await sendContent(imageUrl);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Upload image failed";
+      const message = error instanceof Error ? error.message : t.chat.upload_failed;
       addToast(message, "error");
     } finally {
       setUploadingImage(false);
@@ -466,7 +469,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
     <div className="flex h-full flex-col bg-white">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-4 border-b border-zinc-100/50 bg-white/80 backdrop-blur-md sticky top-0 z-10">
-        <h1 className="text-xl font-bold text-zinc-800 tracking-tight">Chats</h1>
+        <h1 className="text-xl font-bold text-zinc-800 tracking-tight">{t.chat.chats}</h1>
         <div className="flex gap-1">
            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-zinc-500 hover:bg-zinc-100">
               <MoreHorizontal size={20} />
@@ -490,7 +493,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-emerald-500 transition-colors" size={16} />
           <Input
             className="h-10 pl-10 rounded-full bg-zinc-100 border-transparent focus:border-emerald-500/20 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 transition-all text-[14px]"
-            placeholder="Search Messenger"
+            placeholder={t.chat.search_placeholder}
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
           />
@@ -506,8 +509,8 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
               <div className="bg-zinc-50 p-3 rounded-full mb-3">
                  <MessageCircle className="text-zinc-300" size={24}/>
               </div>
-              <p className="text-zinc-500 text-sm font-medium">No messages yet</p>
-              <p className="text-zinc-400 text-xs mt-1">Start chatting with sellers!</p>
+              <p className="text-zinc-500 text-sm font-medium">{t.chat.no_messages}</p>
+              <p className="text-zinc-400 text-xs mt-1">{t.chat.start_chatting}</p>
            </div>
         ) : (
             filteredConversations.map(conv => (
@@ -530,10 +533,10 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
       {/* New Chat Input */}
       <div className="p-3 border-t border-zinc-100 bg-zinc-50/50">
          <div className="flex items-center gap-2 bg-white p-1.5 rounded-lg border border-zinc-200 shadow-sm">
-             <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider px-2">TO:</span>
+             <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider px-2">{t.chat.to}</span>
              <input 
                 className="flex-1 text-sm bg-transparent outline-none placeholder:text-zinc-300 text-zinc-700 min-w-0"
-                placeholder="User ID..."
+                placeholder={t.chat.user_id_placeholder}
                 value={composeTarget}
                 onChange={(e) => {
                     setComposeTarget(e.target.value);
@@ -555,9 +558,9 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
                  <div className="h-24 w-24 bg-white rounded-full shadow-sm flex items-center justify-center mb-6 ring-1 ring-zinc-100">
                      <MessageCircle size={40} className="text-emerald-500" />
                  </div>
-                 <h3 className="text-xl font-bold text-zinc-900">Welcome to Chat</h3>
+                 <h3 className="text-xl font-bold text-zinc-900">{t.chat.welcome_title}</h3>
                  <p className="text-zinc-500 text-sm mt-2 max-w-xs leading-relaxed">
-                    Select a conversation from the left to start messaging securely with sellers.
+                    {t.chat.welcome_desc}
                  </p>
              </div>
          );
@@ -604,10 +607,10 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
                      <div className="flex flex-col">
                          <span className="text-[15px] font-bold text-zinc-900 leading-none flex items-center gap-1.5">
                             {displayName}
-                            {isSeller && <span className="text-[9px] bg-orange-50 text-orange-600 px-1.5 py-0.5 rounded-md font-extrabold tracking-wide border border-orange-100">SELLER</span>}
+                            {isSeller && <span className="text-[9px] bg-orange-50 text-orange-600 px-1.5 py-0.5 rounded-md font-extrabold tracking-wide border border-orange-100">{t.profile.seller_badge.toUpperCase()}</span>}
                          </span>
                          <span className="text-[11px] font-medium text-zinc-400 mt-0.5">
-                             {connectionStatus === "connected" ? "Active now" : "Offline"}
+                             {connectionStatus === "connected" ? t.chat.active_now : t.chat.offline}
                          </span>
                      </div>
                  </div>
@@ -695,7 +698,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
                           <Input
                               ref={inputRef}
                               className="w-full rounded-3xl bg-zinc-100 border-transparent py-2.5 px-4 focus:bg-white focus:border-emerald-200 focus:ring-4 focus:ring-emerald-500/10 transition-all shadow-sm min-h-[42px] max-h-[120px] text-[15px] resize-none overflow-hidden"
-                              placeholder="Type a message..."
+                              placeholder={t.chat.type_message}
                              value={draft}
                              onChange={(e) => setDraft(e.target.value)}
                              onKeyDown={(e) => {
@@ -760,7 +763,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
             <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3 group">
                 {unreadTotal > 0 && (
                     <div className="bg-white px-4 py-2 rounded-xl shadow-lg border border-zinc-100 mb-2 animate-in slide-in-from-bottom-2 fade-in duration-300 origin-bottom-right">
-                        <p className="text-sm font-semibold text-zinc-800">You have <span className="text-emerald-600">{unreadTotal}</span> new messages</p>
+                        <p className="text-sm font-semibold text-zinc-800" dangerouslySetInnerHTML={{ __html: t.chat.new_messages.replace("{{count}}", unreadTotal.toString()) }} />
                     </div>
                 )}
                 <Button
@@ -798,7 +801,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
              {!isAuthenticated ? (
                  <div className="flex flex-col h-full bg-linear-to-b from-emerald-50 to-white">
                      <div className="flex justify-between items-center p-4">
-                         <span className="font-bold text-emerald-800 tracking-tight text-lg">EcomX Support</span>
+                         <span className="font-bold text-emerald-800 tracking-tight text-lg">{t.chat.support_title}</span>
                          <Button variant="ghost" size="sm" onClick={() => setIsOpen(false)} className="hover:bg-black/5 rounded-full h-8 w-8 p-0"><X size={20}/></Button>
                      </div>
                      <div className="flex-1 flex flex-col items-center justify-center p-8 text-center gap-6">
@@ -806,13 +809,13 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
                              <MessageCircle size={40} className="text-emerald-500 fill-emerald-50" />
                          </div>
                          <div className="space-y-2">
-                            <h3 className="font-bold text-xl text-zinc-900">Hello there! 👋</h3>
+                            <h3 className="font-bold text-xl text-zinc-900">{t.chat.hello}</h3>
                             <p className="text-sm text-zinc-500 leading-relaxed max-w-60 mx-auto">
-                                Sign in to start chatting with sellers, track orders, and get support.
+                                {t.chat.login_prompt}
                             </p>
                          </div>
                          <Button className="w-full max-w-[200px] bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-200" onClick={() => router.push(loginHref)}>
-                             Log In Now
+                             {t.chat.login_now}
                          </Button>
                      </div>
                  </div>

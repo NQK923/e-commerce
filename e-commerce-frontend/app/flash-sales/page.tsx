@@ -11,12 +11,14 @@ import { Skeleton } from "@/src/components/ui/skeleton";
 import { formatCurrency } from "@/src/utils/format";
 import { Button } from "@/src/components/ui/button";
 import { Clock, Zap } from "lucide-react";
+import { useTranslation } from "@/src/providers/language-provider";
 
 export default function FlashSalesPage() {
   const [sales, setSales] = useState<FlashSale[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const router = useRouter();
+  const { t } = useTranslation();
 
   useEffect(() => {
     const fetchSales = async () => {
@@ -61,10 +63,10 @@ export default function FlashSalesPage() {
             },
             paymentMethod: "CREDIT_CARD"
         });
-        alert("Đặt hàng thành công!"); // Could be improved with Toast
+        alert(t.flash_sales.order_success); // Could be improved with Toast
         router.push("/orders");
     } catch (e) {
-        alert("Lỗi khi mua hàng: " + e);
+        alert(t.flash_sales.order_error + e);
     }
   };
 
@@ -75,8 +77,8 @@ export default function FlashSalesPage() {
               <Zap className="h-8 w-8 text-red-600 fill-red-600 animate-pulse" />
           </div>
           <div>
-              <h1 className="text-3xl font-bold text-zinc-900">Flash Sales</h1>
-              <p className="text-zinc-500">Săn deal hot, số lượng có hạn!</p>
+              <h1 className="text-3xl font-bold text-zinc-900">{t.flash_sales.title}</h1>
+              <p className="text-zinc-500">{t.flash_sales.subtitle}</p>
           </div>
       </div>
 
@@ -96,7 +98,7 @@ export default function FlashSalesPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {sales.length === 0 ? (
                 <div className="col-span-full py-12 text-center text-zinc-500 bg-white rounded-xl border border-dashed">
-                    Không có chương trình Flash Sale nào đang diễn ra.
+                    {t.flash_sales.empty}
                 </div>
             ) : (
                 sales.map(sale => {
@@ -106,10 +108,10 @@ export default function FlashSalesPage() {
                         <div className="relative aspect-square bg-zinc-100 flex items-center justify-center">
                             {/* Placeholder image logic since FlashSale doesn't have image yet. 
                                 In real app, we would fetch product details to get image. */}
-                            <div className="text-zinc-400 font-medium">Không có ảnh</div>
+                            <div className="text-zinc-400 font-medium">{t.common.no_image}</div>
                             <div className="absolute top-3 left-3">
                                 <Badge className="bg-red-600 text-white border-red-600 animate-pulse">
-                                    Đang giảm giá
+                                    {t.flash_sales.on_sale_badge}
                                 </Badge>
                             </div>
                         </div>
@@ -130,8 +132,8 @@ export default function FlashSalesPage() {
 
                             <div className="space-y-2 mt-auto">
                                 <div className="flex justify-between text-xs text-zinc-500 mb-1">
-                                    <span>Đã bán: {sale.totalQuantity - sale.remainingQuantity}</span>
-                                    <span>Còn lại: {sale.remainingQuantity}</span>
+                                    <span>{t.flash_sales.sold.replace("{{count}}", (sale.totalQuantity - sale.remainingQuantity).toString())}</span>
+                                    <span>{t.flash_sales.remaining.replace("{{count}}", sale.remainingQuantity.toString())}</span>
                                 </div>
                                 <div className="h-2 w-full bg-zinc-100 rounded-full overflow-hidden">
                                     <div 
@@ -144,7 +146,7 @@ export default function FlashSalesPage() {
                             <div className="mt-4 pt-4 border-t border-zinc-100 flex items-center justify-between text-xs text-zinc-500">
                                 <div className="flex items-center gap-1">
                                     <Clock size={14} />
-                                    <span>Kết thúc: {new Date(sale.endTime).toLocaleDateString()}</span>
+                                    <span>{t.flash_sales.ends_in.replace("{{date}}", new Date(sale.endTime).toLocaleDateString())}</span>
                                 </div>
                             </div>
 
@@ -153,7 +155,7 @@ export default function FlashSalesPage() {
                                 className="mt-4 w-full bg-red-600 hover:bg-red-700 text-white font-semibold"
                                 disabled={sale.remainingQuantity <= 0}
                             >
-                                {sale.remainingQuantity > 0 ? "Mua Ngay" : "Hết Hàng"}
+                                {sale.remainingQuantity > 0 ? t.flash_sales.buy_now : t.flash_sales.sold_out}
                             </Button>
                         </div>
                       </Card>

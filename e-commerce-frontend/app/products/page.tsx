@@ -113,8 +113,7 @@ function ProductsContent() {
               <div className="flex items-center justify-between">
                 <h3 className="font-bold text-zinc-900">{t.home.categories.title}</h3>
                 <button onClick={clearFilters} className="text-xs text-emerald-600 hover:underline">
-                  {t.common.retry} {/* Using 'Retry' as 'Clear' placeholder if 'Clear' not exists, checking translation map later or just hardcoding 'Clear' if needed, but 'Retry' is wrong context. Let's stick to clear text or add new key. */}
-                  Clear
+                  {t.nav.clear_filters}
                 </button>
               </div>
               <div className="mt-4 space-y-4">
@@ -122,7 +121,7 @@ function ProductsContent() {
                 <div>
                   <label className="text-xs font-semibold text-zinc-500 uppercase">{t.nav.search_placeholder}</label>
                   <Input 
-                    placeholder="Keyword..." 
+                    placeholder={t.nav.search_placeholder} 
                     value={search} 
                     onChange={(e) => { setSearch(e.target.value); setPage(0); }} 
                     className="mt-1.5"
@@ -161,11 +160,11 @@ function ProductsContent() {
 
                 {/* Price Range */}
                 <div>
-                  <label className="text-xs font-semibold text-zinc-500 uppercase">Price Range ({t.product.currency})</label>
+                  <label className="text-xs font-semibold text-zinc-500 uppercase">{t.nav.price_range} ({t.product.currency})</label>
                   <div className="mt-2 flex items-center gap-2">
                     <Input 
                       type="number" 
-                      placeholder="Min" 
+                      placeholder={t.nav.min_price} 
                       value={minPrice} 
                       onChange={(e) => { setMinPrice(e.target.value); setPage(0); }}
                       className="h-9 text-sm"
@@ -173,7 +172,7 @@ function ProductsContent() {
                     <span className="text-zinc-400">-</span>
                     <Input 
                       type="number" 
-                      placeholder="Max" 
+                      placeholder={t.nav.max_price} 
                       value={maxPrice} 
                       onChange={(e) => { setMaxPrice(e.target.value); setPage(0); }}
                       className="h-9 text-sm"
@@ -200,12 +199,14 @@ function ProductsContent() {
             <div className="hidden lg:block">
               <h1 className="text-3xl font-bold text-zinc-900">{t.nav.products}</h1>
               <p className="text-sm text-zinc-500 mt-1">
-                Showing {data?.items.length || 0} of {data?.total || 0} results
+                {t.nav.showing_results
+                    .replace("{{count}}", (data?.items.length || 0).toString())
+                    .replace("{{total}}", (data?.total || 0).toString())}
               </p>
             </div>
             
             <div className="flex items-center gap-3 ml-auto">
-              <span className="text-sm text-zinc-500">Sort by:</span>
+              <span className="text-sm text-zinc-500">{t.nav.sort_by}</span>
               <select 
                 value={sort}
                 onChange={(e) => { setSort(e.target.value); setPage(0); }}
@@ -213,11 +214,10 @@ function ProductsContent() {
               >
                 {SORT_OPTIONS.map(opt => (
                   <option key={opt.value} value={opt.value}>
-                    {/* Simplified mapping for demo, ideally use t[opt.label] */}
-                    {opt.label === "newest_arrivals" ? "Newest Arrivals" : 
-                     opt.label === "price_low_high" ? "Price: Low to High" :
-                     opt.label === "price_high_low" ? "Price: High to Low" : 
-                     opt.label === "best_selling" ? "Best Selling" : opt.label}
+                    {opt.label === "newest_arrivals" ? t.nav.sort_options.newest : 
+                     opt.label === "price_low_high" ? t.nav.sort_options.price_low_high :
+                     opt.label === "price_high_low" ? t.nav.sort_options.price_high_low : 
+                     opt.label === "best_selling" ? t.nav.sort_options.best_selling : opt.label}
                   </option>
                 ))}
               </select>
@@ -248,12 +248,12 @@ function ProductsContent() {
                   <div className="h-16 w-16 rounded-full bg-zinc-100 flex items-center justify-center mb-4 text-zinc-400">
                     <SlidersHorizontal size={32} />
                   </div>
-                  <h3 className="text-lg font-semibold text-zinc-900">{t.home.featured.no_products}</h3>
+                  <h3 className="text-lg font-semibold text-zinc-900">{t.nav.no_products_found}</h3>
                   <p className="text-zinc-500 max-w-md mt-2">
-                    Try adjusting your filters or search query to find what you&#39;re looking for.
+                    {t.nav.try_adjust_filters}
                   </p>
                   <Button variant="secondary" className="mt-6" onClick={clearFilters}>
-                    Clear Filters
+                    {t.nav.clear_filters}
                   </Button>
                 </div>
               )}
@@ -266,17 +266,19 @@ function ProductsContent() {
                     disabled={page === 0} 
                     onClick={() => { setPage(p => p - 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                   >
-                    Previous
+                    {t.nav.previous}
                   </Button>
                   <div className="flex items-center gap-1 px-4 text-sm font-medium">
-                    Page {page + 1} of {totalPages}
+                    {t.nav.page_info
+                        .replace("{{current}}", (page + 1).toString())
+                        .replace("{{total}}", totalPages.toString())}
                   </div>
                   <Button 
                     variant="outline" 
                     disabled={page + 1 >= totalPages} 
                     onClick={() => { setPage(p => p + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                   >
-                    Next
+                    {t.nav.next}
                   </Button>
                 </div>
               )}
@@ -289,11 +291,12 @@ function ProductsContent() {
 }
 
 export default function ProductsPage() {
+  const { t } = useTranslation();
   return (
     <Suspense fallback={
       <div className="flex min-h-[60vh] items-center justify-center gap-3 text-sm text-zinc-600">
         <Spinner />
-        Loading...
+        {t.common.loading}
       </div>
     }>
       <ProductsContent />

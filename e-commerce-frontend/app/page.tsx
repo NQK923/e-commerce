@@ -68,7 +68,7 @@ export default function HomePage() {
     { icon: Truck, title: t.home.features.shipping, desc: t.home.features.shipping_desc },
     { icon: ShieldCheck, title: t.home.features.payment, desc: t.home.features.payment_desc },
     { icon: Clock, title: t.home.features.support, desc: t.home.features.support_desc },
-    { icon: Star, title: "Chất lượng", desc: "Cam kết sản phẩm chính hãng" },
+    { icon: Star, title: t.home.quality, desc: t.home.quality_desc },
   ];
 
   const renderErrorState = () => (
@@ -116,7 +116,7 @@ export default function HomePage() {
                 </Link>
                 <Link href="/products?category=sale">
                   <Button size="lg" variant="outline" className="h-14 px-8 text-lg border-emerald-200/30 text-emerald-100 hover:bg-white/10 hover:text-white rounded-full bg-transparent">
-                    Xem khuyến mãi
+                    {t.home.view_promotions}
                   </Button>
                 </Link>
               </div>
@@ -170,7 +170,7 @@ export default function HomePage() {
       {/* 3. Categories */}
       <section className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl font-bold text-zinc-900">{t.home.categories.title} nổi bật</h2>
+            <h2 className="text-2xl font-bold text-zinc-900">{t.home.categories.title}{t.home.categories.featured_suffix}</h2>
         </div>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:gap-8">
           {Categories.map((cat, i) => (
@@ -183,7 +183,7 @@ export default function HomePage() {
                 <cat.icon size={32} />
               </div>
               <span className="text-lg font-medium text-zinc-900 group-hover:text-emerald-700">{cat.name}</span>
-              <span className="mt-1 text-xs text-zinc-400 group-hover:text-emerald-500/70">Khám phá ngay</span>
+              <span className="mt-1 text-xs text-zinc-400 group-hover:text-emerald-500/70">{t.home.explore_now}</span>
             </Link>
           ))}
         </div>
@@ -194,10 +194,10 @@ export default function HomePage() {
         <div className="flex items-center justify-between mb-8">
            <div className="flex items-center gap-2">
               <Zap className="h-6 w-6 text-amber-500 fill-amber-500 animate-pulse" />
-              <h2 className="text-2xl font-bold text-zinc-900">Sản phẩm bán chạy</h2>
+              <h2 className="text-2xl font-bold text-zinc-900">{t.home.best_sellers_title}</h2>
            </div>
            <Link href="/products?sort=soldCount,desc" className="text-sm font-medium text-emerald-600 hover:text-emerald-700 hover:underline">
-              Xem tất cả &rarr;
+              {t.home.view_all_arrow} &rarr;
            </Link>
         </div>
 
@@ -224,7 +224,7 @@ export default function HomePage() {
                 ))}
                 {bestSellers.length === 0 && (
                   <div className="col-span-full py-12 text-center text-zinc-500 bg-white rounded-xl border border-dashed">
-                     Chưa có dữ liệu sản phẩm bán chạy.
+                     {t.home.no_best_sellers}
                   </div>
                 )}
               </>
@@ -242,17 +242,17 @@ export default function HomePage() {
             <div className="relative grid items-center gap-8 px-8 py-12 lg:grid-cols-2 lg:px-16 lg:py-20">
                 <div className="space-y-6">
                     <span className="inline-block rounded-lg bg-white/10 px-3 py-1 text-sm font-medium text-purple-200 backdrop-blur">
-                        Khuyến mãi đặc biệt
+                        {t.home.special_offer}
                     </span>
                     <h2 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
-                        Giảm đến 50% cho <br/>
-                        <span className="text-purple-300">Flash Sales mỗi ngày</span>
+                        {t.home.discount_up_to} <br/>
+                        <span className="text-purple-300">{t.home.flash_sale_daily}</span>
                     </h2>
                     <p className="max-w-md text-lg text-purple-100/80">
-                        Đừng bỏ lỡ cơ hội sở hữu những món đồ thời thượng với giá cực hời. Số lượng có hạn!
+                        {t.home.promo_desc}
                     </p>
                     <Button size="lg" className="bg-white text-purple-900 hover:bg-purple-50 border-0 font-bold">
-                        <Link href="/flash-sales">Săn Flash Sale ngay</Link>
+                        <Link href="/flash-sales">{t.home.hunt_flash_sale}</Link>
                     </Button>
                 </div>
                 {/* Decorative Element */}
@@ -271,9 +271,9 @@ export default function HomePage() {
       {/* 6. New Arrivals */}
       <section className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-8">
-          <h2 className="text-2xl font-bold text-zinc-900">Sản phẩm mới nhất</h2>
+          <h2 className="text-2xl font-bold text-zinc-900">{t.home.new_arrivals_title}</h2>
           <Link href="/products" className="text-sm font-medium text-emerald-600 hover:underline">
-            Xem tất cả &rarr;
+            {t.home.view_all_arrow} &rarr;
           </Link>
         </div>
 
@@ -304,7 +304,7 @@ export default function HomePage() {
         <div className="mt-12 text-center">
             <Link href="/products">
                 <Button variant="outline" size="lg" className="min-w-[200px] border-zinc-300 bg-white hover:bg-zinc-50">
-                    Xem thêm sản phẩm
+                    {t.home.load_more_products}
                 </Button>
             </Link>
         </div>

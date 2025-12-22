@@ -11,12 +11,14 @@ import { useRequireAuth } from "@/src/hooks/use-require-auth";
 import { Order } from "@/src/types/order";
 import { formatCurrency, formatDate } from "@/src/utils/format";
 import { useToast } from "@/src/components/ui/toast-provider";
+import { useTranslation } from "@/src/providers/language-provider";
 
 export default function OrderDetailPage() {
   const params = useParams<{ id: string }>();
   const orderId = params?.id;
   const { isAuthenticated, initializing } = useRequireAuth();
   const { addToast } = useToast();
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
@@ -37,13 +39,13 @@ export default function OrderDetailPage() {
       setOrder(response);
       setError(null);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to load order";
+      const message = err instanceof Error ? err.message : t.orders.load_failed;
       setError(message);
       addToast(message, "error");
     } finally {
       setLoading(false);
     }
-  }, [addToast, orderId]);
+  }, [addToast, orderId, t]);
 
   const handleShip = async () => {
     if (!order) return;
@@ -54,9 +56,9 @@ export default function OrderDetailPage() {
         trackingCarrier,
       });
       setOrder(updated);
-      addToast("Shipment started", "success");
+      addToast(t.orders.shipment_started, "success");
     } catch (err) {
-      addToast("Failed to start shipping", "error");
+      addToast(t.common.error, "error");
     } finally {
       setWorking(false);
     }
@@ -68,9 +70,9 @@ export default function OrderDetailPage() {
     try {
       const updated = await orderApi.markDelivered(order.id);
       setOrder(updated);
-      addToast("Order marked as delivered", "success");
+      addToast(t.orders.marked_delivered, "success");
     } catch {
-      addToast("Failed to mark delivered", "error");
+      addToast(t.common.error, "error");
     } finally {
       setWorking(false);
     }
@@ -86,9 +88,9 @@ export default function OrderDetailPage() {
         note: returnNote,
       });
       setOrder(updated);
-      addToast("Return requested. We'll review it soon.", "success");
+      addToast(t.orders.return_requested, "success");
     } catch (err) {
-      addToast("Unable to request a return", "error");
+      addToast(t.common.error, "error");
     } finally {
       setWorking(false);
     }
@@ -104,9 +106,9 @@ export default function OrderDetailPage() {
         note: returnNote,
       });
       setOrder(updated);
-      addToast("Return approved and refund recorded", "success");
+      addToast(t.orders.return_approved, "success");
     } catch {
-      addToast("Failed to approve return", "error");
+      addToast(t.common.error, "error");
     } finally {
       setWorking(false);
     }
@@ -118,9 +120,9 @@ export default function OrderDetailPage() {
     try {
       const updated = await orderApi.rejectReturn(order.id, { note: returnNote });
       setOrder(updated);
-      addToast("Return rejected", "success");
+      addToast(t.orders.return_rejected, "success");
     } catch {
-      addToast("Failed to reject return", "error");
+      addToast(t.common.error, "error");
     } finally {
       setWorking(false);
     }
@@ -147,7 +149,7 @@ export default function OrderDetailPage() {
     return (
       <div className="flex min-h-[60vh] items-center justify-center gap-3 text-sm text-zinc-600">
         <Spinner />
-        Loading order...
+        {t.orders.loading}
       </div>
     );
   }
@@ -155,10 +157,10 @@ export default function OrderDetailPage() {
   if (error || !order) {
     return (
       <div className="mx-auto flex max-w-3xl flex-col items-center gap-3 px-4 py-10 text-center">
-        <p className="text-lg font-semibold text-black">Unable to load order.</p>
+        <p className="text-lg font-semibold text-black">{t.orders.load_failed}</p>
         <p className="text-sm text-zinc-600">{error}</p>
         <Button variant="secondary" onClick={loadOrder}>
-          Retry
+          {t.orders.retry}
         </Button>
       </div>
     );
@@ -168,14 +170,14 @@ export default function OrderDetailPage() {
     <div className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-10">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-black">Order #{order.id}</h1>
-          <p className="text-sm text-zinc-600">Placed on {formatDate(order.createdAt)}</p>
+          <h1 className="text-2xl font-bold text-black">{t.orders.order_id.replace("{{id}}", order.id)}</h1>
+          <p className="text-sm text-zinc-600">{t.orders.placed_on.replace("{{date}}", formatDate(order.createdAt))}</p>
         </div>
         <div className="flex items-center gap-2">
           <Badge>{order.status}</Badge>
           {order.returnStatus && order.returnStatus !== "NONE" ? (
             <Badge tone={order.returnStatus === "REQUESTED" ? "warning" : order.returnStatus === "APPROVED" ? "success" : "danger"}>
-              Return: {order.returnStatus}
+              {t.orders.return_status.replace("{{status}}", order.returnStatus)}
             </Badge>
           ) : null}
         </div>
@@ -183,18 +185,18 @@ export default function OrderDetailPage() {
 
       <div className="grid gap-6 lg:grid-cols-[2fr,1fr]">
         <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-          <h2 className="text-lg font-semibold text-black">Items</h2>
+          <h2 className="text-lg font-semibold text-black">{t.orders.items}</h2>
           <div className="mt-4 space-y-3">
             {order.items.map((item) => (
               <div key={item.id} className="flex items-center justify-between rounded-xl border border-zinc-200 p-3">
                 <div className="flex flex-col">
-                  <span className="text-sm font-semibold text-black">Product {item.productId}</span>
-                  <span className="text-xs text-zinc-500">Quantity: {item.quantity}</span>
+                  <span className="text-sm font-semibold text-black">{t.product.loading.replace("...", "")} {item.productId}</span>
+                  <span className="text-xs text-zinc-500">{t.orders.quantity}: {item.quantity}</span>
                 </div>
                 <div className="text-right text-sm font-semibold text-black">
                   {formatCurrency(item.subtotal, order.currency ?? "USD")}
                   <div className="text-xs text-zinc-500">
-                    {formatCurrency(item.price, order.currency ?? "USD")} each
+                    {formatCurrency(item.price, order.currency ?? "USD")} {t.orders.each}
                   </div>
                 </div>
               </div>
@@ -203,48 +205,48 @@ export default function OrderDetailPage() {
         </div>
         <div className="space-y-4">
           <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-            <h3 className="text-lg font-semibold text-black">Payment</h3>
-            <p className="mt-2 text-sm text-zinc-600">Status: {order.status}</p>
+            <h3 className="text-lg font-semibold text-black">{t.orders.payment}</h3>
+            <p className="mt-2 text-sm text-zinc-600">{t.orders.status}: {order.status}</p>
             <p className="text-sm text-zinc-600">
-              Total: {formatCurrency(order.total, order.currency ?? "USD")}
+              {t.orders.total}: {formatCurrency(order.total, order.currency ?? "USD")}
             </p>
             {order.refundAmount ? (
               <p className="text-sm text-zinc-600">
-                Refund: {formatCurrency(order.refundAmount, order.currency ?? "USD")}
+                {t.orders.refund}: {formatCurrency(order.refundAmount, order.currency ?? "USD")}
               </p>
             ) : null}
           </div>
 
           <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm space-y-2">
-            <h3 className="text-lg font-semibold text-black">Shipment</h3>
+            <h3 className="text-lg font-semibold text-black">{t.orders.shipment}</h3>
             {order.trackingNumber ? (
               <div className="text-sm text-zinc-700 space-y-1">
-                <p>Tracking: {order.trackingNumber}</p>
-                {order.trackingCarrier ? <p>Carrier: {order.trackingCarrier}</p> : null}
-                {order.shippedAt ? <p>Shipped at: {formatDate(order.shippedAt)}</p> : null}
-                {order.deliveredAt ? <p>Delivered at: {formatDate(order.deliveredAt)}</p> : null}
+                <p>{t.orders.tracking}: {order.trackingNumber}</p>
+                {order.trackingCarrier ? <p>{t.orders.carrier}: {order.trackingCarrier}</p> : null}
+                {order.shippedAt ? <p>{t.orders.shipped_at}: {formatDate(order.shippedAt)}</p> : null}
+                {order.deliveredAt ? <p>{t.orders.delivered_at}: {formatDate(order.deliveredAt)}</p> : null}
               </div>
             ) : (
-              <p className="text-sm text-zinc-600">No tracking assigned yet.</p>
+              <p className="text-sm text-zinc-600">{t.orders.no_tracking}</p>
             )}
 
             {isAdmin && order.status === "PAID" ? (
               <div className="space-y-2 pt-2 border-t border-zinc-100">
                 <input
                   className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
-                  placeholder="Tracking number"
+                  placeholder={t.orders.tracking_number_placeholder}
                   value={trackingNumber}
                   onChange={(e) => setTrackingNumber(e.target.value)}
                 />
                 <input
                   className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
-                  placeholder="Carrier (optional)"
+                  placeholder={t.orders.carrier_placeholder}
                   value={trackingCarrier}
                   onChange={(e) => setTrackingCarrier(e.target.value)}
                 />
                 <Button onClick={handleShip} disabled={working || !trackingNumber}>
                   {working ? <Spinner className="mr-2 h-4 w-4" /> : null}
-                  Start shipping
+                  {t.orders.start_shipping}
                 </Button>
               </div>
             ) : null}
@@ -252,36 +254,36 @@ export default function OrderDetailPage() {
             {isAdmin && order.status === "SHIPPING" ? (
               <Button onClick={handleMarkDelivered} disabled={working}>
                 {working ? <Spinner className="mr-2 h-4 w-4" /> : null}
-                Mark delivered
+                {t.orders.mark_delivered}
               </Button>
             ) : null}
           </div>
 
           <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm space-y-2">
-            <h3 className="text-lg font-semibold text-black">Returns & Refunds</h3>
+            <h3 className="text-lg font-semibold text-black">{t.orders.returns_refunds}</h3>
             <div className="text-sm text-zinc-700 space-y-1">
-              <p>Return status: {order.returnStatus ?? "NONE"}</p>
-              {order.returnReason ? <p>Reason: {order.returnReason}</p> : null}
-              {order.returnNote ? <p>Note: {order.returnNote}</p> : null}
+              <p>{t.orders.return_status.replace("{{status}}", order.returnStatus ?? "NONE")}</p>
+              {order.returnReason ? <p>{t.orders.reason}: {order.returnReason}</p> : null}
+              {order.returnNote ? <p>{t.orders.note}: {order.returnNote}</p> : null}
             </div>
 
             {order.status === "DELIVERED" && (!order.returnStatus || order.returnStatus === "NONE") && isOwner ? (
               <div className="space-y-2 pt-2 border-t border-zinc-100">
                 <textarea
                   className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
-                  placeholder="Reason for return"
+                  placeholder={t.orders.reason_placeholder}
                   value={returnReason}
                   onChange={(e) => setReturnReason(e.target.value)}
                 />
                 <textarea
                   className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
-                  placeholder="Additional notes (optional)"
+                  placeholder={t.orders.notes_placeholder}
                   value={returnNote}
                   onChange={(e) => setReturnNote(e.target.value)}
                 />
                 <Button onClick={handleRequestReturn} disabled={working}>
                   {working ? <Spinner className="mr-2 h-4 w-4" /> : null}
-                  Request return
+                  {t.orders.request_return}
                 </Button>
               </div>
             ) : null}
@@ -290,23 +292,23 @@ export default function OrderDetailPage() {
               <div className="space-y-2 pt-2 border-t border-zinc-100">
                 <input
                   className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
-                  placeholder={`Refund amount (${order.currency ?? "USD"})`}
+                  placeholder={t.orders.refund_amount_placeholder.replace("{{currency}}", order.currency ?? "USD")}
                   value={refundAmount}
                   onChange={(e) => setRefundAmount(e.target.value)}
                 />
                 <textarea
                   className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
-                  placeholder="Resolution note"
+                  placeholder={t.orders.resolution_note_placeholder}
                   value={returnNote}
                   onChange={(e) => setReturnNote(e.target.value)}
                 />
                 <div className="flex gap-2">
                   <Button onClick={handleApproveReturn} disabled={working}>
                     {working ? <Spinner className="mr-2 h-4 w-4" /> : null}
-                    Approve & refund
+                    {t.orders.approve_refund}
                   </Button>
                   <Button variant="secondary" onClick={handleRejectReturn} disabled={working}>
-                    Reject
+                    {t.orders.reject}
                   </Button>
                 </div>
               </div>

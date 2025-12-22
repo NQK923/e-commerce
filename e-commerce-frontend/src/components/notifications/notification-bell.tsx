@@ -7,11 +7,13 @@ import { useNotifications } from "@/src/store/notification-store";
 import { useAuth } from "@/src/store/auth-store";
 import { Button } from "../ui/button";
 import { Skeleton } from "../ui/skeleton";
+import { useTranslation } from "@/src/providers/language-provider";
 
 export const NotificationBell: React.FC = () => {
   const { user } = useAuth();
   const { notifications, unreadCount, loading, markRead, refresh } = useNotifications();
   const [open, setOpen] = useState(false);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (open) void refresh();
@@ -24,7 +26,7 @@ export const NotificationBell: React.FC = () => {
       <button
         className="relative p-2 text-zinc-600 hover:text-emerald-600 transition-colors"
         onClick={() => setOpen((prev) => !prev)}
-        aria-label="Notifications"
+        aria-label={t.notifications.title}
       >
         <Bell size={20} />
         {unreadCount > 0 && (
@@ -37,9 +39,9 @@ export const NotificationBell: React.FC = () => {
       {open && (
         <div className="absolute right-0 mt-3 w-80 rounded-xl border border-zinc-200 bg-white shadow-xl overflow-hidden z-50">
           <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-100">
-            <div className="font-semibold text-zinc-800 text-sm">Thông báo</div>
+            <div className="font-semibold text-zinc-800 text-sm">{t.notifications.title}</div>
             <Button variant="ghost" size="sm" onClick={() => void refresh()} className="text-xs text-emerald-600">
-              Làm mới
+              {t.notifications.refresh}
             </Button>
           </div>
           <div className="max-h-96 overflow-y-auto">
@@ -56,7 +58,7 @@ export const NotificationBell: React.FC = () => {
                 ))}
               </div>
             ) : notifications.length === 0 ? (
-              <div className="p-4 text-sm text-zinc-500 text-center">Chưa có thông báo</div>
+              <div className="p-4 text-sm text-zinc-500 text-center">{t.notifications.empty}</div>
             ) : (
               notifications.map((n) => (
                 <div
@@ -76,7 +78,7 @@ export const NotificationBell: React.FC = () => {
                   </div>
                   {n.status === "UNREAD" && (
                     <Button variant="ghost" size="sm" className="text-xs text-emerald-600" onClick={() => void markRead(n.id)}>
-                      Đã đọc
+                      {t.notifications.mark_read}
                     </Button>
                   )}
                 </div>
@@ -84,7 +86,7 @@ export const NotificationBell: React.FC = () => {
             )}
           </div>
           <div className="border-t border-zinc-100 px-4 py-2 text-right text-xs">
-            <Link href="/notifications" className="text-emerald-600 hover:text-emerald-700">Xem tất cả</Link>
+            <Link href="/notifications" className="text-emerald-600 hover:text-emerald-700">{t.notifications.view_all}</Link>
           </div>
         </div>
       )}

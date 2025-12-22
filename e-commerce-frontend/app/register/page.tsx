@@ -28,7 +28,7 @@ export default function RegisterPage() {
 
   const handleSendOtp = async () => {
     if (!form.email) {
-      addToast("Please enter your email before requesting an OTP.", "error");
+      addToast(t.auth.enter_email_warning, "error");
       return;
     }
     setOtpSending(true);
@@ -36,9 +36,9 @@ export default function RegisterPage() {
       const challenge = await authApi.requestOtp(form.email);
       setChallengeId(challenge.id);
       setOtpExpiresAt(challenge.expiresAt);
-      addToast("Verification code sent to your email.", "success");
+      addToast(t.auth.otp_sent_success, "success");
     } catch (error) {
-      addToast("Could not send OTP right now. Please try again.", "error");
+      addToast(t.auth.otp_send_failed, "error");
     } finally {
       setOtpSending(false);
     }
@@ -51,7 +51,7 @@ export default function RegisterPage() {
       return;
     }
     if (!challengeId || !form.otpCode) {
-      addToast("Please verify your email with the OTP before continuing.", "error");
+      addToast(t.auth.otp_verify_warning, "error");
       return;
     }
     setLoading(true);
@@ -119,20 +119,20 @@ export default function RegisterPage() {
 
         <div className="space-y-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3">
           <div className="flex items-center justify-between text-sm font-medium text-zinc-700">
-            <span>Email verification</span>
+            <span>{t.auth.email_verification_label}</span>
             <Button type="button" size="sm" variant="secondary" onClick={handleSendOtp} disabled={otpSending}>
               {otpSending ? <Spinner className="mr-2 h-4 w-4" /> : null}
-              {otpSending ? "Sending..." : "Send OTP"}
+              {otpSending ? t.auth.sending_otp : t.auth.send_otp}
             </Button>
           </div>
           <Input
-            label="Enter verification code"
+            label={t.auth.enter_code_label}
             placeholder="6-digit code"
             value={form.otpCode}
             onChange={(e) => setForm((prev) => ({ ...prev, otpCode: e.target.value }))}
           />
           {otpExpiresAt ? (
-            <p className="text-xs text-zinc-500">Code expires at {new Date(otpExpiresAt).toLocaleTimeString()}</p>
+            <p className="text-xs text-zinc-500">{t.auth.code_expires_at} {new Date(otpExpiresAt).toLocaleTimeString()}</p>
           ) : null}
         </div>
 

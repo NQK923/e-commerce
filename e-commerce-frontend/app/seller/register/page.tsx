@@ -81,7 +81,7 @@ function SellerRegisterContent() {
       return;
     }
     if (existingApplication?.status === "PENDING") {
-      addToast("Đã gửi yêu cầu, vui lòng chờ duyệt", "info");
+      addToast(t.seller.register.pending_msg, "info");
       return;
     }
     if (existingApplication?.status === "APPROVED") {
@@ -181,17 +181,17 @@ function SellerRegisterContent() {
           {loadingExisting ? (
             <div className="mb-4 flex items-center gap-3 text-sm text-zinc-600">
               <Spinner />
-              Đang kiểm tra trạng thái đăng ký...
+              {t.seller.register.check_status}
             </div>
           ) : existingApplication ? (
             <div className="mb-4 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
               <div className="flex items-center gap-2 font-semibold">
-                <ShieldCheck size={16} /> Trạng thái: {existingApplication.status}
+                <ShieldCheck size={16} /> {t.seller.register.status_label} {existingApplication.status}
               </div>
               <div className="mt-1 text-emerald-700">
-                {existingApplication.status === "PENDING" && "Bạn đã gửi yêu cầu. Vui lòng chờ admin duyệt."}
-                {existingApplication.status === "APPROVED" && "Yêu cầu đã được chấp thuận. Chuyển sang dashboard seller."}
-                {existingApplication.status === "REJECTED" && "Yêu cầu bị từ chối. Bạn có thể gửi lại thông tin cập nhật."}
+                {existingApplication.status === "PENDING" && t.seller.register.pending_msg}
+                {existingApplication.status === "APPROVED" && t.seller.register.approved_msg}
+                {existingApplication.status === "REJECTED" && t.seller.register.rejected_msg}
               </div>
             </div>
           ) : null}
@@ -203,7 +203,7 @@ function SellerRegisterContent() {
               <p className="text-sm text-zinc-500">{t.seller.subtitle}</p>
             </div>
             <div className="hidden rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 sm:block">
-              <Sparkles className="mr-1 inline-block" size={14} /> 24h review
+              <Sparkles className="mr-1 inline-block" size={14} /> {t.seller.register.review_badge}
             </div>
           </div>
 
@@ -255,13 +255,13 @@ function SellerRegisterContent() {
                 disabled={formDisabled}
                 value={form.description}
                 onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
-                placeholder="List your main products, expected monthly orders, logistics needs..."
+                placeholder={t.seller.register.desc_placeholder}
               />
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="flex flex-col gap-2 text-sm text-zinc-700">
-                <span className="font-medium">Store avatar (optional)</span>
+                <span className="font-medium">{t.seller.register.avatar_label}</span>
                 <input
                   type="file"
                   accept="image/*"
@@ -272,7 +272,7 @@ function SellerRegisterContent() {
                 {avatarFile && <span className="text-xs text-zinc-500 truncate">{avatarFile.name}</span>}
               </div>
               <div className="flex flex-col gap-2 text-sm text-zinc-700">
-                <span className="font-medium">Cover image (optional)</span>
+                <span className="font-medium">{t.seller.register.cover_label}</span>
                 <input
                   type="file"
                   accept="image/*"
@@ -296,7 +296,7 @@ function SellerRegisterContent() {
             </label>
 
             <Button type="submit" disabled={loading || formDisabled} className="bg-emerald-600 hover:bg-emerald-700">
-              {loading ? t.seller.form.loading : formDisabled ? "Đã gửi" : t.seller.cta}
+              {loading ? t.seller.form.loading : formDisabled ? t.seller.register.already_submitted : t.seller.cta}
             </Button>
           </form>
         </div>
@@ -306,13 +306,13 @@ function SellerRegisterContent() {
             <div className="rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm">
               <h3 className="text-lg font-semibold text-zinc-900 flex items-center gap-2">
                 <ShieldCheck size={18} className="text-emerald-600" />
-                Thông tin đã gửi
+                {t.seller.register.submitted_info}
               </h3>
               <div className="mt-3 space-y-2 text-sm text-zinc-700">
-                <div><span className="font-semibold">Tên shop:</span> {existingApplication.storeName}</div>
-                <div><span className="font-semibold">Liên hệ:</span> {existingApplication.contactEmail} - {existingApplication.phone}</div>
-                <div><span className="font-semibold">Danh mục:</span> {existingApplication.category || "-"}</div>
-                <div><span className="font-semibold">Mô tả:</span> {existingApplication.description || "-"}</div>
+                <div><span className="font-semibold">{t.seller.form.store_name}:</span> {existingApplication.storeName}</div>
+                <div><span className="font-semibold">{t.seller.register.contact_label}</span> {existingApplication.contactEmail} - {existingApplication.phone}</div>
+                <div><span className="font-semibold">{t.seller.register.category_label}</span> {existingApplication.category || "-"}</div>
+                <div><span className="font-semibold">{t.seller.register.desc_label}</span> {existingApplication.description || "-"}</div>
               </div>
               {(existingApplication.avatarUrl || existingApplication.coverUrl) && (
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -350,12 +350,12 @@ function SellerRegisterContent() {
           </div>
           <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5 text-emerald-900">
             <h3 className="text-lg font-semibold flex items-center gap-2">
-              <Sparkles size={18} /> Pro tips
+              <Sparkles size={18} /> {t.seller.register.tips_title}
             </h3>
             <ul className="mt-3 space-y-2 text-sm">
-              <li className="flex items-center gap-2"><ArrowRight size={14} />Use clear product photos & sizing.</li>
-              <li className="flex items-center gap-2"><ArrowRight size={14} />Enable COD and fast shipping options.</li>
-              <li className="flex items-center gap-2"><ArrowRight size={14} />Respond to chats within 5 minutes.</li>
+              <li className="flex items-center gap-2"><ArrowRight size={14} />{t.seller.register.tip_1}</li>
+              <li className="flex items-center gap-2"><ArrowRight size={14} />{t.seller.register.tip_2}</li>
+              <li className="flex items-center gap-2"><ArrowRight size={14} />{t.seller.register.tip_3}</li>
             </ul>
           </div>
         </div>

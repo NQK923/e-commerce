@@ -30,7 +30,7 @@ export const Header: React.FC = () => {
     { href: "/", label: t.nav.home },
     { href: "/products", label: t.nav.products },
     { href: "/orders", label: t.nav.orders, requiresAuth: true },
-    ...(isAdmin ? [{ href: "/admin", label: "Admin" }] : []),
+    ...(isAdmin ? [{ href: "/admin", label: t.nav.admin }] : []),
   ];
 
   if (pathname?.startsWith('/admin')) {
@@ -65,7 +65,7 @@ export const Header: React.FC = () => {
                 className="flex items-center gap-1 font-semibold text-zinc-600 transition-colors hover:text-emerald-600"
               >
                 <Shield size={16} />
-                Admin
+                {t.nav.admin}
               </Link>
             )}
             

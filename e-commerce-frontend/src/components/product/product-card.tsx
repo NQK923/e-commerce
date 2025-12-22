@@ -33,7 +33,7 @@ export const ProductCard: React.FC<Props> = ({ product }) => {
             />
           ) : (
             <div className="flex h-full items-center justify-center text-zinc-300">
-              <span className="text-sm font-medium">Không có ảnh</span>
+              <span className="text-sm font-medium">{t.common.no_image}</span>
             </div>
           )}
           
@@ -68,7 +68,7 @@ export const ProductCard: React.FC<Props> = ({ product }) => {
         {/* Rating */}
         <div className="flex items-center gap-1 mb-3">
              <Star size={14} className="fill-amber-400 text-amber-400" />
-             <span className="text-sm text-zinc-700 font-medium">{product.rating?.toFixed(1) || "Mới"}</span>
+             <span className="text-sm text-zinc-700 font-medium">{product.rating?.toFixed(1) || t.product.new}</span>
              <span className="text-xs text-zinc-400 mx-1">•</span>
              <span className="text-xs text-zinc-500">{formatNumber(product.soldCount)} {t.product.sold}</span>
         </div>

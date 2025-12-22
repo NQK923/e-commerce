@@ -89,7 +89,7 @@ function LoginContent() {
           />
           <div className="flex justify-end">
             <Link href="/forgot-password" className="text-xs font-medium text-emerald-600 hover:text-emerald-500">
-              Forgot password?
+              {t.auth.forgot_password_link}
             </Link>
           </div>
         </div>

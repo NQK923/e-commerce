@@ -24,7 +24,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "EcomX",
-  description: "Production-ready e-commerce frontend",
+  description: "Nền tảng thương mại điện tử chuyên nghiệp",
 };
 
 export default async function RootLayout({

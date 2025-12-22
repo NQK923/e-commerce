@@ -167,7 +167,6 @@ export default function CheckoutPage() {
     <Suspense fallback={
       <div className="flex min-h-[60vh] items-center justify-center gap-3 text-sm text-zinc-600">
         <Spinner />
-        Loading checkout...
       </div>
     }>
       <CheckoutContent />
