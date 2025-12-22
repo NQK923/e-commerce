@@ -26,7 +26,6 @@ import com.learnfirebase.ecommerce.identity.application.port.out.PasswordHasher;
 import com.learnfirebase.ecommerce.identity.application.port.out.RefreshTokenRepository;
 import com.learnfirebase.ecommerce.identity.application.port.out.TokenProvider;
 import com.learnfirebase.ecommerce.identity.application.port.out.UserRepository;
-import com.learnfirebase.ecommerce.identity.application.service.OtpService;
 import com.learnfirebase.ecommerce.identity.domain.exception.IdentityDomainException;
 import com.learnfirebase.ecommerce.identity.domain.model.AuthProvider;
 import com.learnfirebase.ecommerce.identity.domain.model.HashedPassword;

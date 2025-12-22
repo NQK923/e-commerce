@@ -44,7 +44,7 @@ public class AuthController {
     private final RotateRefreshTokenUseCase rotateRefreshTokenUseCase;
 
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@RequestBody RegisterUserCommand command) {
+    public ResponseEntity<?> register(@RequestBody RegisterUserCommand command) {
         try {
             UserDto user = registerUserUseCase.execute(command);
             AuthTokenDto tokens = authenticateUserUseCase.execute(LoginCommand.builder()
