@@ -101,7 +101,10 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
                 price = flashSale.getPrice().getAmount();
             } else {
                 String fetched = standardPrices.get(resolveInventoryKey(itemCmd));
-                price = (fetched != null) ? new BigDecimal(fetched) : new BigDecimal(itemCmd.getPrice());
+                if (fetched == null) {
+                    throw new OrderDomainException("Unable to verify price for product " + itemCmd.getProductId());
+                }
+                price = new BigDecimal(fetched);
             }
             
             items.add(OrderItem.builder()
@@ -344,6 +347,10 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
         java.math.BigDecimal refundAmount = command.getRefundAmount() != null && !command.getRefundAmount().isBlank()
             ? new java.math.BigDecimal(command.getRefundAmount())
             : order.getTotalAmount().getAmount();
+        
+        // Business Rule: We do NOT release inventory back for returned items because they are considered 'used' or 'damaged'.
+        // If this rule changes (e.g. for 'refused delivery'), call inventoryReservationPort.release() here.
+        
         order.approveReturn(Money.builder().amount(refundAmount).currency(currency).build(), command.getNote());
         Order saved = orderRepository.save(order);
         return toDto(saved);

@@ -31,12 +31,19 @@ function CheckoutContent() {
   });
 
   const [paymentMethod, setPaymentMethod] = useState<"COD" | "VNPAY">("COD");
+  
+  // Direct Buy Params
+  const flashSaleId = searchParams.get("flashSaleId");
+  const directProductId = searchParams.get("productId");
+  const directPrice = searchParams.get("price");
+  const directQuantity = searchParams.get("quantity");
+  const isDirectBuy = !!(flashSaleId || directProductId);
 
   useEffect(() => {
-    if (!initializing && isAuthenticated) {
+    if (!initializing && isAuthenticated && !isDirectBuy) {
       void refreshCart();
     }
-  }, [initializing, isAuthenticated, refreshCart]);
+  }, [initializing, isAuthenticated, refreshCart, isDirectBuy]);
 
   const selectedParam = searchParams.get("selected");
   const selectedIds = useMemo(
@@ -45,6 +52,36 @@ function CheckoutContent() {
   );
 
   const filteredCart = useMemo(() => {
+    // Direct Buy Logic
+    if (isDirectBuy && directProductId) {
+        const price = parseFloat(directPrice ?? "0");
+        const quantity = parseInt(directQuantity ?? "1", 10);
+        return {
+            id: "direct-buy",
+            currency: "USD", // Default, ideally fetched from product or passed in
+            total: price * quantity,
+            subtotal: price * quantity,
+            discountTotal: 0,
+            shippingEstimate: 0,
+            items: [{
+                id: "direct-item",
+                product: {
+                    id: directProductId,
+                    name: "Flash Sale Item", // Placeholder, ideally fetch detail
+                    description: "", // Added placeholder description
+                    price: price,
+                    images: [],
+                    currency: "USD"
+                },
+                quantity: quantity,
+                unitPrice: price,
+                subtotal: price * quantity,
+                flashSaleId: flashSaleId ?? undefined,
+                variantSku: searchParams.get("variantSku") ?? undefined
+            }]
+        };
+    }
+
     if (!cart) return cart;
     if (!selectedIds.size) return cart;
     const items = cart.items.filter((i) => selectedIds.has(i.id));
@@ -53,9 +90,9 @@ function CheckoutContent() {
     const shipping = cart.shippingEstimate ?? 0;
     const total = subtotal + shipping - discount;
     return { ...cart, items, subtotal, total };
-  }, [cart, selectedIds]);
+  }, [cart, selectedIds, isDirectBuy, directProductId, directPrice, directQuantity, flashSaleId, searchParams]);
 
-  if (initializing || (loading && !cart) || !isAuthenticated) {
+  if (initializing || (loading && !cart && !isDirectBuy) || !isAuthenticated) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center gap-3 text-sm text-zinc-600">
         <Spinner />

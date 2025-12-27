@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { flashSaleApi, FlashSale } from "@/src/api/flashSaleApi";
-import { orderApi } from "@/src/api/orderApi";
+import { productApi } from "@/src/api/productApi";
+import { Product } from "@/src/types/product";
 import { useAuth } from "@/src/store/auth-store";
 import { useRouter } from "next/navigation";
 import { Card } from "@/src/components/ui/card";
@@ -12,9 +13,12 @@ import { formatCurrency } from "@/src/utils/format";
 import { Button } from "@/src/components/ui/button";
 import { Clock, Zap } from "lucide-react";
 import { useTranslation } from "@/src/providers/language-provider";
+import Image from "next/image";
+
+type FlashSaleWithProduct = FlashSale & { product?: Product };
 
 export default function FlashSalesPage() {
-  const [sales, setSales] = useState<FlashSale[]>([]);
+  const [sales, setSales] = useState<FlashSaleWithProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const router = useRouter();
@@ -25,7 +29,18 @@ export default function FlashSalesPage() {
       setLoading(true);
       try {
         const data = await flashSaleApi.listActive();
-        setSales(data);
+        // Enrich with product data
+        const enriched = await Promise.all(
+             data.map(async (sale) => {
+                 try {
+                     const product = await productApi.detail(sale.productId);
+                     return { ...sale, product };
+                 } catch {
+                     return sale;
+                 }
+             })
+        );
+        setSales(enriched);
       } catch (error) {
         console.error(error);
       } finally {
@@ -35,39 +50,23 @@ export default function FlashSalesPage() {
     fetchSales();
   }, []);
 
-  const handleBuy = async (sale: FlashSale) => {
+  const handleBuy = async (sale: FlashSaleWithProduct) => {
     if (!user) {
-        // Redirect to login with return url
         const returnUrl = encodeURIComponent("/flash-sales");
         router.push(`/login?next=${returnUrl}`);
         return;
     }
     
-    try {
-        await orderApi.create({
-            userId: user.id, 
-            currency: sale.price.currency,
-            items: [{
-                productId: sale.productId,
-                flashSaleId: sale.id.value,
-                quantity: 1,
-                price: sale.price.amount
-            }],
-            address: {
-                fullName: "Test User",
-                line1: "123 Street",
-                city: "City",
-                state: "State",
-                postalCode: "12345",
-                country: "Country"
-            },
-            paymentMethod: "CREDIT_CARD"
-        });
-        alert(t.flash_sales.order_success); // Could be improved with Toast
-        router.push("/orders");
-    } catch (e) {
-        alert(t.flash_sales.order_error + e);
-    }
+    // Direct Buy: Redirect to checkout with params
+    const query = new URLSearchParams({
+        flashSaleId: sale.id.value,
+        productId: sale.productId,
+        quantity: "1",
+        price: sale.price.amount.toString(),
+        // Add variantSku if flash sale is for a variant (future improvement)
+    });
+    
+    router.push(`/checkout?${query.toString()}`);
   };
 
   return (
@@ -106,9 +105,16 @@ export default function FlashSalesPage() {
                     return (
                       <Card key={sale.id.value} className="overflow-hidden border-zinc-200 hover:shadow-lg transition-shadow bg-white flex flex-col">
                         <div className="relative aspect-square bg-zinc-100 flex items-center justify-center">
-                            {/* Placeholder image logic since FlashSale doesn't have image yet. 
-                                In real app, we would fetch product details to get image. */}
-                            <div className="text-zinc-400 font-medium">{t.common.no_image}</div>
+                            {sale.product?.images?.[0] ? (
+                                <Image 
+                                    src={sale.product.images[0].url} 
+                                    alt={sale.product.name} 
+                                    fill 
+                                    className="object-cover" 
+                                />
+                            ) : (
+                                <div className="text-zinc-400 font-medium">{t.common.no_image}</div>
+                            )}
                             <div className="absolute top-3 left-3">
                                 <Badge className="bg-red-600 text-white border-red-600 animate-pulse">
                                     {t.flash_sales.on_sale_badge}
@@ -117,8 +123,8 @@ export default function FlashSalesPage() {
                         </div>
 
                         <div className="p-4 flex-1 flex flex-col">
-                            <h3 className="font-semibold text-zinc-900 mb-2 truncate" title={sale.productId}>
-                                {sale.productId} {/* Should ideally be Product Name */}
+                            <h3 className="font-semibold text-zinc-900 mb-2 truncate" title={sale.product?.name ?? sale.productId}>
+                                {sale.product?.name ?? sale.productId}
                             </h3>
                             
                             <div className="flex items-baseline gap-2 mb-3">

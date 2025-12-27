@@ -57,8 +57,14 @@ public class OrderController {
     }
 
     @GetMapping("/{orderId}")
-    public ResponseEntity<OrderDto> getOrder(@PathVariable("orderId") String orderId) {
-        return ResponseEntity.ok(getOrderUseCase.getOrder(orderId));
+    public ResponseEntity<OrderDto> getOrder(@PathVariable("orderId") String orderId, java.security.Principal principal) {
+        OrderDto order = getOrderUseCase.getOrder(orderId);
+        if (principal != null && !order.getUserId().equals(principal.getName())) {
+             throw new org.springframework.web.server.ResponseStatusException(
+                 org.springframework.http.HttpStatus.FORBIDDEN, "You are not authorized to view this order"
+             );
+        }
+        return ResponseEntity.ok(order);
     }
 
     @PostMapping
