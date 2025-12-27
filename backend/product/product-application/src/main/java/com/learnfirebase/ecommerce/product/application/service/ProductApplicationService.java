@@ -117,6 +117,10 @@ public class ProductApplicationService implements ManageProductUseCase, QueryPro
             ProductId productId = new ProductId(command.getId() != null ? command.getId() : UUID.randomUUID().toString());
             Product existingProduct = productRepository.findById(productId).orElse(null);
 
+            if (existingProduct != null && !existingProduct.getSellerId().equals(command.getSellerId())) {
+                throw new ProductDomainException("You are not authorized to update this product");
+            }
+
             String priceStr = command.getPrice();
             if (priceStr == null || priceStr.trim().isEmpty()) {
                 throw new IllegalArgumentException("Product price is required");
