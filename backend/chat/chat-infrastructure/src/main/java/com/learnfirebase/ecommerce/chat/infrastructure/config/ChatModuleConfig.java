@@ -8,18 +8,14 @@ import com.learnfirebase.ecommerce.chat.application.service.SendMessageService;
 import com.learnfirebase.ecommerce.chat.application.usecase.SendMessageUseCase;
 import com.learnfirebase.ecommerce.chat.domain.repository.ConversationRepository;
 import com.learnfirebase.ecommerce.chat.domain.repository.MessageRepository;
-import com.learnfirebase.ecommerce.chat.infrastructure.persistence.jpa.ConversationJpaEntity;
-import com.learnfirebase.ecommerce.chat.infrastructure.persistence.jpa.ConversationJpaRepository;
-import com.learnfirebase.ecommerce.chat.infrastructure.persistence.jpa.MessageJpaEntity;
-import com.learnfirebase.ecommerce.chat.infrastructure.persistence.jpa.MessageJpaRepository;
-import org.springframework.boot.autoconfigure.domain.EntityScan;
+import com.learnfirebase.ecommerce.chat.infrastructure.persistence.mongo.ConversationMongoRepository;
+import com.learnfirebase.ecommerce.chat.infrastructure.persistence.mongo.MessageMongoRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 
 @Configuration
-@EnableJpaRepositories(basePackageClasses = {ConversationJpaRepository.class, MessageJpaRepository.class})
-@EntityScan(basePackageClasses = {ConversationJpaEntity.class, MessageJpaEntity.class})
+@EnableMongoRepositories(basePackageClasses = {ConversationMongoRepository.class, MessageMongoRepository.class})
 public class ChatModuleConfig {
 
     @Bean
