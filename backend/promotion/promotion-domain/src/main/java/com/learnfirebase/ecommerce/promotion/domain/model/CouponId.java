@@ -1,9 +1,9 @@
 package com.learnfirebase.ecommerce.promotion.domain.model;
 
-import com.learnfirebase.ecommerce.common.domain.valueobject.ValueObject;
-import lombok.Value;
+import com.learnfirebase.ecommerce.common.domain.Identifier;
 
-@Value
-public class CouponId implements ValueObject {
-    String value;
+public class CouponId extends Identifier {
+    public CouponId(String value) {
+        super(value);
+    }
 }

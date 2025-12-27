@@ -27,12 +27,14 @@ public class SellerPromotionApplicationService {
             throw new PromotionDomainException("Coupon code already exists");
         }
 
+        String currency = command.getCurrency() != null ? command.getCurrency() : "USD";
+
         Money minOrder = command.getMinOrderAmount() != null 
-            ? Money.builder().amount(command.getMinOrderAmount()).currency(command.getCurrency()).build() 
+            ? Money.builder().amount(command.getMinOrderAmount()).currency(currency).build() 
             : null;
             
         Money maxDiscount = command.getMaxDiscountAmount() != null 
-            ? Money.builder().amount(command.getMaxDiscountAmount()).currency(command.getCurrency()).build() 
+            ? Money.builder().amount(command.getMaxDiscountAmount()).currency(currency).build() 
             : null;
 
         Coupon coupon = Coupon.builder()
