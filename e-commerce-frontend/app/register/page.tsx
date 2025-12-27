@@ -37,7 +37,7 @@ export default function RegisterPage() {
       setChallengeId(challenge.id);
       setOtpExpiresAt(challenge.expiresAt);
       addToast(t.auth.otp_sent_success, "success");
-    } catch (error) {
+    } catch {
       addToast(t.auth.otp_send_failed, "error");
     } finally {
       setOtpSending(false);

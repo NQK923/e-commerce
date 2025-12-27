@@ -33,7 +33,7 @@ export default function ForgotPasswordPage() {
       setChallengeId(challenge.id ?? null);
       setOtpExpiresAt(challenge.expiresAt ?? null);
       addToast(t.auth.if_account_exists, "success");
-    } catch (error) {
+    } catch {
       addToast(t.auth.otp_send_failed, "error");
     } finally {
       setOtpSending(false);

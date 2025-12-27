@@ -57,7 +57,7 @@ export default function OrderDetailPage() {
       });
       setOrder(updated);
       addToast(t.orders.shipment_started, "success");
-    } catch (err) {
+    } catch {
       addToast(t.common.error, "error");
     } finally {
       setWorking(false);
@@ -89,7 +89,7 @@ export default function OrderDetailPage() {
       });
       setOrder(updated);
       addToast(t.orders.return_requested, "success");
-    } catch (err) {
+    } catch {
       addToast(t.common.error, "error");
     } finally {
       setWorking(false);

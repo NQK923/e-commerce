@@ -82,7 +82,7 @@ public class InventoryReservationAdapter implements InventoryReservationPort {
         script.setResultType(Long.class);
 
         Long result = redisTemplate.execute(script, Collections.singletonList(key), String.valueOf(quantity));
-        return result != null && result >= 0;
+        return result >= 0;
     }
 
     @Override
@@ -128,7 +128,7 @@ public class InventoryReservationAdapter implements InventoryReservationPort {
         }
         List<String> expiredOrders = expired.stream()
             .filter(Objects::nonNull)
-            .collect(Collectors.toList());
+            .toList();
         for (String orderId : expiredOrders) {
             release(orderId, Collections.emptyMap());
             redisTemplate.opsForZSet().remove(RESERVATION_EXPIRATIONS, orderId);
@@ -170,7 +170,7 @@ public class InventoryReservationAdapter implements InventoryReservationPort {
         String reservedKey = reservedKey(productId);
 
         Long result = redisTemplate.execute(script, List.of(availKey, reservedKey), String.valueOf(delta));
-        return result != null && result >= 0;
+        return result >= 0;
     }
 
     private void rollback(List<String> reservedKeys) {
