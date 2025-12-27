@@ -52,7 +52,8 @@ public class OrderController {
     public ResponseEntity<PageResponse<OrderDto>> list(
         @RequestParam(name = "page", defaultValue = "0") int page,
         @RequestParam(name = "size", defaultValue = "10") int size) {
-        PageRequest pageRequest = PageRequest.builder().page(page).size(size).build();
+        int safeSize = Math.min(size, 100);
+        PageRequest pageRequest = PageRequest.builder().page(page).size(safeSize).build();
         return ResponseEntity.ok(listOrdersUseCase.listOrders(pageRequest));
     }
 

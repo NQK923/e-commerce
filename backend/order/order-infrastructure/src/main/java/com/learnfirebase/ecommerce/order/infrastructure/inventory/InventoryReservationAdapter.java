@@ -32,6 +32,7 @@ public class InventoryReservationAdapter implements InventoryReservationPort {
     private static final String FLASH_SALE_STOCK_KEY_PREFIX = "flashsale:%s:stock";
 
     private final StringRedisTemplate redisTemplate;
+    private final com.learnfirebase.ecommerce.order.application.port.out.OrderRepository orderRepository;
 
     @Override
     public boolean reserve(String orderId, Map<String, Integer> productQuantities) {
@@ -131,6 +132,21 @@ public class InventoryReservationAdapter implements InventoryReservationPort {
         for (String orderId : expiredOrders) {
             release(orderId, Collections.emptyMap());
             redisTemplate.opsForZSet().remove(RESERVATION_EXPIRATIONS, orderId);
+            
+            // Sync Order Status to CANCELLED in DB
+            try {
+                orderRepository.findById(new com.learnfirebase.ecommerce.order.domain.model.OrderId(orderId))
+                    .ifPresent(order -> {
+                        if (order.getStatus() == com.learnfirebase.ecommerce.order.domain.model.OrderStatus.PENDING) {
+                            order.cancel("Stock reservation expired");
+                            orderRepository.save(order);
+                            log.info("Cancelled order {} due to stock reservation expiration", orderId);
+                        }
+                    });
+            } catch (Exception e) {
+                log.error("Failed to cancel order {} after stock release", orderId, e);
+            }
+            
             log.info("Released expired reservation for order {}", orderId);
         }
     }
@@ -192,9 +208,14 @@ public class InventoryReservationAdapter implements InventoryReservationPort {
             return;
         }
         String key = reservedKey(productId);
-        long current = readLong(key);
-        long next = Math.max(0, current - qty);
-        redisTemplate.opsForValue().set(key, String.valueOf(next));
+        
+        String script = "local current = tonumber(redis.call('get', KEYS[1]) or '0'); " +
+                       "local next = math.max(0, current - tonumber(ARGV[1])); " +
+                       "redis.call('set', KEYS[1], next); " +
+                       "return next;";
+                       
+        redisTemplate.execute(new DefaultRedisScript<>(script, Long.class), 
+            Collections.singletonList(key), String.valueOf(qty));
     }
 
     private long readLong(String key) {

@@ -55,6 +55,9 @@ import com.learnfirebase.ecommerce.order.domain.exception.OrderDomainException;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.transaction.annotation.Transactional;
+
+@Transactional
 @RequiredArgsConstructor
 public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseCase, CancelOrderUseCase, ListOrdersUseCase, GetOrderUseCase, InitiatePaymentUseCase, HandlePaymentCallbackUseCase, ShipOrderUseCase, MarkDeliveredUseCase, RequestReturnUseCase, ApproveReturnUseCase, RejectReturnUseCase {
 
@@ -273,6 +276,12 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
 
         Order order = orderRepository.findById(new OrderId(verification.getOrderId()))
             .orElseThrow(() -> new OrderDomainException("Order not found"));
+            
+        // Idempotency check: If order is already paid, ignore duplicate callback
+        if (order.getStatus() == OrderStatus.PAID || order.getStatus() == OrderStatus.SHIPPING || 
+            order.getStatus() == OrderStatus.DELIVERED || order.getStatus() == OrderStatus.RETURNED) {
+            return toDto(order);
+        }
 
         if (order.getStatus() == OrderStatus.CANCELLED) {
             throw new OrderDomainException("Payment callback for cancelled order");
