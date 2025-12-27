@@ -34,16 +34,36 @@ public class PaymentController {
     @PostMapping("/orders/{orderId}/payment/vnpay")
     public ResponseEntity<PaymentInitResponse> initiateVnPay(
         @PathVariable("orderId") String orderId,
-        @RequestBody InitiatePaymentRequest request
+        @RequestBody InitiatePaymentRequest request,
+        jakarta.servlet.http.HttpServletRequest servletRequest
     ) {
+        String clientIp = resolveClientIp(servletRequest);
         PaymentInitResponse response = initiatePaymentUseCase.initiate(
             InitiatePaymentCommand.builder()
                 .orderId(orderId)
                 .returnUrl(request.getReturnUrl())
-                .clientIp(request.getClientIp())
+                .clientIp(clientIp)
                 .build()
         );
         return ResponseEntity.ok(response);
+    }
+
+    private String resolveClientIp(jakarta.servlet.http.HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("Proxy-Client-IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("WL-Proxy-Client-IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getRemoteAddr();
+        }
+        // In case of multiple IPs in X-Forwarded-For, take the first one
+        if (ip != null && ip.contains(",")) {
+            ip = ip.split(",")[0].trim();
+        }
+        return ip;
     }
 
     @GetMapping("/payments/vnpay/return")
@@ -61,6 +81,6 @@ public class PaymentController {
     @AllArgsConstructor
     public static class InitiatePaymentRequest {
         private String returnUrl;
-        private String clientIp;
+        // clientIp is now resolved from the request headers
     }
 }

@@ -30,6 +30,8 @@ function CheckoutContent() {
     country: "",
   });
 
+  const [paymentMethod, setPaymentMethod] = useState<"COD" | "VNPAY">("COD");
+
   useEffect(() => {
     if (!initializing && isAuthenticated) {
       void refreshCart();
@@ -79,7 +81,7 @@ function CheckoutContent() {
           userId: user?.id,
           currency: filteredCart.currency ?? "USD",
           address,
-          paymentMethod: "COD", // Placeholder as no UI for payment method yet
+          paymentMethod,
           items: filteredCart.items.map((item) => ({
             productId: item.product.id,
             variantSku: item.variantSku,
@@ -87,9 +89,17 @@ function CheckoutContent() {
             price: item.unitPrice,
           })),
         });
+
       await clearCart();
-      addToast(t.checkout.success, "success");
-      router.replace(`/orders/${order.id}`);
+      
+      if (paymentMethod === "VNPAY") {
+        const returnUrl = `${window.location.origin}/payment/vnpay-return`;
+        const payment = await orderApi.initiatePayment(order.id, { returnUrl });
+        window.location.href = payment.paymentUrl;
+      } else {
+        addToast(t.checkout.success, "success");
+        router.replace(`/orders/${order.id}`);
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : t.checkout.failed;
       addToast(message, "error");
@@ -104,6 +114,31 @@ function CheckoutContent() {
         <h1 className="text-2xl font-bold text-zinc-900">{t.checkout.title}</h1>
         <p className="text-sm text-zinc-600">{t.checkout.subtitle}</p>
         <form className="mt-6 grid gap-4" onSubmit={handleSubmit}>
+          <div className="grid gap-4 sm:grid-cols-2">
+             <div 
+               className={`cursor-pointer rounded-xl border p-4 transition-all ${paymentMethod === 'COD' ? 'border-emerald-600 bg-emerald-50 ring-1 ring-emerald-600' : 'border-zinc-200 hover:border-emerald-200'}`}
+               onClick={() => setPaymentMethod('COD')}
+             >
+               <div className="flex items-center gap-3">
+                 <div className={`flex h-5 w-5 items-center justify-center rounded-full border ${paymentMethod === 'COD' ? 'border-emerald-600' : 'border-zinc-300'}`}>
+                   {paymentMethod === 'COD' && <div className="h-2.5 w-2.5 rounded-full bg-emerald-600" />}
+                 </div>
+                 <span className="font-medium text-zinc-900">Cash on Delivery</span>
+               </div>
+             </div>
+             <div 
+               className={`cursor-pointer rounded-xl border p-4 transition-all ${paymentMethod === 'VNPAY' ? 'border-emerald-600 bg-emerald-50 ring-1 ring-emerald-600' : 'border-zinc-200 hover:border-emerald-200'}`}
+               onClick={() => setPaymentMethod('VNPAY')}
+             >
+               <div className="flex items-center gap-3">
+                 <div className={`flex h-5 w-5 items-center justify-center rounded-full border ${paymentMethod === 'VNPAY' ? 'border-emerald-600' : 'border-zinc-300'}`}>
+                   {paymentMethod === 'VNPAY' && <div className="h-2.5 w-2.5 rounded-full bg-emerald-600" />}
+                 </div>
+                 <span className="font-medium text-zinc-900">VNPAY / Banking</span>
+               </div>
+             </div>
+          </div>
+          <div className="my-2 h-px bg-zinc-100" />
           <Input
             label={t.checkout.full_name}
             required

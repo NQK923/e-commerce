@@ -118,4 +118,15 @@ export const orderApi = {
     apiRequest<BackendOrder>(`/api/orders/${orderId}/returns/approve`, { method: "POST", body: payload }).then(mapOrder),
   rejectReturn: (orderId: string, payload: { note?: string }) =>
     apiRequest<BackendOrder>(`/api/orders/${orderId}/returns/reject`, { method: "POST", body: payload }).then(mapOrder),
+
+  initiatePayment: (orderId: string, payload: { returnUrl: string }) =>
+    apiRequest<PaymentInitResponse>(`/api/orders/${orderId}/payment/vnpay`, { method: "POST", body: payload }),
+
+  verifyPayment: (queryString: string) =>
+    apiRequest<BackendOrder>(`/api/payments/vnpay/return?${queryString}`).then(mapOrder),
+};
+
+type PaymentInitResponse = {
+  paymentUrl: string;
+  reference: string;
 };
