@@ -3,6 +3,7 @@
 import { useParams } from "next/navigation";
 import React, { useCallback, useEffect, useState } from "react";
 import { orderApi } from "@/src/api/orderApi";
+import { productApi } from "@/src/api/productApi";
 import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
 import { Spinner } from "@/src/components/ui/spinner";
@@ -24,6 +25,7 @@ export default function OrderDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
+  const [productDetails, setProductDetails] = useState<Record<string, { name: string; image?: string; currency?: string }>>({});
 
   const [trackingNumber, setTrackingNumber] = useState("");
   const [trackingCarrier, setTrackingCarrier] = useState("");
@@ -134,6 +136,29 @@ export default function OrderDetailPage() {
   }, [initializing, isAuthenticated, loadOrder]);
 
   useEffect(() => {
+    if (!order) return;
+    const uniqueProductIds = Array.from(new Set(order.items.map((i) => i.productId)));
+    const loadProducts = async () => {
+      const entries = await Promise.all(
+        uniqueProductIds.map(async (id) => {
+          try {
+            const detail = await productApi.detail(id);
+            return [id, { name: detail.name, image: detail.images?.[0]?.url, currency: detail.currency }] as const;
+          } catch {
+            return [id, null] as const;
+          }
+        }),
+      );
+      const mapped = entries.reduce<Record<string, { name: string; image?: string; currency?: string }>>((acc, [id, detail]) => {
+        if (detail) acc[id] = detail;
+        return acc;
+      }, {});
+      setProductDetails(mapped);
+    };
+    void loadProducts();
+  }, [order]);
+
+  useEffect(() => {
     if (order?.trackingNumber) {
       setTrackingNumber(order.trackingNumber);
     }
@@ -190,13 +215,20 @@ export default function OrderDetailPage() {
             {order.items.map((item) => (
               <div key={item.id} className="flex items-center justify-between rounded-xl border border-zinc-200 p-3">
                 <div className="flex flex-col">
-                  <span className="text-sm font-semibold text-black">{t.product.loading.replace("...", "")} {item.productId}</span>
-                  <span className="text-xs text-zinc-500">{t.orders.quantity}: {item.quantity}</span>
+                  <span className="text-sm font-semibold text-black">
+                    {productDetails[item.productId]?.name ?? item.productId}
+                  </span>
+                  {item.variantSku ? (
+                    <span className="text-xs text-zinc-500">SKU: {item.variantSku}</span>
+                  ) : null}
+                  <span className="text-xs text-zinc-500">
+                    {t.orders.quantity}: {item.quantity}
+                  </span>
                 </div>
                 <div className="text-right text-sm font-semibold text-black">
-                  {formatCurrency(item.subtotal, order.currency ?? "USD")}
+                  {formatCurrency(item.subtotal, order.currency ?? productDetails[item.productId]?.currency ?? "USD")}
                   <div className="text-xs text-zinc-500">
-                    {formatCurrency(item.price, order.currency ?? "USD")} {t.orders.each}
+                    {formatCurrency(item.price, order.currency ?? productDetails[item.productId]?.currency ?? "USD")} {t.orders.each}
                   </div>
                 </div>
               </div>

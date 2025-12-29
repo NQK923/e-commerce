@@ -7,13 +7,13 @@ import { CartSummary } from "@/src/components/cart/cart-summary";
 import { Spinner } from "@/src/components/ui/spinner";
 import { useCart } from "@/src/store/cart-store";
 import { useToast } from "@/src/components/ui/toast-provider";
-import { useRequireAuth } from "@/src/hooks/use-require-auth";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "@/src/providers/language-provider";
 import { useMemo, useReducer } from "react";
 import { Cart } from "@/src/types/cart";
 import { ShoppingBag, ArrowLeft } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
+import { useAuth } from "@/src/store/auth-store";
 
 type SelectionAction =
   | { type: "sync"; items: Cart["items"] | undefined }
@@ -52,7 +52,7 @@ const selectionReducer = (state: Set<string>, action: SelectionAction) => {
 };
 
 function CartContent() {
-  const { isAuthenticated, initializing } = useRequireAuth();
+  const { user, initializing } = useAuth();
   const { cart, loading, refreshCart, updateQuantity, removeItem, changeVariant } = useCart();
   const { addToast } = useToast();
   const router = useRouter();
@@ -60,10 +60,10 @@ function CartContent() {
   const [selectedIds, dispatchSelection] = useReducer(selectionReducer, new Set<string>());
 
   useEffect(() => {
-    if (!initializing && isAuthenticated) {
+    if (!initializing) {
       void refreshCart();
     }
-  }, [initializing, isAuthenticated, refreshCart]);
+  }, [initializing, refreshCart]);
 
   useEffect(() => {
     dispatchSelection({ type: "sync", items: cart?.items });
@@ -179,7 +179,15 @@ function CartContent() {
             <div className="lg:block">
             <CartSummary
                 cart={selectedCart ?? cart}
-                onCheckout={() => hasSelection && router.push(`/checkout?selected=${encodeURIComponent(Array.from(selectedIds).join(","))}`)}
+                onCheckout={() => {
+                  const target = `/checkout?selected=${encodeURIComponent(Array.from(selectedIds).join(","))}`;
+                  if (user) {
+                    router.push(target);
+                  } else {
+                    const next = encodeURIComponent(target);
+                    router.push(`/login?next=${next}`);
+                  }
+                }}
                 disableAction={!hasSelection}
                 actionLabel={t.cart.proceed_checkout}
             />

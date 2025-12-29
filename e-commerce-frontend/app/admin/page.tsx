@@ -12,7 +12,8 @@ import {
   Package2,
   CheckCircle2,
   Clock4,
-} from "lucide-react";import { productApi } from "@/src/api/productApi";
+} from "lucide-react";
+import { productApi } from "@/src/api/productApi";
 import { adminApi } from "@/src/api/adminApi";
 import { sellerApi } from "@/src/api/sellerApi";
 import { orderApi } from "@/src/api/orderApi";
@@ -44,6 +45,7 @@ function AdminContent() {
   const [selectedRequest, setSelectedRequest] = React.useState<SellerApplication | null>(null);
   const [totalRevenue, setTotalRevenue] = React.useState(0);
   const [revenueGrowth, setRevenueGrowth] = React.useState(0);
+  const [dashboardError, setDashboardError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     if (initializing || !isAuthenticated || !isAdmin) return;
@@ -51,6 +53,7 @@ function AdminContent() {
     const loadData = async () => {
       setLoadingProducts(true);
       setLoadingSellerRequests(true);
+      setDashboardError(null);
       
       try {
         const [usersData, productsRes, requestsData, ordersRes] = await Promise.all([
@@ -99,6 +102,8 @@ function AdminContent() {
 
       } catch (error) {
         console.error("Failed to load dashboard data", error);
+        setDashboardError("Không thể tải dữ liệu tổng quan. Vui lòng thử lại.");
+        addToast("Không thể tải dữ liệu dashboard", "error");
       } finally {
         setLoadingProducts(false);
         setLoadingSellerRequests(false);
@@ -145,6 +150,15 @@ function AdminContent() {
 
   return (
     <div className="space-y-8">
+      {dashboardError ? (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 flex items-center justify-between">
+          <span>{dashboardError}</span>
+          <Button size="sm" variant="outline" onClick={() => window.location.reload()}>
+            Thử lại
+          </Button>
+        </div>
+      ) : null}
+
       <div>
         <h1 className="text-2xl font-bold text-zinc-900">Dashboard Overview</h1>
         <p className="text-sm text-zinc-500">Welcome back, here&apos;s what&apos;s happening with your store today.</p>

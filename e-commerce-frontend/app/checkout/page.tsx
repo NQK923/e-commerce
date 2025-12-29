@@ -3,6 +3,8 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { Suspense, useEffect, useMemo, useState } from "react";
 import { orderApi } from "@/src/api/orderApi";
+import { productApi } from "@/src/api/productApi";
+import { flashSaleApi } from "@/src/api/flashSaleApi";
 import { CartSummary } from "@/src/components/cart/cart-summary";
 import { Input } from "@/src/components/ui/input";
 import { Spinner } from "@/src/components/ui/spinner";
@@ -11,6 +13,7 @@ import { useCart } from "@/src/store/cart-store";
 import { useToast } from "@/src/components/ui/toast-provider";
 import { useTranslation } from "@/src/providers/language-provider";
 import { formatCurrency } from "@/src/utils/format";
+import { Cart } from "@/src/types/cart";
 
 function CheckoutContent() {
   const { user, isAuthenticated, initializing } = useRequireAuth();
@@ -38,12 +41,97 @@ function CheckoutContent() {
   const directPrice = searchParams.get("price");
   const directQuantity = searchParams.get("quantity");
   const isDirectBuy = !!(flashSaleId || directProductId);
+  const variantSku = searchParams.get("variantSku") ?? undefined;
+
+  const [directCart, setDirectCart] = useState<Cart | null>(null);
+  const [directLoading, setDirectLoading] = useState(false);
+  const [directError, setDirectError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!initializing && isAuthenticated && !isDirectBuy) {
       void refreshCart();
     }
   }, [initializing, isAuthenticated, refreshCart, isDirectBuy]);
+
+  useEffect(() => {
+    if (!isDirectBuy) {
+      setDirectCart(null);
+      setDirectError(null);
+      return;
+    }
+
+    if (!directProductId) {
+      setDirectCart(null);
+      setDirectError("Missing product for direct checkout");
+      return;
+    }
+
+    const loadDirectCart = async () => {
+      setDirectLoading(true);
+      setDirectError(null);
+      try {
+        const product = await productApi.detail(directProductId);
+        const variant = variantSku ? product.variants?.find((v) => v.sku === variantSku) : undefined;
+        const basePrice = variant?.price ?? product.price ?? 0;
+        const availableStock = variant?.quantity ?? product.stock ?? Number.POSITIVE_INFINITY;
+        const parsedQuantity = Number.parseInt(directQuantity ?? "1", 10);
+        const clampedQuantity = Math.min(Math.max(parsedQuantity || 1, 1), availableStock);
+
+        let finalPrice = basePrice;
+        let currency = product.currency ?? "USD";
+
+        if (flashSaleId) {
+          try {
+            const sales = await flashSaleApi.listActive();
+            const matched = sales.find(
+              (sale) => sale.id.value === flashSaleId && sale.productId === product.id,
+            );
+            if (matched) {
+              finalPrice = matched.price.amount;
+              currency = matched.price.currency;
+            }
+          } catch {
+            // fall back to product price if flash sale cannot be verified
+          }
+        }
+
+        const unitPrice = Number.isFinite(finalPrice) ? finalPrice : 0;
+        const safeCurrency = currency || "USD";
+        const subtotal = unitPrice * clampedQuantity;
+
+        setDirectCart({
+          id: "direct-buy",
+          currency: safeCurrency,
+          subtotal,
+          discountTotal: 0,
+          shippingEstimate: 0,
+          total: subtotal,
+          items: [
+            {
+              id: `direct-${variantSku ?? product.id}`,
+              product: {
+                ...product,
+                price: unitPrice,
+                currency: safeCurrency,
+                stock: availableStock,
+              },
+              quantity: clampedQuantity,
+              unitPrice,
+              subtotal,
+              variantSku,
+            },
+          ],
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unable to load item";
+        setDirectError(message);
+      } finally {
+        setDirectLoading(false);
+      }
+    };
+
+    void loadDirectCart();
+  }, [directProductId, directQuantity, flashSaleId, isDirectBuy, variantSku]);
 
   const selectedParam = searchParams.get("selected");
   const selectedIds = useMemo(
@@ -52,34 +140,9 @@ function CheckoutContent() {
   );
 
   const filteredCart = useMemo(() => {
-    // Direct Buy Logic
-    if (isDirectBuy && directProductId) {
-        const price = parseFloat(directPrice ?? "0");
-        const quantity = parseInt(directQuantity ?? "1", 10);
-        return {
-            id: "direct-buy",
-            currency: "USD", // Default, ideally fetched from product or passed in
-            total: price * quantity,
-            subtotal: price * quantity,
-            discountTotal: 0,
-            shippingEstimate: 0,
-            items: [{
-                id: "direct-item",
-                product: {
-                    id: directProductId,
-                    name: "Flash Sale Item", // Placeholder, ideally fetch detail
-                    description: "", // Added placeholder description
-                    price: price,
-                    images: [],
-                    currency: "USD"
-                },
-                quantity: quantity,
-                unitPrice: price,
-                subtotal: price * quantity,
-                flashSaleId: flashSaleId ?? undefined,
-                variantSku: searchParams.get("variantSku") ?? undefined
-            }]
-        };
+    // Direct Buy Logic with server-side verified pricing
+    if (isDirectBuy) {
+      return directCart;
     }
 
     if (!cart) return cart;
@@ -92,11 +155,31 @@ function CheckoutContent() {
     return { ...cart, items, subtotal, total };
   }, [cart, selectedIds, isDirectBuy, directProductId, directPrice, directQuantity, flashSaleId, searchParams]);
 
-  if (initializing || (loading && !cart && !isDirectBuy) || !isAuthenticated) {
+  if (
+    initializing ||
+    (!isDirectBuy && loading && !cart) ||
+    (isDirectBuy && (directLoading || !directCart) && !directError) ||
+    !isAuthenticated
+  ) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center gap-3 text-sm text-zinc-600">
         <Spinner />
         {t.checkout.preparing}
+      </div>
+    );
+  }
+
+  if (directError) {
+    return (
+      <div className="mx-auto flex max-w-3xl flex-col items-center gap-3 px-4 py-10 text-center">
+        <p className="text-lg font-semibold text-zinc-900">{t.checkout.failed}</p>
+        <p className="text-sm text-zinc-600">{directError}</p>
+        <button
+          className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white"
+          onClick={() => router.replace("/products")}
+        >
+          {t.cart.continue_shopping}
+        </button>
       </div>
     );
   }
