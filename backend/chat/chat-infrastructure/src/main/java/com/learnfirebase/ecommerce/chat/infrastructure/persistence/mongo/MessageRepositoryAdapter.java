@@ -3,6 +3,7 @@ package com.learnfirebase.ecommerce.chat.infrastructure.persistence.mongo;
 import com.learnfirebase.ecommerce.chat.domain.model.ConversationId;
 import com.learnfirebase.ecommerce.chat.domain.model.Message;
 import com.learnfirebase.ecommerce.chat.domain.model.MessageId;
+import com.learnfirebase.ecommerce.chat.domain.model.MessageStatus;
 import com.learnfirebase.ecommerce.chat.domain.model.ParticipantId;
 import com.learnfirebase.ecommerce.chat.domain.repository.MessageRepository;
 import java.util.List;
@@ -37,6 +38,14 @@ public class MessageRepositoryAdapter implements MessageRepository {
                 .stream()
                 .map(this::toDomain)
                 .toList();
+    }
+
+    @Override
+    public long countUnreadByConversationAndReceiver(ConversationId conversationId, ParticipantId receiverId) {
+        return messageMongoRepository.countByConversationIdAndReceiverIdAndStatusIsNot(
+                conversationId.getValue(),
+                receiverId.getValue(),
+                MessageStatus.READ);
     }
 
     private Message toDomain(MessageDocument document) {

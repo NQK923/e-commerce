@@ -31,6 +31,9 @@ public class ChatQueryService implements GetConversationsUseCase, GetMessagesUse
                 .stream()
                 .map(conversation -> {
                     var lastMessages = messageRepository.findRecentByConversation(conversation.getId(), 1);
+                    long unreadCount = messageRepository.countUnreadByConversationAndReceiver(
+                            conversation.getId(),
+                            participantId);
                     ChatMessageDto lastMessage = lastMessages.stream()
                             .findFirst()
                             .map(this::toDto)
@@ -43,7 +46,7 @@ public class ChatQueryService implements GetConversationsUseCase, GetMessagesUse
                                             .build())
                                     .toList())
                             .lastMessage(lastMessage)
-                            .unreadCount(0) // could be computed via status in repository
+                            .unreadCount(Math.toIntExact(unreadCount))
                             .createdAt(conversation.getCreatedAt())
                             .build();
                 })

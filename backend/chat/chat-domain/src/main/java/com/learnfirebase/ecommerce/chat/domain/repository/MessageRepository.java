@@ -3,6 +3,7 @@ package com.learnfirebase.ecommerce.chat.domain.repository;
 import com.learnfirebase.ecommerce.chat.domain.model.ConversationId;
 import com.learnfirebase.ecommerce.chat.domain.model.Message;
 import com.learnfirebase.ecommerce.chat.domain.model.MessageId;
+import com.learnfirebase.ecommerce.chat.domain.model.ParticipantId;
 import java.util.List;
 import java.util.Optional;
 
@@ -12,4 +13,6 @@ public interface MessageRepository {
     Optional<Message> findById(MessageId id);
 
     List<Message> findRecentByConversation(ConversationId conversationId, int limit);
+
+    long countUnreadByConversationAndReceiver(ConversationId conversationId, ParticipantId receiverId);
 }

@@ -59,13 +59,15 @@ public class SendMessageService implements SendMessageUseCase {
         Message persisted = messageRepository.save(message);
 
         boolean receiverOnline = presencePort.isOnline(receiver.getValue());
-        messageDeliveryPort.deliverToUser(receiver.getValue(), persisted);
+        Message toDeliver = receiverOnline ? messageRepository.save(persisted.delivered()) : persisted;
+
+        messageDeliveryPort.deliverToUser(receiver.getValue(), toDeliver);
 
         if (!receiverOnline) {
-            notificationEventPort.publishOfflineMessage(persisted);
+            notificationEventPort.publishOfflineMessage(toDeliver);
         }
 
-        return new SendMessageResult(persisted, receiverOnline);
+        return new SendMessageResult(toDeliver, receiverOnline);
     }
 
     private Conversation resolveConversation(String conversationIdRaw, ParticipantId sender, ParticipantId receiver) {
