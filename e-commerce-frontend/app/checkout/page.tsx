@@ -15,6 +15,16 @@ import { useTranslation } from "@/src/providers/language-provider";
 import { formatCurrency } from "@/src/utils/format";
 import { Cart } from "@/src/types/cart";
 
+type CheckoutAddress = {
+  fullName: string;
+  line1: string;
+  line2: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+};
+
 function CheckoutContent() {
   const { user, isAuthenticated, initializing } = useRequireAuth();
   const router = useRouter();
@@ -23,7 +33,7 @@ function CheckoutContent() {
   const { addToast } = useToast();
   const { t } = useTranslation();
   const [submitting, setSubmitting] = useState(false);
-  const [address, setAddress] = useState({
+  const [address, setAddress] = useState<CheckoutAddress>({
     fullName: "",
     line1: "",
     line2: "",
@@ -34,6 +44,7 @@ function CheckoutContent() {
   });
 
   const [paymentMethod, setPaymentMethod] = useState<"COD" | "VNPAY">("COD");
+  const [formError, setFormError] = useState<string | null>(null);
   
   // Direct Buy Params
   const flashSaleId = searchParams.get("flashSaleId");
@@ -153,7 +164,17 @@ function CheckoutContent() {
     const shipping = cart.shippingEstimate ?? 0;
     const total = subtotal + shipping - discount;
     return { ...cart, items, subtotal, total };
-  }, [cart, selectedIds, isDirectBuy, directProductId, directPrice, directQuantity, flashSaleId, searchParams]);
+  }, [
+    cart,
+    selectedIds,
+    isDirectBuy,
+    directProductId,
+    directPrice,
+    directQuantity,
+    flashSaleId,
+    searchParams,
+    directCart,
+  ]);
 
   if (
     initializing ||
@@ -193,8 +214,26 @@ function CheckoutContent() {
     );
   }
 
+  const validateAddress = (payload: CheckoutAddress) => {
+    const missing: string[] = [];
+    if (!payload.fullName.trim()) missing.push(t.checkout.full_name);
+    if (!payload.line1.trim()) missing.push(t.checkout.address_1);
+    if (!payload.city.trim()) missing.push(t.checkout.city);
+    if (!payload.postalCode.trim()) missing.push(t.checkout.postal_code);
+    if (!payload.country.trim()) missing.push(t.checkout.country);
+    return missing;
+  };
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    const missing = validateAddress(address);
+    if (missing.length) {
+      const message = `${t.checkout.preparing}: ${missing.join(", ")}`;
+      setFormError(message);
+      addToast(message, "error");
+      return;
+    }
+    setFormError(null);
     setSubmitting(true);
     try {
         const order = await orderApi.create({
@@ -222,6 +261,7 @@ function CheckoutContent() {
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : t.checkout.failed;
+      setFormError(message);
       addToast(message, "error");
     } finally {
       setSubmitting(false);
@@ -233,6 +273,11 @@ function CheckoutContent() {
       <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
         <h1 className="text-2xl font-bold text-zinc-900">{t.checkout.title}</h1>
         <p className="text-sm text-zinc-600">{t.checkout.subtitle}</p>
+        {formError ? (
+          <div className="mt-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+            {formError}
+          </div>
+        ) : null}
         <form className="mt-6 grid gap-4" onSubmit={handleSubmit}>
           <div className="grid gap-4 sm:grid-cols-2">
              <div 

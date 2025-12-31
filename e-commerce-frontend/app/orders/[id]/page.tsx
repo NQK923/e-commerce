@@ -13,6 +13,7 @@ import { Order } from "@/src/types/order";
 import { formatCurrency, formatDate } from "@/src/utils/format";
 import { useToast } from "@/src/components/ui/toast-provider";
 import { useTranslation } from "@/src/providers/language-provider";
+import Image from "next/image";
 
 export default function OrderDetailPage() {
   const params = useParams<{ id: string }>();
@@ -214,16 +215,30 @@ export default function OrderDetailPage() {
           <div className="mt-4 space-y-3">
             {order.items.map((item) => (
               <div key={item.id} className="flex items-center justify-between rounded-xl border border-zinc-200 p-3">
-                <div className="flex flex-col">
-                  <span className="text-sm font-semibold text-black">
-                    {productDetails[item.productId]?.name ?? item.productId}
-                  </span>
-                  {item.variantSku ? (
-                    <span className="text-xs text-zinc-500">SKU: {item.variantSku}</span>
-                  ) : null}
-                  <span className="text-xs text-zinc-500">
-                    {t.orders.quantity}: {item.quantity}
-                  </span>
+                <div className="flex items-center gap-3">
+                  <div className="relative h-14 w-14 overflow-hidden rounded-lg border border-zinc-100 bg-zinc-50">
+                    {productDetails[item.productId]?.image ? (
+                      <Image
+                        src={productDetails[item.productId]!.image!}
+                        alt={productDetails[item.productId]?.name ?? item.productId}
+                        fill
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-xs text-zinc-400">No image</div>
+                    )}
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-semibold text-black">
+                      {productDetails[item.productId]?.name ?? item.productId}
+                    </span>
+                    {item.variantSku ? (
+                      <span className="text-xs text-zinc-500">SKU: {item.variantSku}</span>
+                    ) : null}
+                    <span className="text-xs text-zinc-500">
+                      {t.orders.quantity}: {item.quantity}
+                    </span>
+                  </div>
                 </div>
                 <div className="text-right text-sm font-semibold text-black">
                   {formatCurrency(item.subtotal, order.currency ?? productDetails[item.productId]?.currency ?? "USD")}
