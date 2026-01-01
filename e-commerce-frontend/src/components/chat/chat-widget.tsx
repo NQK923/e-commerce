@@ -64,15 +64,16 @@ const getOtherParticipant = (
   currentUserId?: string,
 ) => conversation?.participants.find((p) => p.id !== currentUserId) ?? null;
 
-const formatShopFallback = (id?: string) => {
+const formatShopFallback = (id?: string | number | null) => {
   if (!id) return "Shop";
-  const suffix = id.length > 4 ? id.slice(-4).toUpperCase() : id.toUpperCase();
+  const idStr = typeof id === "string" ? id : String(id);
+  const suffix = idStr.length > 4 ? idStr.slice(-4).toUpperCase() : idStr.toUpperCase();
   return `Shop ${suffix}`;
 };
 
 const resolveParticipantName = (
   participant: ConversationSummary["participants"][number] | null,
-  fallbackId?: string,
+  fallbackId?: string | number | null,
 ) => {
   if (!participant) return formatShopFallback(fallbackId);
   return (
@@ -128,7 +129,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   const bubbleClass = isImage
     ? "bg-transparent shadow-none p-0"
     : isMine
-        ? "bg-linear-to-br from-emerald-500 to-emerald-600 text-white px-3 py-2 shadow-sm"
+        ? "bg-gradient-to-br from-emerald-500 to-emerald-600 text-white px-3 py-2 shadow-lg shadow-emerald-200/60"
         : "bg-white text-zinc-800 border border-zinc-100 px-3 py-2 shadow-sm";
 
   return (
@@ -199,16 +200,21 @@ const ConversationItem: React.FC<{
   return (
     <div
       onClick={onSelect}
-      className={`relative group flex cursor-pointer items-center gap-3 rounded-xl p-3 mx-2 transition-all duration-200 ${
-        active 
-          ? "bg-emerald-50/80 shadow-sm ring-1 ring-emerald-100/50" 
-          : "hover:bg-zinc-50 hover:shadow-sm"
+      className={`relative group flex cursor-pointer items-center gap-3 rounded-2xl p-3.5 mx-2 border transition-all duration-200 ${
+        active
+          ? "bg-white border-emerald-200 shadow-[0_12px_40px_-24px_rgba(16,185,129,0.8)]"
+          : "bg-white/80 border-transparent hover:border-emerald-100 hover:shadow-sm"
       }`}
     >
+      <span
+        className={`absolute left-0 top-2 bottom-2 w-1 rounded-full transition-all duration-200 ${
+          active || isUnread ? "bg-emerald-500" : "bg-transparent group-hover:bg-emerald-200"
+        }`}
+      />
       <div className="relative shrink-0">
         <Avatar className="h-12 w-12 border-2 border-white shadow-sm group-hover:border-emerald-100 transition-colors">
           <AvatarImage src={other?.avatarUrl} />
-          <AvatarFallback className="bg-linear-to-br from-zinc-100 to-zinc-200 text-zinc-600 font-semibold">
+          <AvatarFallback className="bg-gradient-to-br from-zinc-100 to-zinc-200 text-zinc-600 font-semibold">
             {otherName.trim().charAt(0).toUpperCase() || <User size={20} />}
           </AvatarFallback>
         </Avatar>
@@ -218,9 +224,13 @@ const ConversationItem: React.FC<{
 
       <div className="flex-1 min-w-0">
         <div className="flex justify-between items-center mb-0.5">
-           <h4 className={`text-[14px] truncate ${isUnread ? "font-bold text-zinc-900" : "font-semibold text-zinc-700"}`}>
-             {otherName}
-           </h4>
+          <h4
+            className={`text-[14px] truncate ${
+              isUnread ? "font-bold text-zinc-900" : "font-semibold text-zinc-700"
+            }`}
+          >
+            {otherName}
+          </h4>
            {last && (
              <span className={`text-[10px] flex-none ml-2 ${isUnread ? "font-bold text-emerald-600" : "text-zinc-400"}`}>
                {formatTimeShort(last.sentAt)}
@@ -229,7 +239,11 @@ const ConversationItem: React.FC<{
         </div>
         
         <div className="flex items-center gap-2">
-          <p className={`truncate text-[13px] leading-tight flex-1 ${isUnread ? "font-semibold text-zinc-900" : "text-zinc-500"}`}>
+          <p
+            className={`truncate text-[13px] leading-tight flex-1 ${
+              isUnread ? "font-semibold text-zinc-900" : "text-zinc-500"
+            }`}
+          >
             {last ? (
               <>
                 {last.senderId === currentUserId && t.chat.you}
@@ -324,12 +338,14 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
               avatarUrl: otherRaw.avatarUrl || profile?.avatarUrl,
             }
           : otherRaw;
-        if (!filter.trim()) return true;
+        const query = filter.trim().toLowerCase();
+        if (!query) return true;
+        const idText = other?.id ? String(other.id).toLowerCase() : "";
         return (
-          other?.displayName?.toLowerCase().includes(filter.toLowerCase()) ||
-          other?.storeName?.toLowerCase().includes(filter.toLowerCase()) ||
-          profile?.displayName?.toLowerCase().includes(filter.toLowerCase()) ||
-          other?.id?.toLowerCase().includes(filter.toLowerCase())
+          other?.displayName?.toLowerCase().includes(query) ||
+          other?.storeName?.toLowerCase().includes(query) ||
+          profile?.displayName?.toLowerCase().includes(query) ||
+          idText.includes(query)
         );
       }),
     [conversations, filter, participantProfiles, user?.id],
@@ -369,6 +385,38 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
       userClearedSelection.current = false;
     }
   }, [activeConversationId, initialTargetUserId, setActiveConversationId]);
+
+  useEffect(() => {
+    const handleOpen = (event: Event) => {
+      const detail = (event as CustomEvent<{ userId?: string; conversationId?: string }>).detail;
+      setIsOpen(true);
+      if (detail?.conversationId) {
+        userClearedSelection.current = false;
+        setComposeTarget("");
+        setActiveConversationId(detail.conversationId);
+        return;
+      }
+      if (detail?.userId) {
+        const target = detail.userId;
+        const existingConversation = conversations.find((conv) =>
+          conv.participants.some((p) => p.id === target),
+        );
+        userClearedSelection.current = false;
+        setComposeTarget(target);
+        setActiveConversationId(existingConversation ? existingConversation.id : `temp:${target}`);
+      }
+    };
+
+    const handleClose = () => setIsOpen(false);
+
+    window.addEventListener("chat-widget:open", handleOpen as EventListener);
+    window.addEventListener("chat-widget:close", handleClose);
+
+    return () => {
+      window.removeEventListener("chat-widget:open", handleOpen as EventListener);
+      window.removeEventListener("chat-widget:close", handleClose);
+    };
+  }, [conversations, setActiveConversationId]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -466,33 +514,60 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
   // --- Views ---
 
   const renderConversationList = () => (
-    <div className="flex h-full flex-col bg-white">
+    <div className="flex h-full flex-col bg-gradient-to-b from-emerald-50/70 via-white to-white">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-4 border-b border-zinc-100/50 bg-white/80 backdrop-blur-md sticky top-0 z-10">
-        <h1 className="text-xl font-bold text-zinc-800 tracking-tight">{t.chat.chats}</h1>
-        <div className="flex gap-1">
-           <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-zinc-500 hover:bg-zinc-100">
+      <div className="relative overflow-hidden px-4 py-4 border-b border-emerald-100/70 bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-600 text-white sticky top-0 z-10 shadow-sm">
+        <div className="absolute inset-y-0 right-0 w-32 bg-white/10 blur-3xl pointer-events-none" />
+        <div className="flex items-center justify-between relative z-10">
+          <div className="flex items-center gap-3">
+            <div className="h-11 w-11 rounded-xl bg-white/15 border border-white/20 shadow-inner flex items-center justify-center">
+              <MessageCircle size={22} className="text-white" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold leading-tight">{t.chat.chats}</h1>
+              <div className="flex items-center gap-2 text-[11px] font-semibold text-white/80">
+                <span
+                  className={`h-2.5 w-2.5 rounded-full ${
+                    connectionStatus === "connected"
+                      ? "bg-emerald-200 shadow-[0_0_0_5px_rgba(16,185,129,0.25)]"
+                      : "bg-amber-200 shadow-[0_0_0_5px_rgba(251,191,36,0.25)]"
+                  } animate-pulse`}
+                />
+                <span>{connectionStatus === "connected" ? t.chat.active_now : t.chat.offline}</span>
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 rounded-full text-white/80 hover:bg-white/10"
+            >
               <MoreHorizontal size={20} />
-           </Button>
-           {!fullPage && (
-               <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-8 w-8 rounded-full text-zinc-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+            </Button>
+            {!fullPage && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 rounded-full text-white/80 hover:bg-white/10"
                 onClick={() => setIsOpen(false)}
-               >
-                  <Minimize2 size={18} />
-               </Button>
-           )}
+              >
+                <Minimize2 size={18} />
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Search */}
-      <div className="px-3 py-2">
+      <div className="px-4 py-3">
         <div className="relative group">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-emerald-500 transition-colors" size={16} />
+          <Search
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-400 group-focus-within:text-emerald-600 transition-colors"
+            size={16}
+          />
           <Input
-            className="h-10 pl-10 rounded-full bg-zinc-100 border-transparent focus:border-emerald-500/20 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 transition-all text-[14px]"
+            className="h-11 pl-10 rounded-2xl bg-white/80 border border-emerald-100/70 shadow-sm focus:border-emerald-300 focus:bg-white focus:ring-4 focus:ring-emerald-500/15 transition-all text-[14px] placeholder:text-zinc-400"
             placeholder={t.chat.search_placeholder}
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
@@ -501,7 +576,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
       </div>
 
       {/* List */}
-          <div className="flex-1 overflow-y-auto pt-2 space-y-1 custom-scrollbar scroll-smooth">
+      <div className="flex-1 overflow-y-auto pt-2 pb-1 space-y-2 custom-scrollbar scroll-smooth px-1.5">
         {loadingConversations && conversations.length === 0 ? (
            <div className="flex justify-center py-8"><Loader2 className="animate-spin text-emerald-500" /></div>
         ) : filteredConversations.length === 0 ? (
@@ -531,22 +606,24 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
       </div>
 
       {/* New Chat Input */}
-      <div className="p-3 border-t border-zinc-100 bg-zinc-50/50">
-         <div className="flex items-center gap-2 bg-white p-1.5 rounded-lg border border-zinc-200 shadow-sm">
-             <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider px-2">{t.chat.to}</span>
-             <input 
-                className="flex-1 text-sm bg-transparent outline-none placeholder:text-zinc-300 text-zinc-700 min-w-0"
-                placeholder={t.chat.user_id_placeholder}
-                value={composeTarget}
-                onChange={(e) => {
-                    setComposeTarget(e.target.value);
-                    if (e.target.value) {
-                        userClearedSelection.current = false;
-                        setActiveConversationId(`temp:${e.target.value}`);
-                    }
-                }}
-             />
-         </div>
+      <div className="p-4 border-t border-emerald-100/70 bg-white/70 backdrop-blur">
+        <div className="flex items-center gap-2 bg-white p-2 rounded-2xl border border-emerald-100 shadow-sm">
+          <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider px-2 rounded-lg bg-emerald-50 border border-emerald-100">
+            {t.chat.to}
+          </span>
+          <input
+            className="flex-1 text-sm bg-transparent outline-none placeholder:text-zinc-300 text-zinc-700 min-w-0"
+            placeholder={t.chat.user_id_placeholder}
+            value={composeTarget}
+            onChange={(e) => {
+              setComposeTarget(e.target.value);
+              if (e.target.value) {
+                userClearedSelection.current = false;
+                setActiveConversationId(`temp:${e.target.value}`);
+              }
+            }}
+          />
+        </div>
       </div>
     </div>
   );
@@ -573,15 +650,15 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
      const isSeller = otherParticipant?.role === "SELLER";
 
      return (
-         <div className="flex h-full flex-col bg-[#f8f9fa] relative">
+         <div className="flex h-full flex-col bg-gradient-to-b from-slate-50 via-white to-white relative">
              {/* Chat Header */}
-             <div className="flex items-center justify-between px-4 py-3 bg-white/90 backdrop-blur-md border-b border-zinc-200/60 shadow-sm z-20 sticky top-0">
+             <div className="flex items-center justify-between px-5 py-4 bg-gradient-to-r from-white via-emerald-50/60 to-white backdrop-blur-md border-b border-emerald-100/70 shadow-sm z-20 sticky top-0">
                  <div className="flex items-center gap-3">
                      {!fullPage && (
                           <Button 
                              variant="ghost" 
                              size="icon" 
-                             className="h-9 w-9 text-emerald-600 hover:bg-emerald-50 rounded-full -ml-2"
+                             className="h-9 w-9 text-emerald-700 hover:bg-emerald-50 rounded-full -ml-2 border border-emerald-100"
                              onClick={() => {
                                 userClearedSelection.current = true;
                                 setActiveConversationId(null);
@@ -595,7 +672,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
                       <div className="relative">
                         <Avatar className="h-10 w-10 border border-zinc-100 shadow-sm">
                             <AvatarImage src={otherParticipant?.avatarUrl} />
-                            <AvatarFallback className="bg-linear-to-br from-emerald-100 to-emerald-200 text-emerald-700 font-bold">
+                            <AvatarFallback className="bg-gradient-to-br from-emerald-100 to-emerald-200 text-emerald-700 font-bold">
                                 {displayName.trim().charAt(0)}
                             </AvatarFallback>
                         </Avatar>
@@ -604,25 +681,34 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
                         )}
                      </div>
                      
-                     <div className="flex flex-col">
-                         <span className="text-[15px] font-bold text-zinc-900 leading-none flex items-center gap-1.5">
-                            {displayName}
-                            {isSeller && <span className="text-[9px] bg-orange-50 text-orange-600 px-1.5 py-0.5 rounded-md font-extrabold tracking-wide border border-orange-100">{t.profile.seller_badge.toUpperCase()}</span>}
-                         </span>
-                         <span className="text-[11px] font-medium text-zinc-400 mt-0.5">
-                             {connectionStatus === "connected" ? t.chat.active_now : t.chat.offline}
-                         </span>
+                     <div className="flex flex-col gap-0.5">
+                        <div className="flex items-center gap-2">
+                           <span className="text-[15px] font-bold text-zinc-900 leading-none flex items-center gap-1.5">
+                              {displayName}
+                              {isSeller && <span className="text-[9px] bg-orange-50 text-orange-600 px-1.5 py-0.5 rounded-md font-extrabold tracking-wide border border-orange-100">{t.profile.seller_badge.toUpperCase()}</span>}
+                           </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-[11px] font-semibold text-emerald-700">
+                           <span
+                              className={`h-2.5 w-2.5 rounded-full ${
+                                connectionStatus === "connected"
+                                  ? "bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.18)]"
+                                  : "bg-amber-400 shadow-[0_0_0_4px_rgba(251,191,36,0.24)]"
+                              } animate-pulse`}
+                            />
+                           <span>{connectionStatus === "connected" ? t.chat.active_now : t.chat.offline}</span>
+                        </div>
                      </div>
                  </div>
 
                  <div className="flex items-center gap-1 text-emerald-600">
-                     <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-emerald-50 text-emerald-600"><Phone size={18} /></Button>
-                     <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-emerald-50 text-emerald-600"><Video size={20} /></Button>
+                     <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-emerald-50 text-emerald-600 border border-emerald-100"><Phone size={18} /></Button>
+                     <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-emerald-50 text-emerald-600 border border-emerald-100"><Video size={20} /></Button>
                      {!fullPage && (
                          <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="h-9 w-9 rounded-full hover:bg-red-50 text-zinc-400 hover:text-red-500 transition-colors"
+                            className="h-9 w-9 rounded-full hover:bg-red-50 text-zinc-400 hover:text-red-500 transition-colors border border-zinc-200"
                             onClick={() => setIsOpen(false)}
                          >
                             <X size={20} />
@@ -632,14 +718,21 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
              </div>
 
              {/* Messages Area */}
-             <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-slate-50">
+             <div
+               className="relative flex-1 overflow-y-auto px-4 py-3 custom-scrollbar"
+               style={{
+                 backgroundImage:
+                   "radial-gradient(circle at 16% 20%, rgba(16, 185, 129, 0.12), transparent 35%), radial-gradient(circle at 82% 10%, rgba(59, 130, 246, 0.08), transparent 30%), linear-gradient(to bottom, #f8fafc, #f8fafc)",
+               }}
+             >
+               <div className="max-w-3xl mx-auto w-full space-y-3">
                  {loadingMessages && messages.length === 0 ? (
                      <div className="flex h-full items-center justify-center"><Loader2 className="animate-spin text-emerald-500 h-8 w-8" /></div>
                  ) : (
                      <>
                         {/* Initial User Info Header */}
-                        <div className="flex flex-col items-center py-8 gap-3 opacity-80 mb-6">
-                              <Avatar className="h-20 w-20 ring-4 ring-white shadow-md">
+                        <div className="flex flex-col items-center py-6 gap-3 opacity-90 mb-3">
+                              <Avatar className="h-20 w-20 ring-4 ring-white shadow-md border border-emerald-50">
                                 <AvatarImage src={otherParticipant?.avatarUrl} />
                                 <AvatarFallback className="text-2xl bg-zinc-100 text-zinc-400">
                                   {displayName.trim().charAt(0)}
@@ -647,7 +740,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
                               </Avatar>
                              <div className="text-center">
                                  <h3 className="text-lg font-bold text-zinc-900">{displayName}</h3>
-                                 <p className="text-xs text-zinc-500 font-medium">EcomX Marketplace &bull; Connected</p>
+                                 <p className="text-xs text-zinc-500 font-medium">EcomX Marketplace &bull; {connectionStatus === "connected" ? t.chat.active_now : t.chat.offline}</p>
                              </div>
                         </div>
 
@@ -676,28 +769,35 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
                         <div ref={messagesEndRef} className="h-2" />
                      </>
                  )}
+               </div>
              </div>
 
              {/* Input Area */}
-             <div className="p-3 bg-white border-t border-zinc-100">
+             <div className="p-4 bg-white/95 border-t border-emerald-100/80 shadow-[0_-10px_30px_-28px_rgba(0,0,0,0.25)] backdrop-blur">
                  <div className="flex items-end gap-2 max-w-full">
                       <div className="flex gap-1 pb-2 text-emerald-600 shrink-0">
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-9 w-9 rounded-full hover:bg-emerald-50 transition-colors"
+                            className="h-10 w-10 rounded-full hover:bg-emerald-50 transition-colors border border-emerald-100"
                             onClick={handleSelectImage}
                             disabled={uploadingImage}
                           >
                             {uploadingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon size={20} />}
                           </Button>
-                          <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-emerald-50 transition-colors"><Smile size={20} /></Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-10 w-10 rounded-full hover:bg-emerald-50 transition-colors border border-emerald-100"
+                          >
+                            <Smile size={20} />
+                          </Button>
                       </div>
                      
                       <div className="flex-1 relative min-w-0">
                           <Input
                               ref={inputRef}
-                              className="w-full rounded-3xl bg-zinc-100 border-transparent py-2.5 px-4 focus:bg-white focus:border-emerald-200 focus:ring-4 focus:ring-emerald-500/10 transition-all shadow-sm min-h-[42px] max-h-[120px] text-[15px] resize-none overflow-hidden"
+                              className="w-full rounded-3xl bg-emerald-50/60 border border-emerald-100 py-2.5 px-4 focus:bg-white focus:border-emerald-300 focus:ring-4 focus:ring-emerald-500/15 transition-all shadow-sm min-h-[44px] max-h-[120px] text-[15px] resize-none overflow-hidden"
                               placeholder={t.chat.type_message}
                              value={draft}
                              onChange={(e) => setDraft(e.target.value)}
@@ -716,10 +816,10 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
                          variant="ghost"
                          onClick={handleSend}
                          disabled={!draft.trim() && !uploadingImage}
-                         className={`h-10 w-10 rounded-full mb-0.5 shrink-0 transition-all duration-300 ${
+                         className={`h-11 w-11 rounded-full mb-0.5 shrink-0 transition-all duration-300 ${
                              draft.trim() 
-                                 ? "bg-emerald-600 text-white hover:bg-emerald-700 shadow-md hover:shadow-lg transform hover:-translate-y-0.5" 
-                                 : "bg-transparent text-zinc-300 hover:bg-zinc-50"
+                                 ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white hover:shadow-lg hover:-translate-y-0.5" 
+                                 : "bg-white text-zinc-300 border border-zinc-200 hover:bg-zinc-50"
                         }`}
                       >
                           <Send size={18} fill={draft.trim() ? "currentColor" : "none"} className={draft.trim() ? "ml-0.5" : ""} />
@@ -742,9 +842,9 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
 
   if (fullPage) {
       return (
-        <div className="container mx-auto max-w-7xl h-[calc(100vh-80px)] p-4 md:p-6">
-             <div className="flex h-full overflow-hidden rounded-2xl border border-zinc-200/80 shadow-2xl bg-white ring-1 ring-black/5">
-                 <div className="w-[380px] border-r border-zinc-100 flex flex-col bg-white">
+        <div className="mx-auto max-w-7xl h-[calc(100vh-80px)] p-4 md:p-6 bg-gradient-to-br from-emerald-50 via-white to-slate-50 rounded-3xl shadow-[0_30px_90px_-60px_rgba(16,185,129,0.6)] border border-emerald-50">
+             <div className="flex h-full overflow-hidden rounded-2xl border border-zinc-100 shadow-2xl bg-white/90 backdrop-blur-sm ring-1 ring-black/5">
+                 <div className="w-[380px] border-r border-zinc-100 flex flex-col bg-white/90 backdrop-blur">
                      {renderConversationList()}
                  </div>
                  <div className="flex-1 flex flex-col min-w-0">
@@ -769,7 +869,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
                 <Button
                     onClick={() => setIsOpen(true)}
                     variant="primary"
-                    className="relative h-14 w-14 rounded-full shadow-xl bg-linear-to-br from-emerald-500 to-emerald-600 hover:shadow-2xl hover:scale-110 transition-all duration-300 border border-emerald-400/30 focus:ring-0 focus:ring-offset-0"
+                    className="relative h-14 w-14 rounded-full shadow-xl bg-gradient-to-br from-emerald-500 to-emerald-600 hover:shadow-2xl hover:scale-110 transition-all duration-300 border border-emerald-400/30 focus:ring-0 focus:ring-offset-0"
                 >
                     <MessageCircle size={26} className="text-white" />
                     {unreadTotal > 0 && (
@@ -784,7 +884,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
         {/* Widget Window */}
         <div 
             className={`
-                fixed bottom-0 right-0 z-50 flex flex-col bg-white shadow-[0_0_40px_-10px_rgba(0,0,0,0.15)] rounded-t-2xl overflow-hidden border border-zinc-200/80
+                fixed bottom-0 right-0 z-50 flex flex-col bg-white/95 backdrop-blur-lg shadow-[0_20px_60px_-35px_rgba(0,0,0,0.4)] rounded-t-2xl overflow-hidden border border-emerald-100/80
                 transition-all duration-400 cubic-bezier(0.16, 1, 0.3, 1) origin-bottom-right
                 ${isOpen ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-12 scale-95 pointer-events-none"}
             `}
@@ -799,7 +899,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
             }}
         >
              {!isAuthenticated ? (
-                 <div className="flex flex-col h-full bg-linear-to-b from-emerald-50 to-white">
+                 <div className="flex flex-col h-full bg-gradient-to-b from-emerald-50 to-white">
                      <div className="flex justify-between items-center p-4">
                          <span className="font-bold text-emerald-800 tracking-tight text-lg">{t.chat.support_title}</span>
                          <Button variant="ghost" size="sm" onClick={() => setIsOpen(false)} className="hover:bg-black/5 rounded-full h-8 w-8 p-0"><X size={20}/></Button>

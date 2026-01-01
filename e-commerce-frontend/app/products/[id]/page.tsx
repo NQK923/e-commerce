@@ -16,6 +16,7 @@ import { ProductReviews } from "@/src/components/product/product-reviews";
 import { Button } from "@/src/components/ui/button";
 import { Badge } from "@/src/components/ui/badge";
 import { Spinner } from "@/src/components/ui/spinner";
+import { openChatWidget } from "@/src/lib/chat-widget-controller";
 import { useCart } from "@/src/store/cart-store";
 import { useAuth } from "@/src/store/auth-store";
 import { useToast } from "@/src/components/ui/toast-provider";
@@ -391,11 +392,15 @@ export default function ProductDetailPage() {
                                 </div>
                                 <div className="flex flex-col gap-2 sm:flex-row">
                                     {displayProduct.sellerId && displayProduct.sellerId !== user?.id && (
-                                        <Link href={`/chat?userId=${displayProduct.sellerId}`}>
-                                            <Button variant="outline" size="sm" className="w-full text-emerald-600 hover:bg-emerald-50 border-emerald-200">
-                                                <MessageSquare size={16} className="mr-2"/> {t.product.chat}
-                                            </Button>
-                                        </Link>
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        className="w-full text-emerald-600 hover:bg-emerald-50 border-emerald-200"
+                                        onClick={() => openChatWidget({ userId: displayProduct.sellerId })}
+                                      >
+                                        <MessageSquare size={16} className="mr-2" /> {t.product.chat}
+                                      </Button>
                                     )}
                                     <Link href={`/shop/${seller.id}`}>
                                         <Button variant="secondary" size="sm" className="w-full">

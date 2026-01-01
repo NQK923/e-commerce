@@ -34,8 +34,8 @@ spring:
       host: ${SPRING_REDIS_HOST:localhost}
       port: ${SPRING_REDIS_PORT:6379}
     mongodb:
-      uri: ${MONGO_URI:mongodb://localhost:27017/ecommerce}
-      database: ${MONGO_DATABASE:ecommerce}
+      uri: ${MONGO_URI}
+      database: ${MONGO_DATABASE}
   security:
     oauth2:
       client:
