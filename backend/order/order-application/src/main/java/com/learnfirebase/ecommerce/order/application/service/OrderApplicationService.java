@@ -55,9 +55,6 @@ import com.learnfirebase.ecommerce.order.domain.exception.OrderDomainException;
 
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.transaction.annotation.Transactional;
-
-@Transactional
 @RequiredArgsConstructor
 public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseCase, CancelOrderUseCase, ListOrdersUseCase, GetOrderUseCase, InitiatePaymentUseCase, HandlePaymentCallbackUseCase, ShipOrderUseCase, MarkDeliveredUseCase, RequestReturnUseCase, ApproveReturnUseCase, RejectReturnUseCase {
 
