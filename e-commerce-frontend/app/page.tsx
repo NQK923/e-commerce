@@ -131,11 +131,14 @@ export default function HomePage() {
                <div className="relative rounded-2xl bg-white/5 border border-white/10 p-6 backdrop-blur-sm shadow-2xl rotate-3 hover:rotate-0 transition-transform duration-500">
                   <div className="aspect-[4/3] w-full rounded-lg bg-gradient-to-br from-zinc-100 to-zinc-200 flex items-center justify-center overflow-hidden relative">
                     {/* Placeholder for Hero Image */}
-                    <div className="text-zinc-400 font-medium flex flex-col items-center">
+                    <div className="relative text-zinc-400 font-medium flex flex-col items-center h-full w-full">
                         <Image 
                           src="https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=2070&auto=format&fit=crop" 
                           alt="Shopping" 
                           fill
+                          priority
+                          loading="eager"
+                          sizes="(min-width: 1024px) 50vw, 100vw"
                           className="object-cover opacity-90"
                         />
                     </div>

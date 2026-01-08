@@ -11,12 +11,10 @@ import {
   MessageCircle,
   Minimize2,
   MoreHorizontal,
-  Phone,
   Search,
   Send,
   Smile,
   User,
-  Video,
   X,
 } from "lucide-react";
 import { useChat } from "@/src/store/chat-store";
@@ -701,21 +699,19 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
                      </div>
                  </div>
 
-                 <div className="flex items-center gap-1 text-emerald-600">
-                     <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-emerald-50 text-emerald-600 border border-emerald-100"><Phone size={18} /></Button>
-                     <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-emerald-50 text-emerald-600 border border-emerald-100"><Video size={20} /></Button>
-                     {!fullPage && (
-                         <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-9 w-9 rounded-full hover:bg-red-50 text-zinc-400 hover:text-red-500 transition-colors border border-zinc-200"
-                            onClick={() => setIsOpen(false)}
-                         >
-                            <X size={20} />
-                         </Button>
-                     )}
-                 </div>
-             </div>
+                 {!fullPage && (
+                   <div className="flex items-center text-emerald-600">
+                       <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-9 w-9 rounded-full hover:bg-red-50 text-zinc-400 hover:text-red-500 transition-colors border border-zinc-200"
+                          onClick={() => setIsOpen(false)}
+                       >
+                          <X size={20} />
+                       </Button>
+                   </div>
+                 )}
+            </div>
 
              {/* Messages Area */}
              <div

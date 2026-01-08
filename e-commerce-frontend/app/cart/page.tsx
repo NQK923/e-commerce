@@ -163,10 +163,11 @@ function CartContent() {
         
         <div className="grid gap-8 lg:grid-cols-[1fr,380px] xl:gap-12">
             <div className="flex flex-col gap-4">
-            {cart.items.map((item) => (
+            {cart.items.map((item, index) => (
                 <CartItemCard
                 key={item.id}
                 item={item}
+                eager={index === 0}
                 selectable
                 selected={selectedIds.has(item.id)}
                 onSelectChange={(next) => toggleSelect(item.id, next)}

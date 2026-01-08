@@ -20,9 +20,10 @@ type Props = {
   selectable?: boolean;
   selected?: boolean;
   onSelectChange?: (next: boolean) => void;
+  eager?: boolean;
 };
 
-export const CartItemCard: React.FC<Props> = ({ item, onQuantityChange, onRemove, onVariantChange, selectable, selected, onSelectChange }) => {
+export const CartItemCard: React.FC<Props> = ({ item, onQuantityChange, onRemove, onVariantChange, selectable, selected, onSelectChange, eager }) => {
   const { t } = useTranslation();
   const image = item.product.images.find((img) => img.primary) ?? item.product.images[0];
   const maxQty = item.product.stock ?? 99;
@@ -52,7 +53,15 @@ export const CartItemCard: React.FC<Props> = ({ item, onQuantityChange, onRemove
         )}
         <Link href={`/products/${item.product.id}`} className="relative h-28 w-24 shrink-0 overflow-hidden rounded-xl bg-zinc-50 border border-zinc-100 group-hover:border-emerald-200 transition-colors">
           {image ? (
-            <Image src={image.url} alt={image.altText ?? item.product.name} fill className="object-cover" sizes="100px" />
+            <Image
+              src={image.url}
+              alt={image.altText ?? item.product.name}
+              fill
+              priority={eager}
+              loading={eager ? "eager" : undefined}
+              className="object-cover"
+              sizes="100px"
+            />
           ) : (
             <div className="flex h-full items-center justify-center text-xs text-zinc-400">No image</div>
           )}
