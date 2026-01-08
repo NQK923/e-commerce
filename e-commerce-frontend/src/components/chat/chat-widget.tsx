@@ -190,7 +190,8 @@ const ConversationItem: React.FC<{
   onSelect: () => void;
   currentUserId?: string;
   participantProfiles: ParticipantProfileMap;
-}> = ({ conversation, active, onSelect, currentUserId, participantProfiles }) => {
+  isOnline?: boolean;
+}> = ({ conversation, active, onSelect, currentUserId, participantProfiles, isOnline }) => {
   const { t } = useTranslation();
   const otherRaw = getOtherParticipant(conversation, currentUserId);
   const profile = otherRaw?.id ? participantProfiles[otherRaw.id] : undefined;
@@ -227,8 +228,9 @@ const ConversationItem: React.FC<{
             {otherName.trim().charAt(0).toUpperCase() || <User size={20} />}
           </AvatarFallback>
         </Avatar>
-        {/* Mock Online Indicator */}
-        <span className="absolute bottom-0.5 right-0.5 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-white shadow-sm" />
+        {isOnline && (
+          <span className="absolute bottom-0.5 right-0.5 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-white shadow-sm" />
+        )}
       </div>
 
       <div className="flex-1 min-w-0">
@@ -651,7 +653,13 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
               <p className="text-zinc-400 text-xs mt-1">{t.chat.start_chatting}</p>
            </div>
         ) : (
-            filteredConversations.map(conv => (
+            filteredConversations.map(conv => {
+              const other = getOtherParticipant(conv, user?.id);
+              const presence = getPresenceForUser(other?.id);
+              // Fallback to static online field if presence not available yet
+              const isOnline = presence ? presence.online : Boolean(other?.online);
+              
+              return (
                 <ConversationItem 
                     key={conv.id}
                     conversation={conv}
@@ -663,8 +671,10 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
                     }}
                     currentUserId={user?.id}
                     participantProfiles={participantProfiles}
+                    isOnline={isOnline}
                 />
-            ))
+              );
+            })
         )}
       </div>
 

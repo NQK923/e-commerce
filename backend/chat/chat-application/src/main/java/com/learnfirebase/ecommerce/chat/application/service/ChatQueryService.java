@@ -5,6 +5,7 @@ import com.learnfirebase.ecommerce.chat.application.dto.ConversationSummaryDto;
 import com.learnfirebase.ecommerce.chat.application.port.in.GetConversationsUseCase;
 import com.learnfirebase.ecommerce.chat.application.port.in.GetMessagesUseCase;
 import com.learnfirebase.ecommerce.chat.application.port.in.MarkConversationReadUseCase;
+import com.learnfirebase.ecommerce.chat.application.port.out.MessageDeliveryPort;
 import com.learnfirebase.ecommerce.chat.domain.model.Message;
 import com.learnfirebase.ecommerce.chat.domain.model.MessageStatus;
 import com.learnfirebase.ecommerce.chat.domain.model.ParticipantId;
@@ -17,11 +18,14 @@ public class ChatQueryService implements GetConversationsUseCase, GetMessagesUse
 
     private final ConversationRepository conversationRepository;
     private final MessageRepository messageRepository;
+    private final MessageDeliveryPort messageDeliveryPort;
 
     public ChatQueryService(ConversationRepository conversationRepository,
-                            MessageRepository messageRepository) {
+                            MessageRepository messageRepository,
+                            MessageDeliveryPort messageDeliveryPort) {
         this.conversationRepository = conversationRepository;
         this.messageRepository = messageRepository;
+        this.messageDeliveryPort = messageDeliveryPort;
     }
 
     @Override
@@ -72,7 +76,11 @@ public class ChatQueryService implements GetConversationsUseCase, GetMessagesUse
         messages.stream()
                 .filter(m -> m.getReceiverId().equals(ParticipantId.of(userId)))
                 .filter(m -> m.getStatus() != MessageStatus.READ)
-                .forEach(m -> messageRepository.save(m.read()));
+                .forEach(m -> {
+                    Message updated = messageRepository.save(m.read());
+                    // Notify the sender that their message has been read
+                    messageDeliveryPort.deliverToUser(updated.getSenderId().getValue(), updated);
+                });
     }
 
     private ChatMessageDto toDto(Message message) {

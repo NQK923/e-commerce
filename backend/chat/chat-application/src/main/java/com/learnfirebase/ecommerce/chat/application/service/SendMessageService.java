@@ -17,6 +17,8 @@ import com.learnfirebase.ecommerce.chat.domain.repository.MessageRepository;
 import java.time.Instant;
 import java.util.Optional;
 
+import com.learnfirebase.ecommerce.chat.application.dto.ChatMessageDto;
+
 public class SendMessageService implements SendMessageUseCase {
 
     private final ConversationRepository conversationRepository;
@@ -67,7 +69,19 @@ public class SendMessageService implements SendMessageUseCase {
             notificationEventPort.publishOfflineMessage(toDeliver);
         }
 
-        return new SendMessageResult(toDeliver, receiverOnline);
+        return new SendMessageResult(toDto(toDeliver), receiverOnline);
+    }
+
+    private ChatMessageDto toDto(Message message) {
+        return ChatMessageDto.builder()
+                .id(message.getId().getValue())
+                .conversationId(message.getConversationId().getValue())
+                .senderId(message.getSenderId().getValue())
+                .receiverId(message.getReceiverId().getValue())
+                .content(message.getContent())
+                .sentAt(message.getSentAt())
+                .status(message.getStatus())
+                .build();
     }
 
     private Conversation resolveConversation(String conversationIdRaw, ParticipantId sender, ParticipantId receiver) {

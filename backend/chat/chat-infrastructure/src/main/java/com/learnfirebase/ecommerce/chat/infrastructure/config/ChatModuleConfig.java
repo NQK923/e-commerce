@@ -35,7 +35,8 @@ public class ChatModuleConfig {
 
     @Bean
     public ChatQueryService chatQueryService(ConversationRepository conversationRepository,
-                                             MessageRepository messageRepository) {
-        return new ChatQueryService(conversationRepository, messageRepository);
+                                             MessageRepository messageRepository,
+                                             MessageDeliveryPort messageDeliveryPort) {
+        return new ChatQueryService(conversationRepository, messageRepository, messageDeliveryPort);
     }
 }

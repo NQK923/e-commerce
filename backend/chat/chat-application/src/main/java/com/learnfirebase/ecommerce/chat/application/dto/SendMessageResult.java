@@ -5,6 +5,6 @@ import lombok.Value;
 
 @Value
 public class SendMessageResult {
-    Message persistedMessage;
+    ChatMessageDto persistedMessage;
     boolean receiverOnline;
 }
