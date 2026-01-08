@@ -12,6 +12,7 @@ type UseChatClientOptions = {
   onAck?: (ack: unknown) => void;
   onError?: (error: Error) => void;
   onStatusChange?: (status: ChatConnectionStatus) => void;
+  onPresence?: (presence: unknown) => void;
 };
 
 type UseChatClientResult = {
@@ -32,6 +33,7 @@ export const useChatClient = ({
   onAck,
   onError,
   onStatusChange,
+  onPresence,
 }: UseChatClientOptions): UseChatClientResult => {
   const clientRef = useRef<Client | null>(null);
   const subscriptionsRef = useRef<StompSubscription[]>([]);
@@ -39,6 +41,7 @@ export const useChatClient = ({
   const onAckRef = useRef<typeof onAck | undefined>(undefined);
   const onErrorRef = useRef<typeof onError | undefined>(undefined);
   const onStatusChangeRef = useRef<typeof onStatusChange | undefined>(undefined);
+  const onPresenceRef = useRef<typeof onPresence | undefined>(undefined);
   const [status, setStatus] = useState<ChatConnectionStatus>("idle");
 
   useEffect(() => {
@@ -46,7 +49,8 @@ export const useChatClient = ({
     onAckRef.current = onAck;
     onErrorRef.current = onError;
     onStatusChangeRef.current = onStatusChange;
-  }, [onAck, onError, onMessage, onStatusChange]);
+    onPresenceRef.current = onPresence;
+  }, [onAck, onError, onMessage, onPresence, onStatusChange]);
 
   useEffect(() => {
     const brokerURL = `${toWebSocketUrl(config.apiBaseUrl)}/ws/chat`;
@@ -84,6 +88,17 @@ export const useChatClient = ({
           try {
             const payload = JSON.parse(frame.body);
             onAckRef.current?.(payload);
+          } catch (err) {
+            onErrorRef.current?.(err as Error);
+          }
+        }),
+      );
+
+      subscriptionsRef.current.push(
+        client.subscribe("/topic/chat/presence", (frame: IMessage) => {
+          try {
+            const payload = JSON.parse(frame.body);
+            onPresenceRef.current?.(payload);
           } catch (err) {
             onErrorRef.current?.(err as Error);
           }

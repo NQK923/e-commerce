@@ -13,6 +13,7 @@ import { ChatConnectionStatus, useChatClient } from "../hooks/use-chat-client";
 import {
   ChatMessage,
   ConversationSummary,
+  ChatPresenceEvent,
   SendChatMessagePayload,
   SendChatMessageResult,
 } from "../types/chat";
@@ -24,6 +25,7 @@ type ChatContextValue = {
   activeConversationId: string | null;
   setActiveConversationId: (conversationId: string | null) => void;
   getMessagesForConversation: (conversationId: string | null | undefined) => ChatMessage[];
+  getPresenceForUser: (userId?: string | null) => { online: boolean; lastActiveAt: string } | undefined;
   sendMessage: (payload: SendChatMessagePayload) => Promise<void>;
   connectionStatus: ChatConnectionStatus;
   loadingConversations: boolean;
@@ -53,11 +55,31 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loadingConversations, setLoadingConversations] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<ChatConnectionStatus>("idle");
+  const [presenceByUser, setPresenceByUser] = useState<
+    Record<string, { online: boolean; lastActiveAt: string }>
+  >({});
+
+  const updatePresence = useCallback((userId: string, online: boolean) => {
+    if (!userId) return;
+    setPresenceByUser((prev) => ({
+      ...prev,
+      [userId]: { online, lastActiveAt: new Date().toISOString() },
+    }));
+  }, []);
+
+  const getPresenceForUser = useCallback(
+    (userId?: string | null) => {
+      if (!userId) return undefined;
+      return presenceByUser[userId];
+    },
+    [presenceByUser],
+  );
 
   const resetState = useCallback(() => {
     setConversations([]);
     setMessagesByConversation({});
     setActiveConversationId(null);
+    setPresenceByUser({});
   }, []);
 
   const getMessagesForConversation = useCallback(
@@ -164,18 +186,19 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         sentAt: maybeMessage.sentAt ?? new Date().toISOString(),
         status: maybeMessage.status ?? "DELIVERED",
       };
-      setMessagesByConversation((prev) => ({
-        ...prev,
-        [message.conversationId]: mergeMessages(
-          prev[message.conversationId] ?? [],
-          message,
-        ),
-      }));
-      const incoming = message.senderId !== user?.id;
-      upsertConversationFromMessage(message, incoming);
-    },
-    [upsertConversationFromMessage, user?.id],
-  );
+        setMessagesByConversation((prev) => ({
+          ...prev,
+          [message.conversationId]: mergeMessages(
+            prev[message.conversationId] ?? [],
+            message,
+          ),
+        }));
+        const incoming = message.senderId !== user?.id;
+        updatePresence(message.senderId, true);
+        upsertConversationFromMessage(message, incoming);
+      },
+      [updatePresence, upsertConversationFromMessage, user?.id],
+    );
 
   const handleAck = useCallback(
     (payload: unknown) => {
@@ -205,13 +228,26 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         );
         return next;
       });
+      updatePresence(message.receiverId, !!ack?.receiverOnline);
       upsertConversationFromMessage(message, false);
       setActiveConversationId((current) =>
         current && current.startsWith("temp:") ? message.conversationId : current,
       );
     },
-    [upsertConversationFromMessage],
+    [upsertConversationFromMessage, updatePresence],
   );
+
+  const handlePresenceEvent = useCallback((payload: unknown) => {
+    const presence = payload as Partial<ChatPresenceEvent>;
+    if (!presence?.userId) return;
+    setPresenceByUser((prev) => ({
+      ...prev,
+      [presence.userId]: {
+        online: Boolean(presence.online),
+        lastActiveAt: presence.lastActiveAt ?? new Date().toISOString(),
+      },
+    }));
+  }, []);
 
   const { send, status: socketStatus } = useChatClient({
     accessToken,
@@ -221,11 +257,41 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       addToast("Kết nối chat gặp sự cố", "error");
     },
     onStatusChange: setConnectionStatus,
+    onPresence: handlePresenceEvent,
   });
 
   useEffect(() => {
     setConnectionStatus(socketStatus);
   }, [socketStatus]);
+
+  useEffect(() => {
+    if (!user) return;
+    if (connectionStatus === "connected") {
+      updatePresence(user.id, true);
+    } else if (connectionStatus === "error" || connectionStatus === "idle") {
+      updatePresence(user.id, false);
+    }
+  }, [connectionStatus, updatePresence, user]);
+
+  useEffect(() => {
+    if (connectionStatus === "connected") return;
+    if (!user) return;
+    const interval = setInterval(() => {
+      void refreshConversations();
+      if (activeConversationId && !activeConversationId.startsWith("temp:")) {
+        void chatApi
+          .listMessages(activeConversationId, 50)
+          .then((msgs) =>
+            setMessagesByConversation((prev) => ({
+              ...prev,
+              [activeConversationId]: msgs,
+            })),
+          )
+          .catch(() => undefined);
+      }
+    }, 8000);
+    return () => clearInterval(interval);
+  }, [activeConversationId, connectionStatus, refreshConversations, user]);
 
   const sendMessage = useCallback(
     async (payload: SendChatMessagePayload) => {
@@ -281,6 +347,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       loadingConversations,
       loadingMessages,
       refreshConversations,
+      getPresenceForUser,
     }),
     [
       activeConversationId,
@@ -291,6 +358,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       loadingMessages,
       refreshConversations,
       sendMessage,
+      getPresenceForUser,
     ],
   );
 

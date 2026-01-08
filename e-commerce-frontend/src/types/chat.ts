@@ -16,6 +16,8 @@ export type ChatParticipant = {
   avatarUrl?: string;
   role?: string;
   storeName?: string;
+  online?: boolean;
+  lastActiveAt?: string;
 };
 
 export type ConversationSummary = {
@@ -35,4 +37,10 @@ export type SendChatMessagePayload = {
 export type SendChatMessageResult = {
   persistedMessage: ChatMessage;
   receiverOnline: boolean;
+};
+
+export type ChatPresenceEvent = {
+  userId: string;
+  online: boolean;
+  lastActiveAt: string;
 };

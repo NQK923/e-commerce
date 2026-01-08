@@ -13,7 +13,6 @@ import {
   MoreHorizontal,
   Search,
   Send,
-  Smile,
   User,
   X,
 } from "lucide-react";
@@ -55,6 +54,18 @@ const formatTimeShort = (dateStr: string) => {
   } else {
     return date.toLocaleDateString([], { day: "numeric", month: "short" });
   }
+};
+
+const formatRelativeTime = (dateStr: string) => {
+  const date = new Date(dateStr);
+  const diffSeconds = Math.max(0, Math.round((Date.now() - date.getTime()) / 1000));
+  if (diffSeconds < 60) return "just now";
+  const minutes = Math.round(diffSeconds / 60);
+  if (minutes < 60) return `${minutes} minute${minutes > 1 ? "s" : ""} ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
+  const days = Math.round(hours / 24);
+  return `${days} day${days > 1 ? "s" : ""} ago`;
 };
 
 const getOtherParticipant = (
@@ -276,6 +287,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
     activeConversationId,
     setActiveConversationId,
     getMessagesForConversation,
+    getPresenceForUser,
     sendMessage,
     connectionStatus,
     loadingConversations,
@@ -306,13 +318,25 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
     const raw = getOtherParticipant(activeConversation, user?.id);
     if (!raw) return null;
     const profile = raw.id ? participantProfiles[raw.id] : undefined;
-    if (!profile) return raw;
-    return {
+    const merged = {
       ...raw,
-      displayName: raw.displayName || raw.storeName || profile.displayName,
-      avatarUrl: raw.avatarUrl || profile.avatarUrl,
+      displayName: raw.displayName || raw.storeName || profile?.displayName,
+      avatarUrl: raw.avatarUrl || profile?.avatarUrl,
     };
+    return merged;
   }, [activeConversation, participantProfiles, user?.id]);
+
+  const otherPresence = useMemo(() => {
+    const presence = getPresenceForUser(otherParticipant?.id);
+    if (presence) return presence;
+    if (otherParticipant?.online !== undefined || otherParticipant?.lastActiveAt) {
+      return {
+        online: Boolean(otherParticipant.online),
+        lastActiveAt: otherParticipant.lastActiveAt ?? new Date().toISOString(),
+      };
+    }
+    return undefined;
+  }, [getPresenceForUser, otherParticipant]);
 
   const derivedConversationKey = useMemo(
     () => activeConversationId ?? (composeTarget ? `temp:${composeTarget}` : null),
@@ -323,6 +347,47 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
     () => getMessagesForConversation(derivedConversationKey),
     [derivedConversationKey, getMessagesForConversation],
   );
+
+  const lastOtherMessageAt = useMemo(() => {
+    if (!otherParticipant?.id) return undefined;
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].senderId === otherParticipant.id) {
+        return messages[i].sentAt;
+      }
+    }
+    return undefined;
+  }, [messages, otherParticipant?.id]);
+
+  const lastActiveSource =
+    otherPresence?.lastActiveAt ||
+    lastOtherMessageAt ||
+    activeConversation?.lastMessage?.sentAt;
+  const fallbackActiveSource =
+    !lastActiveSource && otherParticipant && connectionStatus === "connected"
+      ? new Date().toISOString()
+      : undefined;
+  const effectiveLastActiveSource = lastActiveSource ?? fallbackActiveSource;
+  const lastActiveMs = effectiveLastActiveSource
+    ? new Date(effectiveLastActiveSource).getTime()
+    : undefined;
+  const RECENT_ACTIVE_WINDOW_MS = 5 * 60 * 1000;
+  const isRecentlyActive =
+    typeof lastActiveMs === "number" ? Date.now() - lastActiveMs <= RECENT_ACTIVE_WINDOW_MS : false;
+  const isContactOnline = Boolean(otherPresence?.online) || isRecentlyActive;
+
+  const activityLabel = useMemo(() => {
+    if (!otherParticipant) return undefined;
+    if (isContactOnline) return t.chat.active_now;
+    if (!effectiveLastActiveSource) return t.chat.offline;
+    return `Active ${formatRelativeTime(effectiveLastActiveSource)}`;
+  }, [
+    activeConversation?.lastMessage?.sentAt,
+    effectiveLastActiveSource,
+    isContactOnline,
+    otherParticipant,
+    t.chat.active_now,
+    t.chat.offline,
+  ]);
 
   const filteredConversations = useMemo(
     () =>
@@ -674,7 +739,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
                                 {displayName.trim().charAt(0)}
                             </AvatarFallback>
                         </Avatar>
-                        {connectionStatus === "connected" && (
+                        {isContactOnline && (
                             <span className="absolute bottom-0 right-0 h-3 w-3 bg-emerald-500 border-2 border-white rounded-full shadow-sm"></span>
                         )}
                      </div>
@@ -689,12 +754,12 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
                         <div className="flex items-center gap-2 text-[11px] font-semibold text-emerald-700">
                            <span
                               className={`h-2.5 w-2.5 rounded-full ${
-                                connectionStatus === "connected"
+                                isContactOnline
                                   ? "bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.18)]"
                                   : "bg-amber-400 shadow-[0_0_0_4px_rgba(251,191,36,0.24)]"
                               } animate-pulse`}
                             />
-                           <span>{connectionStatus === "connected" ? t.chat.active_now : t.chat.offline}</span>
+                           <span>{activityLabel || t.chat.offline}</span>
                         </div>
                      </div>
                  </div>
@@ -736,7 +801,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
                               </Avatar>
                              <div className="text-center">
                                  <h3 className="text-lg font-bold text-zinc-900">{displayName}</h3>
-                                 <p className="text-xs text-zinc-500 font-medium">EcomX Marketplace &bull; {connectionStatus === "connected" ? t.chat.active_now : t.chat.offline}</p>
+                                 <p className="text-xs text-zinc-500 font-medium">EcomX Marketplace &bull; {activityLabel || t.chat.offline}</p>
                              </div>
                         </div>
 
@@ -780,13 +845,6 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
                             disabled={uploadingImage}
                           >
                             {uploadingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon size={20} />}
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-10 w-10 rounded-full hover:bg-emerald-50 transition-colors border border-emerald-100"
-                          >
-                            <Smile size={20} />
                           </Button>
                       </div>
                      
