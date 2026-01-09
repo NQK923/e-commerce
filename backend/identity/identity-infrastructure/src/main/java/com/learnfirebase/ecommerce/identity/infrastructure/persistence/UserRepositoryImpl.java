@@ -61,9 +61,10 @@ public class UserRepositoryImpl implements UserRepository {
             .roles(user.getRoles().stream().map(Enum::name).collect(Collectors.toSet()))
             .displayName(user.getDisplayName())
             .avatarUrl(user.getAvatarUrl())
+            .shopDescription(user.getShopDescription())
+            .shopBannerUrl(user.getShopBannerUrl())
             .createdAt(user.getCreatedAt())
             .updatedAt(user.getUpdatedAt())
-            .addresses(new ArrayList<>())
             .build();
             
         if (user.getAddresses() != null) {
@@ -83,12 +84,16 @@ public class UserRepositoryImpl implements UserRepository {
             .password(entity.getPassword() != null ? new HashedPassword(entity.getPassword()) : null)
             .authProvider(entity.getAuthProvider())
             .providerUserId(entity.getProviderUserId())
-            .roles(entity.getRoles() != null ? entity.getRoles().stream().map(Role::valueOf).collect(Collectors.toSet()) : java.util.Collections.emptySet())
+            .roles(entity.getRoles().stream().map(Role::valueOf).collect(Collectors.toSet()))
             .displayName(entity.getDisplayName())
             .avatarUrl(entity.getAvatarUrl())
+            .shopDescription(entity.getShopDescription())
+            .shopBannerUrl(entity.getShopBannerUrl())
+            .addresses(entity.getAddresses().stream()
+                .map(addr -> toAddressDomain(addr))
+                .collect(Collectors.toList()))
             .createdAt(entity.getCreatedAt())
             .updatedAt(entity.getUpdatedAt())
-            .addresses(entity.getAddresses() != null ? entity.getAddresses().stream().map(this::toAddressDomain).collect(Collectors.toList()) : new ArrayList<>())
             .build();
     }
 

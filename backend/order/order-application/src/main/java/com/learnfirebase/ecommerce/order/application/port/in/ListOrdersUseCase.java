@@ -6,4 +6,5 @@ import com.learnfirebase.ecommerce.order.application.dto.OrderDto;
 
 public interface ListOrdersUseCase {
     PageResponse<OrderDto> listOrders(PageRequest pageRequest);
+    PageResponse<OrderDto> listOrders(PageRequest pageRequest, String sellerId);
 }

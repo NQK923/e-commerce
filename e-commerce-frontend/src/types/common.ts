@@ -10,4 +10,6 @@ export type ApiListParams = {
   page?: number;
   size?: number;
   sort?: string;
+  sellerId?: string;
+  [key: string]: any;
 };

@@ -3,6 +3,7 @@
 import React, { Suspense } from "react";
 import Link from "next/link";
 import { orderApi } from "@/src/api/orderApi";
+import { useRequireAuth } from "@/src/hooks/use-require-auth";
 import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
 import { Spinner } from "@/src/components/ui/spinner";
@@ -10,15 +11,17 @@ import { Order } from "@/src/types/order";
 import { MoreHorizontal, ShoppingCart, ChevronLeft, ChevronRight } from "lucide-react";
 
 function OrdersContent() {
+  const { user } = useRequireAuth();
   const [orders, setOrders] = React.useState<Order[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [page, setPage] = React.useState(0);
   const [totalPages, setTotalPages] = React.useState(0);
 
   const loadOrders = React.useCallback(async (pageIndex: number) => {
+    if (!user) return;
     setLoading(true);
     try {
-      const response = await orderApi.list({ page: pageIndex, size: 10 });
+      const response = await orderApi.list({ page: pageIndex, size: 10, sellerId: user.id });
       setOrders(response.items || []);
       setTotalPages(response.totalPages || 0);
     } catch (error) {
@@ -26,11 +29,11 @@ function OrdersContent() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user]);
 
   React.useEffect(() => {
-    void loadOrders(page);
-  }, [loadOrders, page]);
+    if (user) void loadOrders(page);
+  }, [loadOrders, page, user]);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 space-y-6">

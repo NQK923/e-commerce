@@ -17,6 +17,7 @@ public class OrderItem {
     private String productId;
     private String variantSku;
     private String flashSaleId;
+    private String sellerId;
     private int quantity;
     private Money price;
 

@@ -71,6 +71,12 @@ export default function ShopPage() {
     <div className="min-h-screen bg-zinc-50 pb-20">
         {/* Shop Header */}
         <div className="bg-white border-b border-zinc-200">
+            {seller.shopBannerUrl && (
+                <div className="h-48 w-full overflow-hidden">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={seller.shopBannerUrl} alt="Shop Banner" className="h-full w-full object-cover" />
+                </div>
+            )}
             <div className="mx-auto max-w-7xl px-4 py-8">
                 <div className="flex flex-col md:flex-row items-center gap-6">
                     <div className="h-24 w-24 overflow-hidden rounded-full border border-zinc-200 bg-zinc-100">
@@ -83,6 +89,9 @@ export default function ShopPage() {
                     </div>
                     <div className="flex-1 text-center md:text-left">
                         <h1 className="text-2xl font-bold text-zinc-900">{seller.displayName}</h1>
+                        {seller.shopDescription && (
+                             <p className="mt-2 text-zinc-600 max-w-2xl">{seller.shopDescription}</p>
+                        )}
                         <div className="mt-2 flex flex-wrap justify-center md:justify-start gap-4 text-sm text-zinc-500">
                             <div className="flex items-center gap-1">
                                 <Store size={16} />

@@ -8,6 +8,8 @@ dependencies {
     implementation(project(":common:common-domain"))
     implementation(project(":common:common-application"))
     implementation(project(":common:common-infrastructure"))
+    implementation(project(":product:product-application"))
+    implementation(project(":product:product-domain"))
     implementation(project(":promotion:promotion-domain"))
     implementation(project(":promotion:promotion-application"))
 

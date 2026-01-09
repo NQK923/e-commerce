@@ -188,6 +188,8 @@ public class IdentityApplicationService implements RegisterUserUseCase, Authenti
             .permissions(user.getPermissions())
             .displayName(displayName)
             .avatarUrl(command.getAvatarUrl() != null ? command.getAvatarUrl() : user.getAvatarUrl())
+            .shopDescription(command.getShopDescription() != null ? command.getShopDescription() : user.getShopDescription())
+            .shopBannerUrl(command.getShopBannerUrl() != null ? command.getShopBannerUrl() : user.getShopBannerUrl())
             .createdAt(user.getCreatedAt())
             .updatedAt(Instant.now())
             .addresses(user.getAddresses())
@@ -248,6 +250,8 @@ public class IdentityApplicationService implements RegisterUserUseCase, Authenti
             .provider(user.getAuthProvider())
             .roles(user.getRoles().stream().map(Enum::name).toList())
             .avatarUrl(user.getAvatarUrl())
+            .shopDescription(user.getShopDescription())
+            .shopBannerUrl(user.getShopBannerUrl())
             .createdAt(user.getCreatedAt())
             .addresses(user.getAddresses() != null ? user.getAddresses().stream().map(this::toAddressDto).toList() : java.util.Collections.emptyList())
             .build();

@@ -16,6 +16,8 @@ export type User = {
   roles: string[];
   provider: AuthProvider;
   avatarUrl?: string;
+  shopDescription?: string;
+  shopBannerUrl?: string;
   addresses?: UserAddress[];
 };
 

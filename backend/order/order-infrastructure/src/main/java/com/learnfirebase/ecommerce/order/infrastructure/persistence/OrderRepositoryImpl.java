@@ -44,8 +44,20 @@ public class OrderRepositoryImpl implements OrderRepository {
     }
 
     @Override
+    public List<Order> findBySellerId(String sellerId, int page, int size) {
+        return orderJpaRepository.findBySellerId(sellerId, PageRequest.of(page, size)).stream()
+            .map(this::toDomain)
+            .collect(Collectors.toList());
+    }
+
+    @Override
     public long count() {
         return orderJpaRepository.count();
+    }
+
+    @Override
+    public long countBySellerId(String sellerId) {
+        return orderJpaRepository.countBySellerId(sellerId);
     }
 
     private JpaOrderEntity toEntity(Order order) {
@@ -73,6 +85,7 @@ public class OrderRepositoryImpl implements OrderRepository {
             .productId(item.getProductId())
             .variantSku(item.getVariantSku())
             .flashSaleId(item.getFlashSaleId())
+            .sellerId(item.getSellerId())
             .quantity(item.getQuantity())
             .price(item.getPrice().getAmount().toPlainString())
             .order(entity)
@@ -90,6 +103,7 @@ public class OrderRepositoryImpl implements OrderRepository {
                     .productId(item.getProductId())
                     .variantSku(item.getVariantSku())
                     .flashSaleId(item.getFlashSaleId())
+                    .sellerId(item.getSellerId())
                     .quantity(item.getQuantity())
                     .price(Money.builder().amount(new java.math.BigDecimal(item.getPrice())).currency(entity.getCurrency()).build())
                     .build())

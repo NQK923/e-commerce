@@ -51,6 +51,10 @@ public class UserEntity {
     private String displayName;
     @Column(name = "avatar_url")
     private String avatarUrl;
+    @Column(name = "shop_description")
+    private String shopDescription;
+    @Column(name = "shop_banner_url")
+    private String shopBannerUrl;
     private Instant createdAt;
     private Instant updatedAt;
 }

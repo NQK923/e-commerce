@@ -10,4 +10,6 @@ public class UpdateProfileCommand {
     String email;
     String displayName;
     String avatarUrl;
+    String shopDescription;
+    String shopBannerUrl;
 }

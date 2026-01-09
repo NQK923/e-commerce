@@ -46,7 +46,7 @@ function SellerDashboardContent() {
       try {
         const [prodRes, ordRes] = await Promise.all([
           productApi.list({ page: 0, size: 100, includeOutOfStock: true, sellerId }),
-          orderApi.list({ page: 0, size: 50, sort: 'createdAt,desc' })
+          orderApi.list({ page: 0, size: 50, sort: 'createdAt,desc', sellerId })
         ]);
         const scopedProducts = (prodRes.items ?? []).filter((p) => p.sellerId === sellerId);
         setProducts(scopedProducts);
@@ -164,6 +164,11 @@ function SellerDashboardContent() {
           <p className="text-emerald-100/80 font-medium">{t.seller.dashboard.overview}</p>
         </div>
         <div className="flex gap-3 relative z-10">
+          <Link href="/seller/settings">
+             <Button className="bg-emerald-800/50 hover:bg-emerald-800 text-white border border-emerald-400/30 backdrop-blur-sm">
+                Settings
+             </Button>
+          </Link>
           <Link href="/seller/products/new">
             <Button size="lg" className="bg-white text-emerald-900 font-bold shadow-xl hover:bg-emerald-50 border-0 transition-transform hover:-translate-y-0.5">
               <Plus size={20} className="mr-2" />

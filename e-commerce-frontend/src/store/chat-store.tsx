@@ -206,26 +206,47 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!ack?.persistedMessage) return;
       const message = ack.persistedMessage;
       const tempKey = tempConversationKey(message.receiverId);
+      
       setMessagesByConversation((prev) => {
         const next = { ...prev };
-        const cleanedPending =
-          next[tempKey]?.filter(
+
+        // 1. Remove from temp key if it exists
+        if (next[tempKey]) {
+            const cleanedTemp = next[tempKey].filter(
+                (msg) =>
+                !(
+                    msg.senderId === message.senderId &&
+                    msg.content === message.content &&
+                    msg.status === "PENDING"
+                ),
+            );
+            if (cleanedTemp.length) {
+                next[tempKey] = cleanedTemp;
+            } else {
+                delete next[tempKey];
+            }
+        }
+
+        // 2. Remove pending from the actual conversation ID if it exists there (case: conversation already existed)
+        const targetConversationId = message.conversationId;
+        const conversationMessages = next[targetConversationId] ?? [];
+        
+        // Filter out the pending version of this message from the target conversation
+        const cleanedConversationMessages = conversationMessages.filter(
             (msg) =>
               !(
                 msg.senderId === message.senderId &&
                 msg.content === message.content &&
                 msg.status === "PENDING"
               ),
-          ) ?? [];
-        if (cleanedPending.length) {
-          next[tempKey] = cleanedPending;
-        } else {
-          delete next[tempKey];
-        }
-        next[message.conversationId] = mergeMessages(
-          next[message.conversationId] ?? [],
+        );
+
+        // 3. Merge the persisted message
+        next[targetConversationId] = mergeMessages(
+          cleanedConversationMessages,
           message,
         );
+
         return next;
       });
       updatePresence(message.receiverId, !!ack?.receiverOnline);

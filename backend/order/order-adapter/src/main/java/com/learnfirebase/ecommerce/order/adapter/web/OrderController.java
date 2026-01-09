@@ -51,10 +51,11 @@ public class OrderController {
     @GetMapping
     public ResponseEntity<PageResponse<OrderDto>> list(
         @RequestParam(name = "page", defaultValue = "0") int page,
-        @RequestParam(name = "size", defaultValue = "10") int size) {
+        @RequestParam(name = "size", defaultValue = "10") int size,
+        @RequestParam(name = "sellerId", required = false) String sellerId) {
         int safeSize = Math.min(size, 100);
         PageRequest pageRequest = PageRequest.builder().page(page).size(safeSize).build();
-        return ResponseEntity.ok(listOrdersUseCase.listOrders(pageRequest));
+        return ResponseEntity.ok(listOrdersUseCase.listOrders(pageRequest, sellerId));
     }
 
     @GetMapping("/{orderId}")

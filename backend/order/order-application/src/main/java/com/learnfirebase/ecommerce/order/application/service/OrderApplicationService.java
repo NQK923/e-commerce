@@ -72,14 +72,18 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
     public OrderDto execute(CreateOrderCommand command) {
         List<OrderItem> items = new ArrayList<>();
         
-        Set<String> standardProductIds = command.getItems().stream()
-            .filter(item -> item.getFlashSaleId() == null)
-            .map(this::resolveInventoryKey)
+        Set<String> allProductIds = command.getItems().stream()
+            .map(CreateOrderCommand.OrderItemCommand::getProductId)
             .collect(Collectors.toSet());
 
-        Map<String, String> standardPrices = loadProductPort.loadProductPrices(command.getCurrency(), standardProductIds);
+        Map<String, LoadProductPort.ProductInfo> productsInfo = loadProductPort.loadProducts(command.getCurrency(), allProductIds);
 
         for (CreateOrderCommand.OrderItemCommand itemCmd : command.getItems()) {
+            LoadProductPort.ProductInfo productInfo = productsInfo.get(itemCmd.getProductId());
+            if (productInfo == null) {
+                throw new OrderDomainException("Product not found: " + itemCmd.getProductId());
+            }
+
             BigDecimal price;
             if (itemCmd.getFlashSaleId() != null) {
                 // Flash Sale: Validate and use Flash Sale price
@@ -100,17 +104,14 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
 
                 price = flashSale.getPrice().getAmount();
             } else {
-                String fetched = standardPrices.get(resolveInventoryKey(itemCmd));
-                if (fetched == null) {
-                    throw new OrderDomainException("Unable to verify price for product " + itemCmd.getProductId());
-                }
-                price = new BigDecimal(fetched);
+                price = productInfo.getPrice();
             }
             
             items.add(OrderItem.builder()
                 .productId(itemCmd.getProductId())
                 .variantSku(itemCmd.getVariantSku())
                 .flashSaleId(itemCmd.getFlashSaleId())
+                .sellerId(productInfo.getSellerId())
                 .quantity(itemCmd.getQuantity())
                 .price(Money.builder().amount(price).currency(command.getCurrency()).build())
                 .build());
@@ -209,6 +210,26 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
             .totalElements(total)
             .totalPages(totalPages)
             .build();
+    }
+
+    @Override
+    public PageResponse<OrderDto> listOrders(PageRequest pageRequest, String sellerId) {
+        if (sellerId != null) {
+            List<Order> orders = orderRepository.findBySellerId(sellerId, pageRequest.getPage(), pageRequest.getSize());
+            long total = orderRepository.countBySellerId(sellerId);
+            int totalPages = (int) Math.ceil((double) total / pageRequest.getSize());
+            
+            List<OrderDto> dtos = orders.stream().map(this::toDto).collect(Collectors.toList());
+
+            return PageResponse.<OrderDto>builder()
+                .content(dtos)
+                .page(pageRequest.getPage())
+                .size(pageRequest.getSize())
+                .totalElements(total)
+                .totalPages(totalPages)
+                .build();
+        }
+        return listOrders(pageRequest);
     }
 
     @Override

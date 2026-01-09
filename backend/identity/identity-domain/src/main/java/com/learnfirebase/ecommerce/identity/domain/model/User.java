@@ -35,6 +35,8 @@ public class User extends AggregateRoot<UserId> {
     private List<UserAddress> addresses = new ArrayList<>();
     private String displayName;
     private String avatarUrl;
+    private String shopDescription;
+    private String shopBannerUrl;
     private Instant createdAt;
     private Instant updatedAt;
 

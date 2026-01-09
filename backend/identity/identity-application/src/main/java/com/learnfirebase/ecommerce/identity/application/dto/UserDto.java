@@ -17,6 +17,8 @@ public class UserDto {
     String email;
     String displayName;
     String avatarUrl;
+    String shopDescription;
+    String shopBannerUrl;
     AuthProvider provider;
     @Singular
     Set<String> roles;
