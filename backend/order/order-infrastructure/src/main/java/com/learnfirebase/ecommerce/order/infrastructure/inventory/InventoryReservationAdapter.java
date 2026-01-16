@@ -50,12 +50,14 @@ public class InventoryReservationAdapter implements InventoryReservationPort {
                     return false;
                 }
                 reservedKeys.add(productId + ":" + qty);
-                redisTemplate.opsForHash().put(reservationKey(orderId), productId, String.valueOf(qty));
+                redisTemplate.opsForHash().put(Objects.requireNonNull(reservationKey(orderId)),
+                        Objects.requireNonNull(productId), Objects.requireNonNull(String.valueOf(qty)));
             }
             if (!reservedKeys.isEmpty()) {
                 long expiresAt = Instant.now().getEpochSecond() + RESERVATION_TTL_SECONDS;
-                redisTemplate.opsForZSet().add(RESERVATION_EXPIRATIONS, orderId, expiresAt);
-                redisTemplate.expire(reservationKey(orderId), java.time.Duration.ofSeconds(RESERVATION_TTL_SECONDS));
+                redisTemplate.opsForZSet().add(RESERVATION_EXPIRATIONS, Objects.requireNonNull(orderId), expiresAt);
+                redisTemplate.expire(Objects.requireNonNull(reservationKey(orderId)),
+                        Objects.requireNonNull(java.time.Duration.ofSeconds(RESERVATION_TTL_SECONDS)));
             }
             return true;
         } catch (Exception ex) {
@@ -69,40 +71,41 @@ public class InventoryReservationAdapter implements InventoryReservationPort {
     public boolean reserveFlashSale(String orderId, String flashSaleId, int quantity) {
         String key = String.format(FLASH_SALE_STOCK_KEY_PREFIX, flashSaleId);
 
-        String scriptText =
-            "local current = tonumber(redis.call('get', KEYS[1]) or '-1'); " +
-            "if current ~= nil and current >= tonumber(ARGV[1]) then " +
-            "   return redis.call('decrby', KEYS[1], ARGV[1]); " +
-            "else " +
-            "   return -1; " +
-            "end";
+        String scriptText = "local current = tonumber(redis.call('get', KEYS[1]) or '-1'); " +
+                "if current ~= nil and current >= tonumber(ARGV[1]) then " +
+                "   return redis.call('decrby', KEYS[1], ARGV[1]); " +
+                "else " +
+                "   return -1; " +
+                "end";
 
         DefaultRedisScript<Long> script = new DefaultRedisScript<>();
         script.setScriptText(scriptText);
         script.setResultType(Long.class);
 
-        Long result = redisTemplate.execute(script, Collections.singletonList(key), String.valueOf(quantity));
-        return result >= 0;
+        Long result = redisTemplate.execute(script, Objects.requireNonNull(List.of(Objects.requireNonNull(key))),
+                String.valueOf(quantity));
+        return result != null && result >= 0;
     }
 
     @Override
     public void releaseFlashSale(String flashSaleId, int quantity) {
         String key = String.format(FLASH_SALE_STOCK_KEY_PREFIX, flashSaleId);
-        redisTemplate.opsForValue().increment(key, quantity);
+        redisTemplate.opsForValue().increment(Objects.requireNonNull(key), quantity);
     }
 
     @Override
     public void release(String orderId, Map<String, Integer> productQuantities) {
         Map<String, Integer> releaseMap = productQuantities;
         if (releaseMap == null || releaseMap.isEmpty()) {
-            releaseMap = redisTemplate.<String, String>opsForHash().entries(reservationKey(orderId)).entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, e -> Integer.parseInt(e.getValue())));
+            releaseMap = redisTemplate.<String, String>opsForHash()
+                    .entries(Objects.requireNonNull(reservationKey(orderId))).entrySet().stream()
+                    .collect(Collectors.toMap(Map.Entry::getKey, e -> Integer.parseInt(e.getValue())));
         }
         releaseMap.forEach((productId, qty) -> {
             if (qty <= 0) {
                 return;
             }
-            redisTemplate.opsForValue().increment(availableKey(productId), qty);
+            redisTemplate.opsForValue().increment(Objects.requireNonNull(availableKey(productId)), qty);
             decrementReserved(productId, qty);
         });
         cleanupReservation(orderId);
@@ -110,7 +113,8 @@ public class InventoryReservationAdapter implements InventoryReservationPort {
 
     @Override
     public void confirm(String orderId) {
-        Map<String, String> reservation = redisTemplate.<String, String>opsForHash().entries(reservationKey(orderId));
+        Map<String, String> reservation = redisTemplate.<String, String>opsForHash()
+                .entries(Objects.requireNonNull(reservationKey(orderId)));
         reservation.forEach((productId, qtyStr) -> {
             int qty = Integer.parseInt(qtyStr);
             decrementReserved(productId, qty);
@@ -127,40 +131,40 @@ public class InventoryReservationAdapter implements InventoryReservationPort {
             return;
         }
         List<String> expiredOrders = expired.stream()
-            .filter(Objects::nonNull)
-            .toList();
+                .filter(Objects::nonNull)
+                .toList();
         for (String orderId : expiredOrders) {
             release(orderId, Collections.emptyMap());
             redisTemplate.opsForZSet().remove(RESERVATION_EXPIRATIONS, orderId);
-            
+
             // Sync Order Status to CANCELLED in DB
             try {
                 orderRepository.findById(new com.learnfirebase.ecommerce.order.domain.model.OrderId(orderId))
-                    .ifPresent(order -> {
-                        if (order.getStatus() == com.learnfirebase.ecommerce.order.domain.model.OrderStatus.PENDING) {
-                            order.cancel("Stock reservation expired");
-                            orderRepository.save(order);
-                            log.info("Cancelled order {} due to stock reservation expiration", orderId);
-                        }
-                    });
+                        .ifPresent(order -> {
+                            if (order
+                                    .getStatus() == com.learnfirebase.ecommerce.order.domain.model.OrderStatus.PENDING) {
+                                order.cancel("Stock reservation expired");
+                                orderRepository.save(order);
+                                log.info("Cancelled order {} due to stock reservation expiration", orderId);
+                            }
+                        });
             } catch (Exception e) {
                 log.error("Failed to cancel order {} after stock release", orderId, e);
             }
-            
+
             log.info("Released expired reservation for order {}", orderId);
         }
     }
 
     private boolean adjustStockAtomically(String productId, int delta) {
-        String scriptText =
-            "local availKey = KEYS[1]; " +
-            "local reservedKey = KEYS[2]; " +
-            "local delta = tonumber(ARGV[1]); " +
-            "local current = tonumber(redis.call('get', availKey) or '0'); " +
-            "if current + delta < 0 then return -1 end; " +
-            "redis.call('incrby', availKey, delta); " +
-            "redis.call('incrby', reservedKey, -delta); " +
-            "return redis.call('get', availKey);";
+        String scriptText = "local availKey = KEYS[1]; " +
+                "local reservedKey = KEYS[2]; " +
+                "local delta = tonumber(ARGV[1]); " +
+                "local current = tonumber(redis.call('get', availKey) or '0'); " +
+                "if current + delta < 0 then return -1 end; " +
+                "redis.call('incrby', availKey, delta); " +
+                "redis.call('incrby', reservedKey, -delta); " +
+                "return redis.call('get', availKey);";
 
         DefaultRedisScript<Long> script = new DefaultRedisScript<>();
         script.setScriptText(scriptText);
@@ -169,8 +173,10 @@ public class InventoryReservationAdapter implements InventoryReservationPort {
         String availKey = availableKey(productId);
         String reservedKey = reservedKey(productId);
 
-        Long result = redisTemplate.execute(script, List.of(availKey, reservedKey), String.valueOf(delta));
-        return result >= 0;
+        Long result = redisTemplate.execute(script,
+                Objects.requireNonNull(List.of(Objects.requireNonNull(availKey), Objects.requireNonNull(reservedKey))),
+                String.valueOf(delta));
+        return result != null && result >= 0;
     }
 
     private void rollback(List<String> reservedKeys) {
@@ -181,7 +187,7 @@ public class InventoryReservationAdapter implements InventoryReservationPort {
             }
             String productId = parts[0];
             int qty = Integer.parseInt(parts[1]);
-            redisTemplate.opsForValue().increment(availableKey(productId), qty);
+            redisTemplate.opsForValue().increment(Objects.requireNonNull(availableKey(productId)), qty);
             decrementReserved(productId, qty);
         }
     }
@@ -199,7 +205,7 @@ public class InventoryReservationAdapter implements InventoryReservationPort {
     }
 
     private void cleanupReservation(String orderId) {
-        redisTemplate.delete(reservationKey(orderId));
+        redisTemplate.delete(Objects.requireNonNull(reservationKey(orderId)));
         redisTemplate.opsForZSet().remove(RESERVATION_EXPIRATIONS, orderId);
     }
 
@@ -208,25 +214,14 @@ public class InventoryReservationAdapter implements InventoryReservationPort {
             return;
         }
         String key = reservedKey(productId);
-        
+
         String script = "local current = tonumber(redis.call('get', KEYS[1]) or '0'); " +
-                       "local next = math.max(0, current - tonumber(ARGV[1])); " +
-                       "redis.call('set', KEYS[1], next); " +
-                       "return next;";
-                       
-        redisTemplate.execute(new DefaultRedisScript<>(script, Long.class), 
-            Collections.singletonList(key), String.valueOf(qty));
+                "local next = math.max(0, current - tonumber(ARGV[1])); " +
+                "redis.call('set', KEYS[1], next); " +
+                "return next;";
+
+        redisTemplate.execute(new DefaultRedisScript<>(script, Long.class),
+                Objects.requireNonNull(List.of(Objects.requireNonNull(key))), String.valueOf(qty));
     }
 
-    private long readLong(String key) {
-        String value = redisTemplate.opsForValue().get(key);
-        if (value == null) {
-            return 0L;
-        }
-        try {
-            return Long.parseLong(value);
-        } catch (NumberFormatException ex) {
-            return 0L;
-        }
-    }
 }

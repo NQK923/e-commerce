@@ -1,6 +1,7 @@
 package com.learnfirebase.ecommerce.order.infrastructure.outbox;
 
 import java.time.Instant;
+import java.util.Objects;
 import java.util.UUID;
 
 import org.springframework.kafka.core.KafkaTemplate;
@@ -26,14 +27,16 @@ public class OutboxWorker {
     }
 
     private void publishAsync(OutboxEntity event) {
-        kafkaTemplate.send(event.getType(), event.getAggregateId(), event.getPayload())
-            .whenComplete((result, ex) -> {
-                if (ex == null) {
-                    markPublished(event);
-                } else {
-                    markFailed(event, ex);
-                }
-            });
+        kafkaTemplate
+                .send(Objects.requireNonNull(event.getType()), Objects.requireNonNull(event.getAggregateId()),
+                        Objects.requireNonNull(event.getPayload()))
+                .whenComplete((result, ex) -> {
+                    if (ex == null) {
+                        markPublished(event);
+                    } else {
+                        markFailed(event, ex);
+                    }
+                });
     }
 
     private void markPublished(OutboxEntity event) {
@@ -52,15 +55,15 @@ public class OutboxWorker {
     public void saveRawEvent(String aggregateId, String type, Object payload) {
         try {
             OutboxEntity entity = OutboxEntity.builder()
-                .id(UUID.randomUUID().toString())
-                .aggregateId(aggregateId)
-                .type(type)
-                .payload(objectMapper.writeValueAsString(payload))
-                .status(OutboxStatus.PENDING)
-                .createdAt(Instant.now())
-                .updatedAt(Instant.now())
-                .build();
-            outboxRepository.save(entity);
+                    .id(UUID.randomUUID().toString())
+                    .aggregateId(aggregateId)
+                    .type(type)
+                    .payload(objectMapper.writeValueAsString(payload))
+                    .status(OutboxStatus.PENDING)
+                    .createdAt(Instant.now())
+                    .updatedAt(Instant.now())
+                    .build();
+            outboxRepository.save(Objects.requireNonNull(entity));
         } catch (Exception e) {
             log.error("Could not serialize outbox payload", e);
         }

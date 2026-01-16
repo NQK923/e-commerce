@@ -1,7 +1,5 @@
 package com.learnfirebase.ecommerce.identity.infrastructure.persistence;
 
-import java.util.UUID;
-
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;

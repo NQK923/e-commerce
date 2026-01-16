@@ -3,7 +3,6 @@ package com.learnfirebase.ecommerce.promotion.application.service;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import com.learnfirebase.ecommerce.common.domain.valueobject.Money;
 import com.learnfirebase.ecommerce.promotion.application.command.CreateFlashSaleCommand;
@@ -26,27 +25,27 @@ public class FlashSaleApplicationService implements CreateFlashSaleUseCase, List
     @Override
     public FlashSaleId createFlashSale(CreateFlashSaleCommand command) {
         FlashSale flashSale = FlashSale.builder()
-            .id(new FlashSaleId(UUID.randomUUID()))
-            .productId(command.getProductId())
-            .price(Money.builder()
-                .amount(command.getPrice())
-                .currency(command.getCurrency())
-                .build())
-            .originalPrice(Money.builder()
-                .amount(command.getOriginalPrice())
-                .currency(command.getOriginalCurrency())
-                .build())
-            .startTime(command.getStartTime())
-            .endTime(command.getEndTime())
-            .totalQuantity(command.getTotalQuantity())
-            .remainingQuantity(command.getTotalQuantity())
-            .status(FlashSaleStatus.ACTIVE)
-            .createdAt(Instant.now())
-            .updatedAt(Instant.now())
-            .build();
+                .id(new FlashSaleId(UUID.randomUUID()))
+                .productId(command.getProductId())
+                .price(Money.builder()
+                        .amount(command.getPrice())
+                        .currency(command.getCurrency())
+                        .build())
+                .originalPrice(Money.builder()
+                        .amount(command.getOriginalPrice())
+                        .currency(command.getOriginalCurrency())
+                        .build())
+                .startTime(command.getStartTime())
+                .endTime(command.getEndTime())
+                .totalQuantity(command.getTotalQuantity())
+                .remainingQuantity(command.getTotalQuantity())
+                .status(FlashSaleStatus.ACTIVE)
+                .createdAt(Instant.now())
+                .updatedAt(Instant.now())
+                .build();
 
         FlashSale saved = flashSaleRepository.save(flashSale);
-        
+
         if (saved.isActive()) {
             flashSaleCachePort.setStock(saved.getId(), saved.getRemainingQuantity());
         }

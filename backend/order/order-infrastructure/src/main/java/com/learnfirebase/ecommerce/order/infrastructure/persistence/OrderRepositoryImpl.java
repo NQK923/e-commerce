@@ -1,6 +1,7 @@
 package com.learnfirebase.ecommerce.order.infrastructure.persistence;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -27,27 +28,27 @@ public class OrderRepositoryImpl implements OrderRepository {
     @Override
     public Order save(Order order) {
         JpaOrderEntity entity = toEntity(order);
-        JpaOrderEntity saved = orderJpaRepository.save(entity);
+        JpaOrderEntity saved = orderJpaRepository.save(Objects.requireNonNull(entity));
         return toDomain(saved);
     }
 
     @Override
     public Optional<Order> findById(OrderId id) {
-        return orderJpaRepository.findById(id.getValue()).map(this::toDomain);
+        return orderJpaRepository.findById(Objects.requireNonNull(id.getValue())).map(this::toDomain);
     }
 
     @Override
     public List<Order> findAll(int page, int size) {
         return orderJpaRepository.findAll(PageRequest.of(page, size)).stream()
-            .map(this::toDomain)
-            .collect(Collectors.toList());
+                .map(this::toDomain)
+                .collect(Collectors.toList());
     }
 
     @Override
     public List<Order> findBySellerId(String sellerId, int page, int size) {
         return orderJpaRepository.findBySellerId(sellerId, PageRequest.of(page, size)).stream()
-            .map(this::toDomain)
-            .collect(Collectors.toList());
+                .map(this::toDomain)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -62,66 +63,74 @@ public class OrderRepositoryImpl implements OrderRepository {
 
     private JpaOrderEntity toEntity(Order order) {
         JpaOrderEntity entity = JpaOrderEntity.builder()
-            .id(order.getId().getValue())
-            .userId(order.getUserId().getValue())
-            .status(order.getStatus().name())
-            .currency(order.getTotalAmount().getCurrency())
-            .totalAmount(order.getTotalAmount().getAmount().toPlainString())
-            .trackingNumber(order.getTrackingNumber())
-            .trackingCarrier(order.getTrackingCarrier())
-            .shippedAt(order.getShippedAt())
-            .deliveredAt(order.getDeliveredAt())
-            .returnStatus(order.getReturnStatus() != null ? order.getReturnStatus().name() : null)
-            .returnReason(order.getReturnReason())
-            .returnNote(order.getReturnNote())
-            .returnRequestedAt(order.getReturnRequestedAt())
-            .returnResolvedAt(order.getReturnResolvedAt())
-            .refundAmount(order.getRefundAmount() != null ? order.getRefundAmount().getAmount().toPlainString() : null)
-            .createdAt(order.getCreatedAt())
-            .updatedAt(order.getUpdatedAt())
-            .build();
+                .id(order.getId().getValue())
+                .userId(order.getUserId().getValue())
+                .status(order.getStatus().name())
+                .currency(order.getTotalAmount().getCurrency())
+                .totalAmount(order.getTotalAmount().getAmount().toPlainString())
+                .trackingNumber(order.getTrackingNumber())
+                .trackingCarrier(order.getTrackingCarrier())
+                .shippedAt(order.getShippedAt())
+                .deliveredAt(order.getDeliveredAt())
+                .returnStatus(order.getReturnStatus() != null ? order.getReturnStatus().name() : null)
+                .returnReason(order.getReturnReason())
+                .returnNote(order.getReturnNote())
+                .returnRequestedAt(order.getReturnRequestedAt())
+                .returnResolvedAt(order.getReturnResolvedAt())
+                .refundAmount(
+                        order.getRefundAmount() != null ? order.getRefundAmount().getAmount().toPlainString() : null)
+                .createdAt(order.getCreatedAt())
+                .updatedAt(order.getUpdatedAt())
+                .build();
         entity.setItems(order.getItems().stream().map(item -> JpaOrderItemEntity.builder()
-            .id(UUID.randomUUID().toString())
-            .productId(item.getProductId())
-            .variantSku(item.getVariantSku())
-            .flashSaleId(item.getFlashSaleId())
-            .sellerId(item.getSellerId())
-            .quantity(item.getQuantity())
-            .price(item.getPrice().getAmount().toPlainString())
-            .order(entity)
-            .build()).collect(Collectors.toList()));
+                .id(UUID.randomUUID().toString())
+                .productId(item.getProductId())
+                .variantSku(item.getVariantSku())
+                .flashSaleId(item.getFlashSaleId())
+                .sellerId(item.getSellerId())
+                .quantity(item.getQuantity())
+                .price(item.getPrice().getAmount().toPlainString())
+                .order(entity)
+                .build()).collect(Collectors.toList()));
         return entity;
     }
 
     private Order toDomain(JpaOrderEntity entity) {
         return Order.builder()
-            .id(new OrderId(entity.getId()))
-            .userId(new UserId(entity.getUserId()))
-            .status(mapStatus(entity.getStatus()))
-            .items(entity.getItems().stream()
-                .map(item -> OrderItem.builder()
-                    .productId(item.getProductId())
-                    .variantSku(item.getVariantSku())
-                    .flashSaleId(item.getFlashSaleId())
-                    .sellerId(item.getSellerId())
-                    .quantity(item.getQuantity())
-                    .price(Money.builder().amount(new java.math.BigDecimal(item.getPrice())).currency(entity.getCurrency()).build())
-                    .build())
-                .collect(Collectors.toList()))
-            .totalAmount(Money.builder().amount(new java.math.BigDecimal(entity.getTotalAmount())).currency(entity.getCurrency()).build())
-            .trackingNumber(entity.getTrackingNumber())
-            .trackingCarrier(entity.getTrackingCarrier())
-            .shippedAt(entity.getShippedAt())
-            .deliveredAt(entity.getDeliveredAt())
-            .returnStatus(entity.getReturnStatus() != null ? ReturnStatus.valueOf(entity.getReturnStatus()) : ReturnStatus.NONE)
-            .returnReason(entity.getReturnReason())
-            .returnNote(entity.getReturnNote())
-            .returnRequestedAt(entity.getReturnRequestedAt())
-            .returnResolvedAt(entity.getReturnResolvedAt())
-            .refundAmount(entity.getRefundAmount() != null ? Money.builder().amount(new java.math.BigDecimal(entity.getRefundAmount())).currency(entity.getCurrency()).build() : null)
-            .createdAt(entity.getCreatedAt())
-            .updatedAt(entity.getUpdatedAt())
-            .build();
+                .id(new OrderId(entity.getId()))
+                .userId(new UserId(entity.getUserId()))
+                .status(mapStatus(entity.getStatus()))
+                .items(entity.getItems().stream()
+                        .map(item -> OrderItem.builder()
+                                .productId(item.getProductId())
+                                .variantSku(item.getVariantSku())
+                                .flashSaleId(item.getFlashSaleId())
+                                .sellerId(item.getSellerId())
+                                .quantity(item.getQuantity())
+                                .price(Money.builder().amount(new java.math.BigDecimal(item.getPrice()))
+                                        .currency(entity.getCurrency()).build())
+                                .build())
+                        .collect(Collectors.toList()))
+                .totalAmount(Money.builder().amount(new java.math.BigDecimal(entity.getTotalAmount()))
+                        .currency(entity.getCurrency()).build())
+                .trackingNumber(entity.getTrackingNumber())
+                .trackingCarrier(entity.getTrackingCarrier())
+                .shippedAt(entity.getShippedAt())
+                .deliveredAt(entity.getDeliveredAt())
+                .returnStatus(entity.getReturnStatus() != null ? ReturnStatus.valueOf(entity.getReturnStatus())
+                        : ReturnStatus.NONE)
+                .returnReason(entity.getReturnReason())
+                .returnNote(entity.getReturnNote())
+                .returnRequestedAt(entity.getReturnRequestedAt())
+                .returnResolvedAt(entity.getReturnResolvedAt())
+                .refundAmount(
+                        entity.getRefundAmount() != null
+                                ? Money.builder().amount(new java.math.BigDecimal(entity.getRefundAmount()))
+                                        .currency(entity.getCurrency()).build()
+                                : null)
+                .createdAt(entity.getCreatedAt())
+                .updatedAt(entity.getUpdatedAt())
+                .build();
     }
 
     private OrderStatus mapStatus(String status) {

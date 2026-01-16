@@ -22,13 +22,13 @@ public class MessageRepositoryAdapter implements MessageRepository {
 
     @Override
     public Message save(Message message) {
-        MessageDocument saved = messageMongoRepository.save(toDocument(message));
+        MessageDocument saved = messageMongoRepository.save(java.util.Objects.requireNonNull(toDocument(message)));
         return toDomain(saved);
     }
 
     @Override
     public java.util.Optional<Message> findById(MessageId id) {
-        return messageMongoRepository.findById(id.getValue()).map(this::toDomain);
+        return messageMongoRepository.findById(java.util.Objects.requireNonNull(id.getValue())).map(this::toDomain);
     }
 
     @Override

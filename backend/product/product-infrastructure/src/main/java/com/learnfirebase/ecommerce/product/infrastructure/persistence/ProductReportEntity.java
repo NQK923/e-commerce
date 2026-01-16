@@ -1,7 +1,6 @@
 package com.learnfirebase.ecommerce.product.infrastructure.persistence;
 
 import java.time.Instant;
-import java.util.UUID;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -33,15 +32,15 @@ public class ProductReportEntity {
     private String id;
     private String productId;
     private String userId;
-    
+
     @Enumerated(EnumType.STRING)
     private ReportReason reason;
-    
+
     private String description;
-    
+
     @Enumerated(EnumType.STRING)
     private ReportStatus status;
-    
+
     private Instant createdAt;
     private Instant updatedAt;
 

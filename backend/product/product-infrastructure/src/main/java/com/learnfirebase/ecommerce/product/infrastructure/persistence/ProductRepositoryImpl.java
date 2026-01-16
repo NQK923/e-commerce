@@ -1,5 +1,6 @@
 package com.learnfirebase.ecommerce.product.infrastructure.persistence;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -34,20 +35,21 @@ public class ProductRepositoryImpl implements ProductRepository {
     @Override
     public Product save(Product product) {
         ProductEntity entity = toEntity(product);
-        ProductEntity saved = productJpaRepository.save(entity);
+        ProductEntity saved = productJpaRepository.save(Objects.requireNonNull(entity));
         return toDomain(saved);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Optional<Product> findById(ProductId id) {
-        return productJpaRepository.findById(id.getValue()).map(this::toDomain);
+        return productJpaRepository.findById(Objects.requireNonNull(id.getValue())).map(this::toDomain);
     }
 
     @Override
     @Transactional(readOnly = true)
     public PageResponse<Product> findAll(PageRequest pageRequest) {
-        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(pageRequest.getPage(), pageRequest.getSize());
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest
+                .of(pageRequest.getPage(), pageRequest.getSize());
         org.springframework.data.domain.Page<ProductEntity> page = productJpaRepository.findAll(pageable);
         return toPageResponse(page);
     }
@@ -61,27 +63,24 @@ public class ProductRepositoryImpl implements ProductRepository {
             if (query.getSearch() != null && !query.getSearch().trim().isEmpty()) {
                 String likePattern = "%" + query.getSearch().trim().toLowerCase() + "%";
                 predicates.add(criteriaBuilder.or(
-                    criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), likePattern),
-                    criteriaBuilder.like(criteriaBuilder.lower(root.get("description")), likePattern)
-                ));
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), likePattern),
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("description")), likePattern)));
             }
 
             if (query.getCategory() != null && !query.getCategory().trim().isEmpty()) {
-                 predicates.add(criteriaBuilder.equal(root.get("categoryId"), query.getCategory()));
+                predicates.add(criteriaBuilder.equal(root.get("categoryId"), query.getCategory()));
             }
 
             if (query.getMinPrice() != null) {
                 predicates.add(criteriaBuilder.ge(
-                    root.get("price"), 
-                    query.getMinPrice()
-                ));
+                        root.get("price"),
+                        query.getMinPrice()));
             }
 
             if (query.getMaxPrice() != null) {
                 predicates.add(criteriaBuilder.le(
-                    root.get("price"), 
-                    query.getMaxPrice()
-                ));
+                        root.get("price"),
+                        query.getMaxPrice()));
             }
 
             if (query.getSellerId() != null && !query.getSellerId().trim().isEmpty()) {
@@ -102,91 +101,94 @@ public class ProductRepositoryImpl implements ProductRepository {
                 }
             }
         }
-        
-        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(pageRequest.getPage(), pageRequest.getSize(), sort);
+
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest
+                .of(pageRequest.getPage(), pageRequest.getSize(), sort);
         org.springframework.data.domain.Page<ProductEntity> page = productJpaRepository.findAll(spec, pageable);
         return toPageResponse(page);
     }
 
     @Override
     public void incrementSoldCount(ProductId id, int quantity) {
-        productJpaRepository.incrementSoldCount(id.getValue(), quantity);
+        productJpaRepository.incrementSoldCount(Objects.requireNonNull(id.getValue()), quantity);
     }
-    
+
     private PageResponse<Product> toPageResponse(org.springframework.data.domain.Page<ProductEntity> page) {
         return PageResponse.<Product>builder()
-            .content(page.getContent().stream().map(this::toDomain).toList())
-            .totalElements(page.getTotalElements())
-            .totalPages(page.getTotalPages())
-            .page(page.getNumber())
-            .size(page.getSize())
-            .build();
+                .content(page.getContent().stream().map(this::toDomain).toList())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .page(page.getNumber())
+                .size(page.getSize())
+                .build();
     }
 
     private ProductEntity toEntity(Product product) {
         ProductEntity entity = ProductEntity.builder()
-            .id(product.getId().getValue())
-            .name(product.getName())
-            .description(product.getDescription())
-            .price(product.getPrice().getAmount())
-            .currency(product.getPrice().getCurrency())
-            .quantity(product.getStock())
-            .soldCount(product.getSoldCount())
-            .sellerId(product.getSellerId())
-            .categoryId(product.getCategory() != null ? product.getCategory().getId() : null)
-            .createdAt(product.getCreatedAt())
-            .updatedAt(product.getUpdatedAt())
-            .build();
+                .id(product.getId().getValue())
+                .name(product.getName())
+                .description(product.getDescription())
+                .price(product.getPrice().getAmount())
+                .currency(product.getPrice().getCurrency())
+                .quantity(product.getStock())
+                .soldCount(product.getSoldCount())
+                .sellerId(product.getSellerId())
+                .categoryId(product.getCategory() != null ? product.getCategory().getId() : null)
+                .createdAt(product.getCreatedAt())
+                .updatedAt(product.getUpdatedAt())
+                .build();
         entity.setVariants(product.getVariants() != null ? product.getVariants().stream()
-            .map(v -> ProductVariantEntity.builder()
-                .sku(v.getSku() != null ? v.getSku() : UUID.randomUUID().toString())
-                .name(v.getName())
-                .price(v.getPrice().getAmount())
-                .currency(v.getPrice().getCurrency())
-                .quantity(v.getQuantity())
-                .product(entity)
-                .build())
-            .collect(Collectors.toList()) : java.util.Collections.emptyList());
+                .map(v -> ProductVariantEntity.builder()
+                        .sku(v.getSku() != null ? v.getSku() : UUID.randomUUID().toString())
+                        .name(v.getName())
+                        .price(v.getPrice().getAmount())
+                        .currency(v.getPrice().getCurrency())
+                        .quantity(v.getQuantity())
+                        .product(entity)
+                        .build())
+                .collect(Collectors.toList()) : java.util.Collections.emptyList());
         entity.setImages(product.getImages() != null ? product.getImages().stream()
-            .map(img -> ProductImageEntity.builder()
-                .id(img.getId() != null ? img.getId().getValue() : UUID.randomUUID().toString())
-                .url(img.getUrl())
-                .sortOrder(img.getSortOrder())
-                .primaryImage(img.isPrimary())
-                .product(entity)
-                .build())
-            .collect(Collectors.toList()) : java.util.Collections.emptyList());
+                .map(img -> ProductImageEntity.builder()
+                        .id(img.getId() != null ? img.getId().getValue() : UUID.randomUUID().toString())
+                        .url(img.getUrl())
+                        .sortOrder(img.getSortOrder())
+                        .primaryImage(img.isPrimary())
+                        .product(entity)
+                        .build())
+                .collect(Collectors.toList()) : java.util.Collections.emptyList());
         return entity;
     }
 
     private Product toDomain(ProductEntity entity) {
         return Product.builder()
-            .id(new ProductId(entity.getId()))
-            .name(entity.getName())
-            .description(entity.getDescription())
-            .price(Money.builder().amount(entity.getPrice()).currency(entity.getCurrency()).build())
-            .stock(entity.getQuantity())
-            .soldCount(entity.getSoldCount())
-            .sellerId(entity.getSellerId())
-            .category(entity.getCategoryId() != null ? Category.builder().id(entity.getCategoryId()).name(entity.getCategoryId()).build() : null)
-            .variants(entity.getVariants() != null ? entity.getVariants().stream()
-                .map(v -> ProductVariant.builder()
-                    .sku(v.getSku())
-                    .name(v.getName())
-                    .price(Money.builder().amount(v.getPrice()).currency(v.getCurrency()).build())
-                    .quantity(v.getQuantity())
-                    .build())
-                .collect(Collectors.toList()) : java.util.Collections.emptyList())
-            .images(entity.getImages() != null ? entity.getImages().stream()
-                .map(img -> ProductImage.builder()
-                    .id(new ProductImageId(img.getId()))
-                    .url(img.getUrl())
-                    .sortOrder(img.getSortOrder())
-                    .primary(img.isPrimaryImage())
-                    .build())
-                .collect(Collectors.toList()) : java.util.Collections.emptyList())
-            .createdAt(entity.getCreatedAt())
-            .updatedAt(entity.getUpdatedAt())
-            .build();
+                .id(new ProductId(entity.getId()))
+                .name(entity.getName())
+                .description(entity.getDescription())
+                .price(Money.builder().amount(entity.getPrice()).currency(entity.getCurrency()).build())
+                .stock(entity.getQuantity())
+                .soldCount(entity.getSoldCount())
+                .sellerId(entity.getSellerId())
+                .category(entity.getCategoryId() != null
+                        ? Category.builder().id(entity.getCategoryId()).name(entity.getCategoryId()).build()
+                        : null)
+                .variants(entity.getVariants() != null ? entity.getVariants().stream()
+                        .map(v -> ProductVariant.builder()
+                                .sku(v.getSku())
+                                .name(v.getName())
+                                .price(Money.builder().amount(v.getPrice()).currency(v.getCurrency()).build())
+                                .quantity(v.getQuantity())
+                                .build())
+                        .collect(Collectors.toList()) : java.util.Collections.emptyList())
+                .images(entity.getImages() != null ? entity.getImages().stream()
+                        .map(img -> ProductImage.builder()
+                                .id(new ProductImageId(img.getId()))
+                                .url(img.getUrl())
+                                .sortOrder(img.getSortOrder())
+                                .primary(img.isPrimaryImage())
+                                .build())
+                        .collect(Collectors.toList()) : java.util.Collections.emptyList())
+                .createdAt(entity.getCreatedAt())
+                .updatedAt(entity.getUpdatedAt())
+                .build();
     }
 }

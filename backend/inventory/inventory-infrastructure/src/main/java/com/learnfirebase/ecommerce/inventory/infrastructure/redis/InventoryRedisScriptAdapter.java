@@ -2,6 +2,7 @@ package com.learnfirebase.ecommerce.inventory.infrastructure.redis;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
@@ -23,13 +24,12 @@ public class InventoryRedisScriptAdapter implements InventoryRedisScriptPort {
 
     @Override
     public boolean executeAtomicReserve(String inventoryId, Map<String, Integer> reservations) {
-        String scriptText =
-            "local availKey = KEYS[1]; " +
-            "local delta = tonumber(ARGV[1]); " +
-            "local current = tonumber(redis.call('get', availKey) or '0'); " +
-            "if current + delta < 0 then return -1 end; " +
-            "redis.call('incrby', availKey, delta); " +
-            "return redis.call('get', availKey);";
+        String scriptText = "local availKey = KEYS[1]; " +
+                "local delta = tonumber(ARGV[1]); " +
+                "local current = tonumber(redis.call('get', availKey) or '0'); " +
+                "if current + delta < 0 then return -1 end; " +
+                "redis.call('incrby', availKey, delta); " +
+                "return redis.call('get', availKey);";
 
         DefaultRedisScript<Long> script = new DefaultRedisScript<>();
         script.setScriptText(scriptText);
@@ -37,7 +37,14 @@ public class InventoryRedisScriptAdapter implements InventoryRedisScriptPort {
 
         for (Map.Entry<String, Integer> entry : reservations.entrySet()) {
             String availKey = availableKey(inventoryId, entry.getKey());
-            Long result = redisTemplate.execute(script, List.of(availKey), String.valueOf(entry.getValue()));
+            // Objects.requireNonNull(availKey) prevents null, but List.of should return a
+            // valid list.
+            // The warning might be due to generic type inference. Explicitly typing or
+            // using Collections.singletonList might help if strict checks are on.
+            // Using List.of ensures the list and its elements are non-null
+            Long result = redisTemplate.execute(script,
+                    Objects.requireNonNull(List.of(Objects.requireNonNull(availKey))),
+                    String.valueOf(entry.getValue()));
             if (result == null || result < 0) {
                 log.warn("Inventory update failed for {} delta {}", entry.getKey(), entry.getValue());
                 return false;
@@ -48,13 +55,13 @@ public class InventoryRedisScriptAdapter implements InventoryRedisScriptPort {
 
     @Override
     public int getAvailable(String inventoryId, String productId) {
-        String value = redisTemplate.opsForValue().get(availableKey(inventoryId, productId));
+        String value = redisTemplate.opsForValue().get(Objects.requireNonNull(availableKey(inventoryId, productId)));
         return value == null ? 0 : Integer.parseInt(value);
     }
 
     @Override
     public int getReserved(String inventoryId, String productId) {
-        String value = redisTemplate.opsForValue().get(reservedKey(inventoryId, productId));
+        String value = redisTemplate.opsForValue().get(Objects.requireNonNull(reservedKey(inventoryId, productId)));
         return value == null ? 0 : Integer.parseInt(value);
     }
 

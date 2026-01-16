@@ -1,6 +1,7 @@
 package com.learnfirebase.ecommerce.notification.infrastructure.persistence;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -23,22 +24,22 @@ public class NotificationRepositoryAdapter implements NotificationRepository {
     @Transactional
     public NotificationDto save(NotificationDto notification) {
         NotificationEntity entity = toEntity(notification);
-        return toDto(jpaRepository.save(entity));
+        return toDto(jpaRepository.save(Objects.requireNonNull(entity)));
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<NotificationDto> findByUser(String userId, int limit) {
         return jpaRepository.findTop20ByUserIdOrderByCreatedAtDesc(userId).stream()
-            .limit(limit > 0 ? limit : 20)
-            .map(this::toDto)
-            .collect(Collectors.toList());
+                .limit(limit > 0 ? limit : 20)
+                .map(this::toDto)
+                .collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
     public Optional<NotificationDto> findById(String id) {
-        return jpaRepository.findById(id).map(this::toDto);
+        return jpaRepository.findById(Objects.requireNonNull(id)).map(this::toDto);
     }
 
     @Override
@@ -55,27 +56,27 @@ public class NotificationRepositoryAdapter implements NotificationRepository {
 
     private NotificationDto toDto(NotificationEntity entity) {
         return NotificationDto.builder()
-            .id(entity.getId())
-            .userId(entity.getUserId())
-            .title(entity.getTitle())
-            .body(entity.getBody())
-            .channel(entity.getChannel())
-            .status(entity.getStatus())
-            .createdAt(entity.getCreatedAt())
-            .readAt(entity.getReadAt())
-            .build();
+                .id(entity.getId())
+                .userId(entity.getUserId())
+                .title(entity.getTitle())
+                .body(entity.getBody())
+                .channel(entity.getChannel())
+                .status(entity.getStatus())
+                .createdAt(entity.getCreatedAt())
+                .readAt(entity.getReadAt())
+                .build();
     }
 
     private NotificationEntity toEntity(NotificationDto dto) {
         return NotificationEntity.builder()
-            .id(dto.getId())
-            .userId(dto.getUserId())
-            .title(dto.getTitle())
-            .body(dto.getBody())
-            .channel(dto.getChannel())
-            .status(dto.getStatus())
-            .createdAt(dto.getCreatedAt())
-            .readAt(dto.getReadAt())
-            .build();
+                .id(dto.getId())
+                .userId(dto.getUserId())
+                .title(dto.getTitle())
+                .body(dto.getBody())
+                .channel(dto.getChannel())
+                .status(dto.getStatus())
+                .createdAt(dto.getCreatedAt())
+                .readAt(dto.getReadAt())
+                .build();
     }
 }

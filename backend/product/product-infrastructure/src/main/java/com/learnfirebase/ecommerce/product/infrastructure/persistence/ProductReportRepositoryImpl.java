@@ -1,6 +1,7 @@
 package com.learnfirebase.ecommerce.product.infrastructure.persistence;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -19,12 +20,12 @@ public class ProductReportRepositoryImpl implements ProductReportRepository {
 
     @Override
     public void save(ProductReport report) {
-        jpaRepository.save(ProductReportEntity.fromDomain(report));
+        jpaRepository.save(Objects.requireNonNull(ProductReportEntity.fromDomain(report)));
     }
 
     @Override
     public Optional<ProductReport> findById(ProductReportId id) {
-        return jpaRepository.findById(id.getValue()).map(ProductReportEntity::toDomain);
+        return jpaRepository.findById(Objects.requireNonNull(id.getValue())).map(ProductReportEntity::toDomain);
     }
 
     @Override

@@ -26,8 +26,9 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 
         AuthProvider provider = mapProvider(userRequest.getClientRegistration().getRegistrationId());
         String providerUserId = extractProviderUserId(provider, attributes, oauth2User.getName());
-        String email = attributes.getOrDefault("email", null) != null ? attributes.get("email").toString() : null;
-        String nameAttr = userRequest.getClientRegistration().getProviderDetails().getUserInfoEndpoint().getUserNameAttributeName();
+
+        String nameAttr = userRequest.getClientRegistration().getProviderDetails().getUserInfoEndpoint()
+                .getUserNameAttributeName();
 
         attributes.put("auth_provider", provider.name());
         attributes.put("provider_user_id", providerUserId);

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.Objects;
 import java.util.UUID;
 
 @Component
@@ -20,20 +21,21 @@ public class ProductReviewReportRepositoryAdapter implements ProductReviewReport
     public void saveReport(ReportReviewCommand command) {
         Instant now = Instant.now();
         ProductReviewReportEntity entity = ProductReviewReportEntity.builder()
-            .id(UUID.randomUUID().toString())
-            .reviewId(command.getReviewId())
-            .reporterUserId(command.getReporterUserId())
-            .reason(command.getReason())
-            .description(command.getDescription())
-            .status(ReportStatus.PENDING)
-            .createdAt(now)
-            .updatedAt(now)
-            .build();
-        jpaRepository.save(entity);
+                .id(UUID.randomUUID().toString())
+                .reviewId(command.getReviewId())
+                .reporterUserId(command.getReporterUserId())
+                .reason(command.getReason())
+                .description(command.getDescription())
+                .status(ReportStatus.PENDING)
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
+        jpaRepository.save(Objects.requireNonNull(entity));
     }
 
     @Override
     public boolean hasReported(String reviewId, String reporterUserId) {
-        return jpaRepository.existsByReviewIdAndReporterUserId(reviewId, reporterUserId);
+        return jpaRepository.existsByReviewIdAndReporterUserId(Objects.requireNonNull(reviewId),
+                Objects.requireNonNull(reporterUserId));
     }
 }

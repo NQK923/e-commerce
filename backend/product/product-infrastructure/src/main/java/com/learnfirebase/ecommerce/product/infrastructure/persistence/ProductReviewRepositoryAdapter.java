@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -27,36 +28,36 @@ public class ProductReviewRepositoryAdapter implements ProductReviewRepositoryPo
     public ProductReviewDto save(CreateReviewCommand command) {
         Instant now = Instant.now();
         ProductReviewEntity entity = ProductReviewEntity.builder()
-            .id(UUID.randomUUID().toString())
-            .productId(command.getProductId())
-            .userId(command.getUserId())
-            .userName(command.getUserName())
-            .rating(command.getRating())
-            .comment(command.getComment())
-            .verifiedPurchase(command.isVerifiedPurchase())
-            .abuseReportCount(0)
-            .createdAt(now)
-            .updatedAt(now)
-            .build();
-        ProductReviewEntity saved = jpaRepository.save(entity);
+                .id(UUID.randomUUID().toString())
+                .productId(command.getProductId())
+                .userId(command.getUserId())
+                .userName(command.getUserName())
+                .rating(command.getRating())
+                .comment(command.getComment())
+                .verifiedPurchase(command.isVerifiedPurchase())
+                .abuseReportCount(0)
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
+        ProductReviewEntity saved = jpaRepository.save(Objects.requireNonNull(entity));
         return toDto(saved);
     }
 
     @Transactional
     @Override
     public ProductReviewDto update(UpdateReviewCommand command) {
-        ProductReviewEntity entity = jpaRepository.findById(command.getReviewId())
-            .orElseThrow(() -> new IllegalArgumentException("Review not found"));
+        ProductReviewEntity entity = jpaRepository.findById(Objects.requireNonNull(command.getReviewId()))
+                .orElseThrow(() -> new IllegalArgumentException("Review not found"));
         entity.setRating(command.getRating());
         entity.setComment(command.getComment());
         entity.setUpdatedAt(Instant.now());
-        return toDto(jpaRepository.save(entity));
+        return toDto(jpaRepository.save(Objects.requireNonNull(entity)));
     }
 
     @Transactional
     @Override
     public void delete(String reviewId) {
-        if (!jpaRepository.existsById(reviewId)) {
+        if (!jpaRepository.existsById(Objects.requireNonNull(reviewId))) {
             throw new IllegalArgumentException("Review not found");
         }
         jpaRepository.deleteById(reviewId);
@@ -65,68 +66,71 @@ public class ProductReviewRepositoryAdapter implements ProductReviewRepositoryPo
     @Transactional
     @Override
     public ProductReviewDto respond(RespondReviewCommand command) {
-        ProductReviewEntity entity = jpaRepository.findById(command.getReviewId())
-            .orElseThrow(() -> new IllegalArgumentException("Review not found"));
+        ProductReviewEntity entity = jpaRepository.findById(Objects.requireNonNull(command.getReviewId()))
+                .orElseThrow(() -> new IllegalArgumentException("Review not found"));
         entity.setSellerResponse(command.getResponse());
         entity.setSellerRespondedAt(Instant.now());
         entity.setSellerId(command.getSellerId());
         entity.setUpdatedAt(Instant.now());
-        return toDto(jpaRepository.save(entity));
+        return toDto(jpaRepository.save(Objects.requireNonNull(entity)));
     }
 
     @Override
     public PageResponse<ProductReviewDto> findByProductId(String productId, PageRequest pageRequest) {
-        Pageable pageable = org.springframework.data.domain.PageRequest.of(pageRequest.getPage(), pageRequest.getSize());
-        Page<ProductReviewEntity> page = jpaRepository.findByProductIdOrderByCreatedAtDesc(productId, pageable);
-        
+        Pageable pageable = org.springframework.data.domain.PageRequest.of(pageRequest.getPage(),
+                pageRequest.getSize());
+        Page<ProductReviewEntity> page = jpaRepository
+                .findByProductIdOrderByCreatedAtDesc(Objects.requireNonNull(productId), pageable);
+
         return PageResponse.<ProductReviewDto>builder()
-            .content(page.getContent().stream().map(this::toDto).toList())
-            .totalElements(page.getTotalElements())
-            .totalPages(page.getTotalPages())
-            .page(page.getNumber())
-            .size(page.getSize())
-            .build();
+                .content(page.getContent().stream().map(this::toDto).toList())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .page(page.getNumber())
+                .size(page.getSize())
+                .build();
     }
 
     @Override
     public boolean hasReviewed(String productId, String userId) {
-        return jpaRepository.existsByProductIdAndUserId(productId, userId);
+        return jpaRepository.existsByProductIdAndUserId(Objects.requireNonNull(productId),
+                Objects.requireNonNull(userId));
     }
 
     @Override
     public long countRecentReviews(String userId, Instant createdAfter) {
-        return jpaRepository.countByUserIdAndCreatedAtAfter(userId, createdAfter);
+        return jpaRepository.countByUserIdAndCreatedAtAfter(Objects.requireNonNull(userId), createdAfter);
     }
 
     @Override
     public Optional<ProductReviewDto> findById(String reviewId) {
-        return jpaRepository.findById(reviewId).map(this::toDto);
+        return jpaRepository.findById(Objects.requireNonNull(reviewId)).map(this::toDto);
     }
 
     @Transactional
     @Override
     public void incrementAbuseReport(String reviewId) {
-        ProductReviewEntity entity = jpaRepository.findById(reviewId)
-            .orElseThrow(() -> new IllegalArgumentException("Review not found"));
+        ProductReviewEntity entity = jpaRepository.findById(Objects.requireNonNull(reviewId))
+                .orElseThrow(() -> new IllegalArgumentException("Review not found"));
         entity.setAbuseReportCount(entity.getAbuseReportCount() + 1);
         entity.setUpdatedAt(Instant.now());
-        jpaRepository.save(entity);
+        jpaRepository.save(Objects.requireNonNull(entity));
     }
 
     private ProductReviewDto toDto(ProductReviewEntity entity) {
         return ProductReviewDto.builder()
-            .id(entity.getId())
-            .productId(entity.getProductId())
-            .userId(entity.getUserId())
-            .userName(entity.getUserName())
-            .rating(entity.getRating())
-            .comment(entity.getComment())
-            .verifiedPurchase(entity.isVerifiedPurchase())
-            .abuseReportCount(entity.getAbuseReportCount())
-            .sellerResponse(entity.getSellerResponse())
-            .sellerRespondedAt(entity.getSellerRespondedAt())
-            .updatedAt(entity.getUpdatedAt())
-            .createdAt(entity.getCreatedAt())
-            .build();
+                .id(entity.getId())
+                .productId(entity.getProductId())
+                .userId(entity.getUserId())
+                .userName(entity.getUserName())
+                .rating(entity.getRating())
+                .comment(entity.getComment())
+                .verifiedPurchase(entity.isVerifiedPurchase())
+                .abuseReportCount(entity.getAbuseReportCount())
+                .sellerResponse(entity.getSellerResponse())
+                .sellerRespondedAt(entity.getSellerRespondedAt())
+                .updatedAt(entity.getUpdatedAt())
+                .createdAt(entity.getCreatedAt())
+                .build();
     }
 }

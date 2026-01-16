@@ -3,6 +3,7 @@ package com.learnfirebase.ecommerce.chat.infrastructure.event;
 import com.learnfirebase.ecommerce.chat.application.port.out.NotificationEventPort;
 import com.learnfirebase.ecommerce.chat.domain.model.Message;
 import java.time.Instant;
+import java.util.Objects;
 import lombok.Builder;
 import lombok.Value;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -29,7 +30,7 @@ public class KafkaNotificationEventPublisher implements NotificationEventPort {
                 .content(message.getContent())
                 .sentAt(message.getSentAt())
                 .build();
-        kafkaTemplate.send(TOPIC, message.getReceiverId().getValue(), event);
+        kafkaTemplate.send(TOPIC, Objects.requireNonNull(message.getReceiverId().getValue()), event);
     }
 
     @Value

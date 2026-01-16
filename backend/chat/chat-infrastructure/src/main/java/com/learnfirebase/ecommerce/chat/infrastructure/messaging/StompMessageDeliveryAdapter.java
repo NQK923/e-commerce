@@ -4,6 +4,7 @@ import com.learnfirebase.ecommerce.chat.application.dto.ChatMessageDto;
 import com.learnfirebase.ecommerce.chat.application.port.out.MessageDeliveryPort;
 import com.learnfirebase.ecommerce.chat.domain.model.Message;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import java.util.Objects;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -27,6 +28,7 @@ public class StompMessageDeliveryAdapter implements MessageDeliveryPort {
                 .sentAt(message.getSentAt())
                 .status(message.getStatus())
                 .build();
-        simpMessagingTemplate.convertAndSendToUser(destinationUserId, destination, dto);
+        simpMessagingTemplate.convertAndSendToUser(Objects.requireNonNull(destinationUserId), destination,
+                Objects.requireNonNull(dto));
     }
 }

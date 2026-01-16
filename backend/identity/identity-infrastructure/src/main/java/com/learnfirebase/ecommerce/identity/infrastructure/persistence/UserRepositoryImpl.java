@@ -1,9 +1,9 @@
 package com.learnfirebase.ecommerce.identity.infrastructure.persistence;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.List;
-import java.util.ArrayList;
 
 import org.springframework.stereotype.Repository;
 
@@ -27,7 +27,7 @@ public class UserRepositoryImpl implements UserRepository {
     @Override
     public User save(User user) {
         UserEntity entity = toEntity(user);
-        UserEntity saved = userJpaRepository.save(entity);
+        UserEntity saved = userJpaRepository.save(Objects.requireNonNull(entity));
         return toDomain(saved);
     }
 
@@ -38,7 +38,7 @@ public class UserRepositoryImpl implements UserRepository {
 
     @Override
     public Optional<User> findById(UserId id) {
-        return userJpaRepository.findById(id.getValue()).map(this::toDomain);
+        return userJpaRepository.findById(Objects.requireNonNull(id.getValue())).map(this::toDomain);
     }
 
     @Override
@@ -53,82 +53,82 @@ public class UserRepositoryImpl implements UserRepository {
 
     private UserEntity toEntity(User user) {
         UserEntity entity = UserEntity.builder()
-            .id(user.getId().getValue())
-            .email(user.getEmail() != null ? user.getEmail().getValue() : null)
-            .password(user.getPassword() != null ? user.getPassword().getValue() : null)
-            .authProvider(user.getAuthProvider())
-            .providerUserId(user.getProviderUserId())
-            .roles(user.getRoles().stream().map(Enum::name).collect(Collectors.toSet()))
-            .displayName(user.getDisplayName())
-            .avatarUrl(user.getAvatarUrl())
-            .shopDescription(user.getShopDescription())
-            .shopBannerUrl(user.getShopBannerUrl())
-            .createdAt(user.getCreatedAt())
-            .updatedAt(user.getUpdatedAt())
-            .build();
-            
+                .id(user.getId().getValue())
+                .email(user.getEmail() != null ? user.getEmail().getValue() : null)
+                .password(user.getPassword() != null ? user.getPassword().getValue() : null)
+                .authProvider(user.getAuthProvider())
+                .providerUserId(user.getProviderUserId())
+                .roles(user.getRoles().stream().map(Enum::name).collect(Collectors.toSet()))
+                .displayName(user.getDisplayName())
+                .avatarUrl(user.getAvatarUrl())
+                .shopDescription(user.getShopDescription())
+                .shopBannerUrl(user.getShopBannerUrl())
+                .createdAt(user.getCreatedAt())
+                .updatedAt(user.getUpdatedAt())
+                .build();
+
         if (user.getAddresses() != null) {
             List<UserAddressEntity> addressEntities = user.getAddresses().stream()
-                .map(addr -> toAddressEntity(addr, entity))
-                .collect(Collectors.toList());
+                    .map(addr -> toAddressEntity(addr, entity))
+                    .collect(Collectors.toList());
             entity.setAddresses(addressEntities);
         }
-        
+
         return entity;
     }
 
     private User toDomain(UserEntity entity) {
         return User.builder()
-            .id(new UserId(entity.getId()))
-            .email(entity.getEmail() != null ? new Email(entity.getEmail()) : null)
-            .password(entity.getPassword() != null ? new HashedPassword(entity.getPassword()) : null)
-            .authProvider(entity.getAuthProvider())
-            .providerUserId(entity.getProviderUserId())
-            .roles(entity.getRoles().stream().map(Role::valueOf).collect(Collectors.toSet()))
-            .displayName(entity.getDisplayName())
-            .avatarUrl(entity.getAvatarUrl())
-            .shopDescription(entity.getShopDescription())
-            .shopBannerUrl(entity.getShopBannerUrl())
-            .addresses(entity.getAddresses().stream()
-                .map(addr -> toAddressDomain(addr))
-                .collect(Collectors.toList()))
-            .createdAt(entity.getCreatedAt())
-            .updatedAt(entity.getUpdatedAt())
-            .build();
+                .id(new UserId(entity.getId()))
+                .email(entity.getEmail() != null ? new Email(entity.getEmail()) : null)
+                .password(entity.getPassword() != null ? new HashedPassword(entity.getPassword()) : null)
+                .authProvider(entity.getAuthProvider())
+                .providerUserId(entity.getProviderUserId())
+                .roles(entity.getRoles().stream().map(Role::valueOf).collect(Collectors.toSet()))
+                .displayName(entity.getDisplayName())
+                .avatarUrl(entity.getAvatarUrl())
+                .shopDescription(entity.getShopDescription())
+                .shopBannerUrl(entity.getShopBannerUrl())
+                .addresses(entity.getAddresses().stream()
+                        .map(addr -> toAddressDomain(addr))
+                        .collect(Collectors.toList()))
+                .createdAt(entity.getCreatedAt())
+                .updatedAt(entity.getUpdatedAt())
+                .build();
     }
 
     private UserAddressEntity toAddressEntity(UserAddress domain, UserEntity userEntity) {
         return UserAddressEntity.builder()
-            .id(domain.getId())
-            .user(userEntity)
-            .label(domain.getLabel())
-            .isDefault(domain.isDefault())
-            .fullName(domain.getAddress().getFullName())
-            .phoneNumber(domain.getAddress().getPhoneNumber())
-            .line1(domain.getAddress().getLine1())
-            .line2(domain.getAddress().getLine2())
-            .city(domain.getAddress().getCity())
-            .state(domain.getAddress().getState())
-            .postalCode(domain.getAddress().getPostalCode())
-            .country(domain.getAddress().getCountry())
-            .build();
+                .id(domain.getId())
+                .user(userEntity)
+                .label(domain.getLabel())
+                .isDefault(domain.isDefault())
+                .fullName(domain.getAddress().getFullName())
+                .phoneNumber(domain.getAddress().getPhoneNumber())
+                .line1(domain.getAddress().getLine1())
+                .line2(domain.getAddress().getLine2())
+                .city(domain.getAddress().getCity())
+                .state(domain.getAddress().getState())
+                .postalCode(domain.getAddress().getPostalCode())
+                .country(domain.getAddress().getCountry())
+                .build();
     }
 
     private UserAddress toAddressDomain(UserAddressEntity entity) {
         return UserAddress.builder()
-            .id(entity.getId())
-            .label(entity.getLabel())
-            .isDefault(entity.isDefault())
-            .address(Address.builder()
-                .fullName(entity.getFullName())
-                .phoneNumber(entity.getPhoneNumber())
-                .line1(entity.getLine1())
-                .line2(entity.getLine2())
-                .city(entity.getCity())
-                .state(entity.getState())
-                .postalCode(entity.getPostalCode())
-                .country(entity.getCountry())
-                .build())
-            .build();
+                .id(entity.getId())
+                .label(entity.getLabel())
+                .isDefault(entity.isDefault())
+                .address(Address.builder()
+                        .fullName(entity.getFullName())
+                        .phoneNumber(entity.getPhoneNumber())
+                        .line1(entity.getLine1())
+                        .line2(entity.getLine2())
+                        .city(entity.getCity())
+                        .state(entity.getState())
+                        .postalCode(entity.getPostalCode())
+                        .country(entity.getCountry())
+                        .build())
+                .build();
     }
 }

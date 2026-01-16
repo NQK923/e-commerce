@@ -56,7 +56,9 @@ import com.learnfirebase.ecommerce.order.domain.exception.OrderDomainException;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseCase, CancelOrderUseCase, ListOrdersUseCase, GetOrderUseCase, InitiatePaymentUseCase, HandlePaymentCallbackUseCase, ShipOrderUseCase, MarkDeliveredUseCase, RequestReturnUseCase, ApproveReturnUseCase, RejectReturnUseCase {
+public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseCase, CancelOrderUseCase,
+        ListOrdersUseCase, GetOrderUseCase, InitiatePaymentUseCase, HandlePaymentCallbackUseCase, ShipOrderUseCase,
+        MarkDeliveredUseCase, RequestReturnUseCase, ApproveReturnUseCase, RejectReturnUseCase {
 
     private final OrderRepository orderRepository;
     private final LoadProductPort loadProductPort;
@@ -71,12 +73,13 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
     @Override
     public OrderDto execute(CreateOrderCommand command) {
         List<OrderItem> items = new ArrayList<>();
-        
-        Set<String> allProductIds = command.getItems().stream()
-            .map(CreateOrderCommand.OrderItemCommand::getProductId)
-            .collect(Collectors.toSet());
 
-        Map<String, LoadProductPort.ProductInfo> productsInfo = loadProductPort.loadProducts(command.getCurrency(), allProductIds);
+        Set<String> allProductIds = command.getItems().stream()
+                .map(CreateOrderCommand.OrderItemCommand::getProductId)
+                .collect(Collectors.toSet());
+
+        Map<String, LoadProductPort.ProductInfo> productsInfo = loadProductPort.loadProducts(command.getCurrency(),
+                allProductIds);
 
         for (CreateOrderCommand.OrderItemCommand itemCmd : command.getItems()) {
             LoadProductPort.ProductInfo productInfo = productsInfo.get(itemCmd.getProductId());
@@ -88,33 +91,35 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
             if (itemCmd.getFlashSaleId() != null) {
                 // Flash Sale: Validate and use Flash Sale price
                 var flashSale = loadFlashSalePort.loadFlashSale(itemCmd.getFlashSaleId())
-                    .orElseThrow(() -> new OrderDomainException("Flash Sale not found: " + itemCmd.getFlashSaleId()));
-                
+                        .orElseThrow(
+                                () -> new OrderDomainException("Flash Sale not found: " + itemCmd.getFlashSaleId()));
+
                 if (!flashSale.getProductId().equals(itemCmd.getProductId())) {
-                     throw new OrderDomainException("Flash Sale " + itemCmd.getFlashSaleId() + " does not match product " + itemCmd.getProductId());
+                    throw new OrderDomainException("Flash Sale " + itemCmd.getFlashSaleId() + " does not match product "
+                            + itemCmd.getProductId());
                 }
-                
+
                 if (!flashSale.isActive()) {
-                     throw new OrderDomainException("Flash Sale " + itemCmd.getFlashSaleId() + " is not active");
+                    throw new OrderDomainException("Flash Sale " + itemCmd.getFlashSaleId() + " is not active");
                 }
-                
+
                 if (!flashSale.getPrice().getCurrency().equals(command.getCurrency())) {
-                     throw new OrderDomainException("Currency mismatch for Flash Sale " + itemCmd.getFlashSaleId());
+                    throw new OrderDomainException("Currency mismatch for Flash Sale " + itemCmd.getFlashSaleId());
                 }
 
                 price = flashSale.getPrice().getAmount();
             } else {
                 price = productInfo.getPrice();
             }
-            
+
             items.add(OrderItem.builder()
-                .productId(itemCmd.getProductId())
-                .variantSku(itemCmd.getVariantSku())
-                .flashSaleId(itemCmd.getFlashSaleId())
-                .sellerId(productInfo.getSellerId())
-                .quantity(itemCmd.getQuantity())
-                .price(Money.builder().amount(price).currency(command.getCurrency()).build())
-                .build());
+                    .productId(itemCmd.getProductId())
+                    .variantSku(itemCmd.getVariantSku())
+                    .flashSaleId(itemCmd.getFlashSaleId())
+                    .sellerId(productInfo.getSellerId())
+                    .quantity(itemCmd.getQuantity())
+                    .price(Money.builder().amount(price).currency(command.getCurrency()).build())
+                    .build());
         }
 
         Order order = domainService.initiateOrder(new UserId(command.getUserId()), items, command.getCurrency());
@@ -122,9 +127,9 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
 
         // Standard Reservations
         Map<String, Integer> standardReservations = buildReservationMap(order.getItems().stream()
-            .filter(i -> i.getFlashSaleId() == null)
-            .toList());
-            
+                .filter(i -> i.getFlashSaleId() == null)
+                .toList());
+
         if (!standardReservations.isEmpty()) {
             boolean ok = inventoryReservationPort.reserve(saved.getId().getValue(), standardReservations);
             if (!ok) {
@@ -134,13 +139,15 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
 
         // Flash Sale Reservations
         command.getItems().stream()
-            .filter(i -> i.getFlashSaleId() != null)
-            .forEach(i -> {
-                 boolean success = inventoryReservationPort.reserveFlashSale(saved.getId().getValue(), i.getFlashSaleId(), i.getQuantity());
-                 if (!success) {
-                     throw new OrderDomainException("Flash Sale stock exhausted or invalid for product " + i.getProductId());
-                 }
-            });
+                .filter(i -> i.getFlashSaleId() != null)
+                .forEach(i -> {
+                    boolean success = inventoryReservationPort.reserveFlashSale(saved.getId().getValue(),
+                            i.getFlashSaleId(), i.getQuantity());
+                    if (!success) {
+                        throw new OrderDomainException(
+                                "Flash Sale stock exhausted or invalid for product " + i.getProductId());
+                    }
+                });
 
         order.getDomainEvents().forEach(event -> {
             orderOutboxPort.saveEvent(event);
@@ -153,11 +160,12 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
     @Override
     public OrderDto execute(PayOrderCommand command) {
         Order order = orderRepository.findById(new OrderId(command.getOrderId()))
-            .orElseThrow(() -> new OrderDomainException("Order not found"));
+                .orElseThrow(() -> new OrderDomainException("Order not found"));
         if (order.getStatus() == OrderStatus.CANCELLED) {
             throw new OrderDomainException("Cannot pay a cancelled order");
         }
-        if (order.getStatus() == OrderStatus.PAID || order.getStatus() == OrderStatus.SHIPPING || order.getStatus() == OrderStatus.DELIVERED || order.getStatus() == OrderStatus.RETURNED) {
+        if (order.getStatus() == OrderStatus.PAID || order.getStatus() == OrderStatus.SHIPPING
+                || order.getStatus() == OrderStatus.DELIVERED || order.getStatus() == OrderStatus.RETURNED) {
             return toDto(order);
         }
         order.pay();
@@ -173,17 +181,17 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
     @Override
     public OrderDto execute(CancelOrderCommand command) {
         Order order = orderRepository.findById(new OrderId(command.getOrderId()))
-            .orElseThrow(() -> new OrderDomainException("Order not found"));
+                .orElseThrow(() -> new OrderDomainException("Order not found"));
         order.cancel(command.getReason());
         Order saved = orderRepository.save(order);
-        
+
         // Release Flash Sale Stock
         saved.getItems().stream()
-             .filter(item -> item.getFlashSaleId() != null)
-             .forEach(item -> inventoryReservationPort.releaseFlashSale(item.getFlashSaleId(), item.getQuantity()));
+                .filter(item -> item.getFlashSaleId() != null)
+                .forEach(item -> inventoryReservationPort.releaseFlashSale(item.getFlashSaleId(), item.getQuantity()));
         Map<String, Integer> standardReservations = buildReservationMap(saved.getItems().stream()
-            .filter(item -> item.getFlashSaleId() == null)
-            .toList());
+                .filter(item -> item.getFlashSaleId() == null)
+                .toList());
         if (!standardReservations.isEmpty()) {
             inventoryReservationPort.release(order.getId().getValue(), standardReservations);
         }
@@ -204,12 +212,12 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
         List<OrderDto> dtos = orders.stream().map(this::toDto).collect(Collectors.toList());
 
         return PageResponse.<OrderDto>builder()
-            .content(dtos)
-            .page(pageRequest.getPage())
-            .size(pageRequest.getSize())
-            .totalElements(total)
-            .totalPages(totalPages)
-            .build();
+                .content(dtos)
+                .page(pageRequest.getPage())
+                .size(pageRequest.getSize())
+                .totalElements(total)
+                .totalPages(totalPages)
+                .build();
     }
 
     @Override
@@ -218,16 +226,16 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
             List<Order> orders = orderRepository.findBySellerId(sellerId, pageRequest.getPage(), pageRequest.getSize());
             long total = orderRepository.countBySellerId(sellerId);
             int totalPages = (int) Math.ceil((double) total / pageRequest.getSize());
-            
+
             List<OrderDto> dtos = orders.stream().map(this::toDto).collect(Collectors.toList());
 
             return PageResponse.<OrderDto>builder()
-                .content(dtos)
-                .page(pageRequest.getPage())
-                .size(pageRequest.getSize())
-                .totalElements(total)
-                .totalPages(totalPages)
-                .build();
+                    .content(dtos)
+                    .page(pageRequest.getPage())
+                    .size(pageRequest.getSize())
+                    .totalElements(total)
+                    .totalPages(totalPages)
+                    .build();
         }
         return listOrders(pageRequest);
     }
@@ -235,16 +243,17 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
     @Override
     public OrderDto getOrder(String orderId) {
         Order order = orderRepository.findById(new OrderId(orderId))
-            .orElseThrow(() -> new OrderDomainException("Order not found"));
+                .orElseThrow(() -> new OrderDomainException("Order not found"));
         return toDto(order);
     }
 
     @Override
     public PaymentInitResponse initiate(InitiatePaymentCommand command) {
         Order order = orderRepository.findById(new OrderId(command.getOrderId()))
-            .orElseThrow(() -> new OrderDomainException("Order not found"));
+                .orElseThrow(() -> new OrderDomainException("Order not found"));
 
-        if (order.getStatus() == OrderStatus.PAID || order.getStatus() == OrderStatus.SHIPPING || order.getStatus() == OrderStatus.DELIVERED || order.getStatus() == OrderStatus.RETURNED) {
+        if (order.getStatus() == OrderStatus.PAID || order.getStatus() == OrderStatus.SHIPPING
+                || order.getStatus() == OrderStatus.DELIVERED || order.getStatus() == OrderStatus.RETURNED) {
             throw new OrderDomainException("Order already paid");
         }
         if (order.getStatus() == OrderStatus.CANCELLED) {
@@ -252,52 +261,52 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
         }
 
         PaymentGatewayPort.PaymentSession session = paymentGatewayPort.initiatePayment(
-            PaymentGatewayPort.PaymentRequest.builder()
-                .orderId(order.getId().getValue())
-                .amount(order.getTotalAmount().getAmount())
-                .currency(order.getTotalAmount().getCurrency())
-                .description("Payment for order " + order.getId().getValue())
-                .returnUrl(command.getReturnUrl())
-                .clientIp(command.getClientIp())
-                .build()
-        );
+                PaymentGatewayPort.PaymentRequest.builder()
+                        .orderId(order.getId().getValue())
+                        .amount(order.getTotalAmount().getAmount())
+                        .currency(order.getTotalAmount().getCurrency())
+                        .description("Payment for order " + order.getId().getValue())
+                        .returnUrl(command.getReturnUrl())
+                        .clientIp(command.getClientIp())
+                        .build());
 
         paymentTransactionPort.save(PaymentRecord.builder()
-            .orderId(order.getId().getValue())
-            .reference(session.getReference())
-            .gateway("VNPAY")
-            .amount(order.getTotalAmount().getAmount())
-            .currency(order.getTotalAmount().getCurrency())
-            .status(PaymentStatus.PENDING)
-            .createdAt(java.time.Instant.now())
-            .updatedAt(java.time.Instant.now())
-            .build());
+                .orderId(order.getId().getValue())
+                .reference(session.getReference())
+                .gateway("VNPAY")
+                .amount(order.getTotalAmount().getAmount())
+                .currency(order.getTotalAmount().getCurrency())
+                .status(PaymentStatus.PENDING)
+                .createdAt(java.time.Instant.now())
+                .updatedAt(java.time.Instant.now())
+                .build());
 
         return PaymentInitResponse.builder()
-            .paymentUrl(session.getPaymentUrl())
-            .reference(session.getReference())
-            .build();
+                .paymentUrl(session.getPaymentUrl())
+                .reference(session.getReference())
+                .build();
     }
 
     @Override
     public OrderDto handleCallback(HandlePaymentCallbackCommand command) {
         PaymentGatewayPort.PaymentVerification verification = paymentGatewayPort.verify(
-            PaymentGatewayPort.PaymentCallback.builder()
-                .parameters(command.getParameters())
-                .build()
-        );
+                PaymentGatewayPort.PaymentCallback.builder()
+                        .parameters(command.getParameters())
+                        .build());
 
         if (!verification.isSuccess()) {
-            paymentTransactionPort.updateStatus(verification.getReference(), PaymentStatus.FAILED, verification.getTransactionNo(), verification.getRawPayload());
-            throw new OrderDomainException(verification.getErrorMessage() == null ? "Payment failed" : verification.getErrorMessage());
+            paymentTransactionPort.updateStatus(verification.getReference(), PaymentStatus.FAILED,
+                    verification.getTransactionNo(), verification.getRawPayload());
+            throw new OrderDomainException(
+                    verification.getErrorMessage() == null ? "Payment failed" : verification.getErrorMessage());
         }
 
         Order order = orderRepository.findById(new OrderId(verification.getOrderId()))
-            .orElseThrow(() -> new OrderDomainException("Order not found"));
-            
+                .orElseThrow(() -> new OrderDomainException("Order not found"));
+
         // Idempotency check: If order is already paid, ignore duplicate callback
-        if (order.getStatus() == OrderStatus.PAID || order.getStatus() == OrderStatus.SHIPPING || 
-            order.getStatus() == OrderStatus.DELIVERED || order.getStatus() == OrderStatus.RETURNED) {
+        if (order.getStatus() == OrderStatus.PAID || order.getStatus() == OrderStatus.SHIPPING ||
+                order.getStatus() == OrderStatus.DELIVERED || order.getStatus() == OrderStatus.RETURNED) {
             return toDto(order);
         }
 
@@ -307,16 +316,16 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
 
         if (paymentTransactionPort.findByReference(verification.getReference()).isEmpty()) {
             paymentTransactionPort.save(PaymentRecord.builder()
-                .reference(verification.getReference())
-                .orderId(order.getId().getValue())
-                .gateway("VNPAY")
-                .amount(verification.getAmount())
-                .currency(order.getTotalAmount().getCurrency())
-                .status(PaymentStatus.PENDING)
-                .createdAt(java.time.Instant.now())
-                .updatedAt(java.time.Instant.now())
-                .rawPayload(verification.getRawPayload())
-                .build());
+                    .reference(verification.getReference())
+                    .orderId(order.getId().getValue())
+                    .gateway("VNPAY")
+                    .amount(verification.getAmount())
+                    .currency(order.getTotalAmount().getCurrency())
+                    .status(PaymentStatus.PENDING)
+                    .createdAt(java.time.Instant.now())
+                    .updatedAt(java.time.Instant.now())
+                    .rawPayload(verification.getRawPayload())
+                    .build());
         }
 
         if (order.getStatus() == OrderStatus.PENDING) {
@@ -325,7 +334,8 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
 
         Order saved = orderRepository.save(order);
 
-        paymentTransactionPort.updateStatus(verification.getReference(), PaymentStatus.SUCCESS, verification.getTransactionNo(), verification.getRawPayload());
+        paymentTransactionPort.updateStatus(verification.getReference(), PaymentStatus.SUCCESS,
+                verification.getTransactionNo(), verification.getRawPayload());
         inventoryReservationPort.confirm(order.getId().getValue());
 
         saved.getDomainEvents().forEach(event -> {
@@ -339,7 +349,7 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
     @Override
     public OrderDto ship(ShipOrderCommand command) {
         Order order = orderRepository.findById(new OrderId(command.getOrderId()))
-            .orElseThrow(() -> new OrderDomainException("Order not found"));
+                .orElseThrow(() -> new OrderDomainException("Order not found"));
         order.ship(command.getTrackingNumber(), command.getTrackingCarrier());
         Order saved = orderRepository.save(order);
         return toDto(saved);
@@ -348,7 +358,7 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
     @Override
     public OrderDto markDelivered(MarkDeliveredCommand command) {
         Order order = orderRepository.findById(new OrderId(command.getOrderId()))
-            .orElseThrow(() -> new OrderDomainException("Order not found"));
+                .orElseThrow(() -> new OrderDomainException("Order not found"));
         order.markDelivered();
         Order saved = orderRepository.save(order);
         return toDto(saved);
@@ -357,8 +367,9 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
     @Override
     public OrderDto requestReturn(RequestReturnCommand command) {
         Order order = orderRepository.findById(new OrderId(command.getOrderId()))
-            .orElseThrow(() -> new OrderDomainException("Order not found"));
-        if (order.getUserId() != null && command.getUserId() != null && !order.getUserId().getValue().equals(command.getUserId())) {
+                .orElseThrow(() -> new OrderDomainException("Order not found"));
+        if (order.getUserId() != null && command.getUserId() != null
+                && !order.getUserId().getValue().equals(command.getUserId())) {
             throw new OrderDomainException("Only order owner can request a return");
         }
         order.requestReturn(command.getReason(), command.getNote());
@@ -369,15 +380,17 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
     @Override
     public OrderDto approveReturn(ApproveReturnCommand command) {
         Order order = orderRepository.findById(new OrderId(command.getOrderId()))
-            .orElseThrow(() -> new OrderDomainException("Order not found"));
+                .orElseThrow(() -> new OrderDomainException("Order not found"));
         String currency = command.getCurrency() != null ? command.getCurrency() : order.getTotalAmount().getCurrency();
         java.math.BigDecimal refundAmount = command.getRefundAmount() != null && !command.getRefundAmount().isBlank()
-            ? new java.math.BigDecimal(command.getRefundAmount())
-            : order.getTotalAmount().getAmount();
-        
-        // Business Rule: We do NOT release inventory back for returned items because they are considered 'used' or 'damaged'.
-        // If this rule changes (e.g. for 'refused delivery'), call inventoryReservationPort.release() here.
-        
+                ? new java.math.BigDecimal(command.getRefundAmount())
+                : order.getTotalAmount().getAmount();
+
+        // Business Rule: We do NOT release inventory back for returned items because
+        // they are considered 'used' or 'damaged'.
+        // If this rule changes (e.g. for 'refused delivery'), call
+        // inventoryReservationPort.release() here.
+
         order.approveReturn(Money.builder().amount(refundAmount).currency(currency).build(), command.getNote());
         Order saved = orderRepository.save(order);
         return toDto(saved);
@@ -386,7 +399,7 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
     @Override
     public OrderDto rejectReturn(RejectReturnCommand command) {
         Order order = orderRepository.findById(new OrderId(command.getOrderId()))
-            .orElseThrow(() -> new OrderDomainException("Order not found"));
+                .orElseThrow(() -> new OrderDomainException("Order not found"));
         order.rejectReturn(command.getNote());
         Order saved = orderRepository.save(order);
         return toDto(saved);
@@ -394,33 +407,35 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
 
     private OrderDto toDto(Order order) {
         return OrderDto.builder()
-            .id(order.getId().getValue())
-            .userId(order.getUserId().getValue())
-            .status(order.getStatus().name())
-            .currency(order.getTotalAmount().getCurrency())
-            .totalAmount(order.getTotalAmount().getAmount().toPlainString())
-            .trackingNumber(order.getTrackingNumber())
-            .trackingCarrier(order.getTrackingCarrier())
-            .shippedAt(order.getShippedAt())
-            .deliveredAt(order.getDeliveredAt())
-            .returnStatus(order.getReturnStatus() != null ? order.getReturnStatus().name() : ReturnStatus.NONE.name())
-            .returnReason(order.getReturnReason())
-            .returnNote(order.getReturnNote())
-            .returnRequestedAt(order.getReturnRequestedAt())
-            .returnResolvedAt(order.getReturnResolvedAt())
-            .refundAmount(order.getRefundAmount() != null ? order.getRefundAmount().getAmount().toPlainString() : null)
-            .createdAt(order.getCreatedAt())
-            .updatedAt(order.getUpdatedAt())
-            .items(order.getItems().stream()
-                .map(item -> OrderDto.OrderItemDto.builder()
-                    .productId(item.getProductId())
-                    .variantSku(item.getVariantSku())
-                    .flashSaleId(item.getFlashSaleId())
-                    .quantity(item.getQuantity())
-                    .price(item.getPrice().getAmount().toPlainString())
-                    .build())
-                .collect(Collectors.toList()))
-            .build();
+                .id(order.getId().getValue())
+                .userId(order.getUserId().getValue())
+                .status(order.getStatus().name())
+                .currency(order.getTotalAmount().getCurrency())
+                .totalAmount(order.getTotalAmount().getAmount().toPlainString())
+                .trackingNumber(order.getTrackingNumber())
+                .trackingCarrier(order.getTrackingCarrier())
+                .shippedAt(order.getShippedAt())
+                .deliveredAt(order.getDeliveredAt())
+                .returnStatus(
+                        order.getReturnStatus() != null ? order.getReturnStatus().name() : ReturnStatus.NONE.name())
+                .returnReason(order.getReturnReason())
+                .returnNote(order.getReturnNote())
+                .returnRequestedAt(order.getReturnRequestedAt())
+                .returnResolvedAt(order.getReturnResolvedAt())
+                .refundAmount(
+                        order.getRefundAmount() != null ? order.getRefundAmount().getAmount().toPlainString() : null)
+                .createdAt(order.getCreatedAt())
+                .updatedAt(order.getUpdatedAt())
+                .items(order.getItems().stream()
+                        .map(item -> OrderDto.OrderItemDto.builder()
+                                .productId(item.getProductId())
+                                .variantSku(item.getVariantSku())
+                                .flashSaleId(item.getFlashSaleId())
+                                .quantity(item.getQuantity())
+                                .price(item.getPrice().getAmount().toPlainString())
+                                .build())
+                        .collect(Collectors.toList()))
+                .build();
     }
 
     private Map<String, Integer> buildReservationMap(List<OrderItem> items) {
@@ -430,10 +445,6 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
             reservations.merge(key, item.getQuantity(), Integer::sum);
         }
         return reservations;
-    }
-
-    private String resolveInventoryKey(CreateOrderCommand.OrderItemCommand itemCmd) {
-        return resolveInventoryKey(itemCmd.getProductId(), itemCmd.getVariantSku());
     }
 
     private String resolveInventoryKey(String productId, String variantSku) {

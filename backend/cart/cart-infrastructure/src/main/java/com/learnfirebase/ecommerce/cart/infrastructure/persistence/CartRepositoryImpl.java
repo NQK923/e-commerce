@@ -3,7 +3,9 @@ package com.learnfirebase.ecommerce.cart.infrastructure.persistence;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
+
 import java.util.Optional;
+import java.util.Objects;
 
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +25,7 @@ public class CartRepositoryImpl implements CartRepository {
 
     @Override
     @Transactional
+    @SuppressWarnings("null")
     public Cart save(Cart cart) {
         CartEntity entity = toEntity(cart);
         CartEntity saved = cartJpaRepository.save(entity);
@@ -32,38 +35,39 @@ public class CartRepositoryImpl implements CartRepository {
     @Override
     @Transactional(readOnly = true)
     public Optional<Cart> findById(CartId id) {
-        return cartJpaRepository.findById(id.getValue()).map(this::toDomain);
+        return cartJpaRepository.findById(Objects.requireNonNull(id.getValue())).map(this::toDomain);
     }
 
     private CartEntity toEntity(Cart cart) {
         return CartEntity.builder()
-            .id(cart.getId().getValue())
-            .items(cart.getItems().stream()
-                .map(item -> CartItemEmbeddable.builder()
-                    .productId(item.getProductId())
-                    .variantSku(item.getVariantSku() == null ? "" : item.getVariantSku())
-                    .quantity(item.getQuantity())
-                    .price(item.getPrice().getAmount().toPlainString())
-                    .currency(item.getPrice().getCurrency())
-                    .build())
-                .collect(Collectors.toList()))
-            .build();
+                .id(cart.getId().getValue())
+                .items(cart.getItems().stream()
+                        .map(item -> CartItemEmbeddable.builder()
+                                .productId(item.getProductId())
+                                .variantSku(item.getVariantSku() == null ? "" : item.getVariantSku())
+                                .quantity(item.getQuantity())
+                                .price(item.getPrice().getAmount().toPlainString())
+                                .currency(item.getPrice().getCurrency())
+                                .build())
+                        .collect(Collectors.toList()))
+                .build();
     }
 
     private Cart toDomain(CartEntity entity) {
         return Cart.builder()
-            .id(new CartId(entity.getId()))
-            .items(Optional.ofNullable(entity.getItems()).orElseGet(ArrayList::new).stream()
-                .map(item -> CartItem.builder()
-                    .productId(item.getProductId())
-                    .variantSku(item.getVariantSku() == null || item.getVariantSku().isEmpty() ? null : item.getVariantSku())
-                    .quantity(item.getQuantity())
-                    .price(Money.builder()
-                        .amount(new BigDecimal(Optional.ofNullable(item.getPrice()).orElse("0")))
-                        .currency(item.getCurrency())
-                        .build())
-                    .build())
-                .collect(Collectors.toCollection(ArrayList::new)))
-            .build();
+                .id(new CartId(entity.getId()))
+                .items(Optional.ofNullable(entity.getItems()).orElseGet(ArrayList::new).stream()
+                        .map(item -> CartItem.builder()
+                                .productId(item.getProductId())
+                                .variantSku(item.getVariantSku() == null || item.getVariantSku().isEmpty() ? null
+                                        : item.getVariantSku())
+                                .quantity(item.getQuantity())
+                                .price(Money.builder()
+                                        .amount(new BigDecimal(Optional.ofNullable(item.getPrice()).orElse("0")))
+                                        .currency(item.getCurrency())
+                                        .build())
+                                .build())
+                        .collect(Collectors.toCollection(ArrayList::new)))
+                .build();
     }
 }

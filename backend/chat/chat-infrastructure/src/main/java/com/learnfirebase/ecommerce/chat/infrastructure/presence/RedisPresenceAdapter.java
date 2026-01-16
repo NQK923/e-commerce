@@ -16,6 +16,9 @@ public class RedisPresenceAdapter implements PresencePort {
 
     @Override
     public boolean isOnline(String userId) {
+        if (userId == null) {
+            return false;
+        }
         Boolean member = stringRedisTemplate.opsForSet().isMember(ONLINE_USERS_KEY, userId);
         return Boolean.TRUE.equals(member);
     }

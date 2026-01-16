@@ -1,5 +1,7 @@
 package com.learnfirebase.ecommerce.chat.infrastructure.persistence.mongo;
 
+import java.util.Objects;
+
 import com.learnfirebase.ecommerce.chat.domain.model.Conversation;
 import com.learnfirebase.ecommerce.chat.domain.model.ConversationId;
 import com.learnfirebase.ecommerce.chat.domain.model.ParticipantId;
@@ -20,18 +22,20 @@ public class ConversationRepositoryAdapter implements ConversationRepository {
 
     @Override
     public Optional<Conversation> findById(ConversationId id) {
-        return conversationMongoRepository.findById(id.getValue()).map(this::toDomain);
+        return conversationMongoRepository.findById(Objects.requireNonNull(id.getValue())).map(this::toDomain);
     }
 
     @Override
     public Optional<Conversation> findByParticipants(ParticipantId buyerId, ParticipantId sellerId) {
-        return conversationMongoRepository.findByParticipants(buyerId.getValue(), sellerId.getValue())
+        return conversationMongoRepository
+                .findByParticipants(Objects.requireNonNull(buyerId.getValue()),
+                        Objects.requireNonNull(sellerId.getValue()))
                 .map(this::toDomain);
     }
 
     @Override
     public java.util.List<Conversation> findByParticipant(ParticipantId participantId) {
-        return conversationMongoRepository.findByParticipantsContains(participantId.getValue())
+        return conversationMongoRepository.findByParticipantsContains(Objects.requireNonNull(participantId.getValue()))
                 .stream()
                 .map(this::toDomain)
                 .toList();
@@ -39,7 +43,7 @@ public class ConversationRepositoryAdapter implements ConversationRepository {
 
     @Override
     public Conversation save(Conversation conversation) {
-        ConversationDocument saved = conversationMongoRepository.save(toDocument(conversation));
+        ConversationDocument saved = conversationMongoRepository.save(Objects.requireNonNull(toDocument(conversation)));
         return toDomain(saved);
     }
 
