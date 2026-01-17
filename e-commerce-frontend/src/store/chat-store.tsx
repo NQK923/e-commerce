@@ -302,7 +302,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setTypingUsers((prev) => {
       const currentSet = prev[event.conversationId] ?? new Set();
       const nextSet = new Set(currentSet);
-      if (event.isTyping) {
+      if (event.typing) {
         nextSet.add(event.senderId);
       } else {
         nextSet.delete(event.senderId);
@@ -334,7 +334,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       sendTypingInternal({
         conversationId,
         receiverId: receiver.id,
-        isTyping,
+        typing: isTyping,
       });
     },
     [activeConversationId, conversations, sendTypingInternal, user]

@@ -87,6 +87,21 @@ public class ProductRepositoryImpl implements ProductRepository {
                 predicates.add(criteriaBuilder.equal(root.get("sellerId"), query.getSellerId()));
             }
 
+            // Tags filter - product must have all specified tags
+            if (query.getTags() != null && !query.getTags().isEmpty()) {
+                jakarta.persistence.criteria.Join<ProductEntity, String> tagsJoin = root.join("tags");
+                predicates.add(tagsJoin.in(query.getTags()));
+            }
+
+            // Stock filter if inStock is explicitly true
+            if (Boolean.TRUE.equals(query.getInStock())) {
+                predicates.add(criteriaBuilder.greaterThan(root.get("quantity"), 0));
+            }
+
+            // TODO: Implement minRating filter using LEFT JOIN with product_reviews table
+            // For now, rating filtering can be added in future enhancement
+            // This requires proper entity relationship between Product and ProductReview
+
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
 

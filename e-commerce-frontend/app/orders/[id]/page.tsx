@@ -14,6 +14,8 @@ import { formatCurrency, formatDate } from "@/src/utils/format";
 import { useToast } from "@/src/components/ui/toast-provider";
 import { useTranslation } from "@/src/providers/language-provider";
 import Image from "next/image";
+import { OrderTrackingTimeline, OrderStatus } from "@/src/components/order/order-tracking-timeline";
+import { ReturnRequestDialog } from "@/src/components/order/return-request-dialog";
 
 export default function OrderDetailPage() {
   const params = useParams<{ id: string }>();
@@ -33,6 +35,7 @@ export default function OrderDetailPage() {
   const [returnReason, setReturnReason] = useState("");
   const [returnNote, setReturnNote] = useState("");
   const [refundAmount, setRefundAmount] = useState("");
+  const [showReturnDialog, setShowReturnDialog] = useState(false);
 
   const loadOrder = useCallback(async () => {
     if (!orderId) return;
@@ -209,6 +212,16 @@ export default function OrderDetailPage() {
         </div>
       </div>
 
+      {/* Order Tracking Timeline */}
+      <OrderTrackingTimeline
+        status={order.status as OrderStatus}
+        createdAt={order.createdAt}
+        paidAt={order.status !== 'PENDING' ? order.createdAt : undefined}
+        shippedAt={order.shippedAt}
+        deliveredAt={order.deliveredAt}
+        trackingNumber={order.trackingNumber}
+      />
+
       <div className="grid gap-6 lg:grid-cols-[2fr,1fr]">
         <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
           <h2 className="text-lg font-semibold text-black">{t.orders.items}</h2>
@@ -315,21 +328,11 @@ export default function OrderDetailPage() {
             </div>
 
             {order.status === "DELIVERED" && (!order.returnStatus || order.returnStatus === "NONE") && isOwner ? (
-              <div className="space-y-2 pt-2 border-t border-zinc-100">
-                <textarea
-                  className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
-                  placeholder={t.orders.reason_placeholder}
-                  value={returnReason}
-                  onChange={(e) => setReturnReason(e.target.value)}
-                />
-                <textarea
-                  className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
-                  placeholder={t.orders.notes_placeholder}
-                  value={returnNote}
-                  onChange={(e) => setReturnNote(e.target.value)}
-                />
-                <Button onClick={handleRequestReturn} disabled={working}>
-                  {working ? <Spinner className="mr-2 h-4 w-4" /> : null}
+              <div className="pt-2 border-t border-zinc-100">
+                <Button
+                  onClick={() => setShowReturnDialog(true)}
+                  className="w-full bg-amber-600 hover:bg-amber-700"
+                >
                   {t.orders.request_return}
                 </Button>
               </div>
@@ -363,6 +366,14 @@ export default function OrderDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Return Request Dialog */}
+      <ReturnRequestDialog
+        orderId={order.id}
+        isOpen={showReturnDialog}
+        onClose={() => setShowReturnDialog(false)}
+        onSuccess={loadOrder}
+      />
     </div>
   );
 }

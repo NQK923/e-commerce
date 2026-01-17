@@ -13,5 +13,5 @@ public class TypingEvent {
     private String conversationId;
     private String senderId;
     private String receiverId;
-    private boolean isTyping;
+    private boolean typing;
 }

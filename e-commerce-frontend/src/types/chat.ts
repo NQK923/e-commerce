@@ -49,5 +49,5 @@ export type TypingEvent = {
   conversationId: string;
   senderId: string;
   receiverId: string;
-  isTyping: boolean;
+  typing: boolean;
 };
