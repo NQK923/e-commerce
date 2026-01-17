@@ -7,11 +7,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
 import java.security.Principal;
-import java.util.List;
 
 /**
  * Controller for bulk product operations
@@ -21,34 +19,25 @@ import java.util.List;
 @RequiredArgsConstructor
 public class BulkProductController {
 
-    // Placeholder for bulk upload service
-    // private final BulkProductUploadService bulkProductUploadService;
+    private final com.learnfirebase.ecommerce.product.application.port.in.BulkProductUploadUseCase bulkProductUploadUseCase;
 
     @PostMapping("/bulk")
-    public ResponseEntity<BulkUploadResponse> uploadBulk(
+    public ResponseEntity<com.learnfirebase.ecommerce.product.application.dto.BulkUploadResult> uploadBulk(
             @RequestParam("file") MultipartFile file,
             Principal principal) {
         String sellerId = principal.getName();
 
-        // TODO: Implement CSV parsing and bulk product creation
-        // For now, return placeholder response
-        BulkUploadResponse response = new BulkUploadResponse();
-        response.setSuccess(false);
-        response.setMessage("Bulk upload feature coming soon!");
-        response.setTotalRows(0);
-        response.setSuccessCount(0);
-        response.setFailureCount(0);
-
-        return ResponseEntity.ok(response);
+        try {
+            com.learnfirebase.ecommerce.product.application.dto.BulkUploadResult result = bulkProductUploadUseCase
+                    .uploadBulk(sellerId, file.getInputStream());
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(com.learnfirebase.ecommerce.product.application.dto.BulkUploadResult.builder()
+                            .success(false)
+                            .message("Upload failed: " + e.getMessage())
+                            .build());
+        }
     }
 
-    @Data
-    public static class BulkUploadResponse {
-        private boolean success;
-        private String message;
-        private int totalRows;
-        private int successCount;
-        private int failureCount;
-        private List<String> errors;
-    }
 }

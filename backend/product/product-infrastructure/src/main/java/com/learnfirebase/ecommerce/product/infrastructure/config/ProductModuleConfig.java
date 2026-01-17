@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
+import com.learnfirebase.ecommerce.product.application.port.in.ManageProductUseCase;
 import com.learnfirebase.ecommerce.product.application.port.out.ProductEventPublisher;
 import com.learnfirebase.ecommerce.product.application.port.out.ProductReportRepository;
 import com.learnfirebase.ecommerce.product.application.port.out.ProductRepository;
@@ -34,25 +35,35 @@ public class ProductModuleConfig {
     }
 
     @Bean
-    public ProductApplicationService productApplicationService(ProductRepository productRepository, ProductSearchIndexPort productSearchIndexPort, ProductSearchPort productSearchPort, ProductEventPublisher productEventPublisher) {
-        return new ProductApplicationService(productRepository, productSearchIndexPort, productSearchPort, productEventPublisher);
+    public ProductApplicationService productApplicationService(ProductRepository productRepository,
+            ProductSearchIndexPort productSearchIndexPort, ProductSearchPort productSearchPort,
+            ProductEventPublisher productEventPublisher) {
+        return new ProductApplicationService(productRepository, productSearchIndexPort, productSearchPort,
+                productEventPublisher);
     }
 
     @Bean
-    public ProductReportApplicationService productReportApplicationService(ProductReportRepository productReportRepository) {
+    public ProductReportApplicationService productReportApplicationService(
+            ProductReportRepository productReportRepository) {
         return new ProductReportApplicationService(productReportRepository);
     }
 
     @Bean
     public ProductReviewService productReviewService(
-        ProductReviewRepositoryPort productReviewRepositoryPort,
-        ProductReviewReportRepositoryPort productReviewReportRepositoryPort,
-        PurchaseVerificationPort purchaseVerificationPort,
-        ProductRepository productRepository) {
+            ProductReviewRepositoryPort productReviewRepositoryPort,
+            ProductReviewReportRepositoryPort productReviewReportRepositoryPort,
+            PurchaseVerificationPort purchaseVerificationPort,
+            ProductRepository productRepository) {
         return new ProductReviewService(
-            productReviewRepositoryPort,
-            productReviewReportRepositoryPort,
-            purchaseVerificationPort,
-            productRepository);
+                productReviewRepositoryPort,
+                productReviewReportRepositoryPort,
+                purchaseVerificationPort,
+                productRepository);
+    }
+
+    @Bean
+    public com.learnfirebase.ecommerce.product.application.service.BulkProductService bulkProductService(
+            ManageProductUseCase manageProductUseCase) {
+        return new com.learnfirebase.ecommerce.product.application.service.BulkProductService(manageProductUseCase);
     }
 }

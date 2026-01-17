@@ -98,9 +98,24 @@ public class ProductRepositoryImpl implements ProductRepository {
                 predicates.add(criteriaBuilder.greaterThan(root.get("quantity"), 0));
             }
 
-            // TODO: Implement minRating filter using LEFT JOIN with product_reviews table
-            // For now, rating filtering can be added in future enhancement
-            // This requires proper entity relationship between Product and ProductReview
+            // Min Rating filter using Subquery
+            if (query.getMinRating() != null && criteriaQuery != null) {
+                jakarta.persistence.criteria.Subquery<Double> avgRatingSubquery = criteriaQuery.subquery(Double.class);
+                jakarta.persistence.criteria.Root<ProductReviewEntity> reviewRoot = avgRatingSubquery
+                        .from(ProductReviewEntity.class);
+                avgRatingSubquery.select(criteriaBuilder.avg(reviewRoot.get("rating")));
+                avgRatingSubquery.where(criteriaBuilder.equal(reviewRoot.get("productId"), root.get("id")));
+
+                // Coalesce null average to 0.0 or handle it.
+                // If a product has no reviews, average is null. User asking for minRating
+                // likely implies products WITH reviews.
+                // greaterThanOrEqualTo handles logic, but comparing with specific Double might
+                // be tricky if avg is null.
+                // Safest to just add the condition. If subquery returns null, comparison might
+                // be false or unknown.
+                predicates.add(
+                        criteriaBuilder.greaterThanOrEqualTo(avgRatingSubquery, query.getMinRating().doubleValue()));
+            }
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
