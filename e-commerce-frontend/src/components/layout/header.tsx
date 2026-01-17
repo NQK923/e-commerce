@@ -9,7 +9,7 @@ import { useCart } from "../../store/cart-store";
 import { cx } from "../../utils/cx";
 import { Button } from "../ui/button";
 import { useTranslation } from "../../providers/language-provider";
-import { NotificationBell } from "../notifications/notification-bell";
+import { NotificationDropdown } from "../notification/notification-dropdown";
 
 export const Header: React.FC = () => {
   const pathname = usePathname();
@@ -51,8 +51,8 @@ export const Header: React.FC = () => {
 
           <nav className="hidden items-center gap-6 text-sm font-medium text-zinc-500 md:flex">
             {/* Seller Channel Link */}
-            <Link 
-              href="/seller/dashboard" 
+            <Link
+              href="/seller/dashboard"
               className="flex items-center gap-1 font-semibold text-zinc-600 transition-colors hover:text-emerald-600"
             >
               <Store size={16} />
@@ -60,15 +60,15 @@ export const Header: React.FC = () => {
             </Link>
 
             {isAdmin && (
-              <Link 
-                href="/admin" 
+              <Link
+                href="/admin"
                 className="flex items-center gap-1 font-semibold text-zinc-600 transition-colors hover:text-emerald-600"
               >
                 <Shield size={16} />
                 {t.nav.admin}
               </Link>
             )}
-            
+
             <div className="h-4 w-px bg-zinc-200 mx-1" />
 
             {navItems
@@ -95,7 +95,7 @@ export const Header: React.FC = () => {
             <Search size={20} />
           </button>
 
-          <NotificationBell />
+          <NotificationDropdown />
 
           {/* Cart */}
           <Link href="/cart" className="group relative p-2 text-zinc-600 hover:text-emerald-600 transition-colors">
@@ -115,10 +115,10 @@ export const Header: React.FC = () => {
                   <User size={18} />
                   <span suppressHydrationWarning>{user.displayName || t.nav.account}</span>
                 </Link>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={() => logout()} 
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => logout()}
                   title={t.nav.logout}
                   className="h-9 w-9 text-zinc-500 hover:text-red-600"
                 >
@@ -140,7 +140,7 @@ export const Header: React.FC = () => {
               </div>
             )}
           </div>
-          
+
           {/* Mobile Menu Toggle */}
           <button className="block md:hidden p-2 text-zinc-800">
             <Menu size={24} />

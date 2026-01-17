@@ -40,7 +40,7 @@ export function ReturnRequestDialog({ orderId, isOpen, onClose, onSuccess }: Ret
 
         setLoading(true);
         try {
-            await orderApi.requestReturn(orderId, { reason, description });
+            await orderApi.requestReturn(orderId, { reason, note: description });
             addToast('Yêu cầu hoàn trả đã được gửi', 'success');
             onSuccess();
             onClose();
