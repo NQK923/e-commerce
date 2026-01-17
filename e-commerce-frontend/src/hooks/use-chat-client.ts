@@ -13,12 +13,14 @@ type UseChatClientOptions = {
   onError?: (error: Error) => void;
   onStatusChange?: (status: ChatConnectionStatus) => void;
   onPresence?: (presence: unknown) => void;
+  onTyping?: (typing: unknown) => void;
 };
 
 type UseChatClientResult = {
   connected: boolean;
   status: ChatConnectionStatus;
   send: (payload: object) => void;
+  sendTyping: (payload: object) => void;
 };
 
 const toWebSocketUrl = (httpUrl: string): string => {
@@ -34,6 +36,7 @@ export const useChatClient = ({
   onError,
   onStatusChange,
   onPresence,
+  onTyping,
 }: UseChatClientOptions): UseChatClientResult => {
   const clientRef = useRef<Client | null>(null);
   const subscriptionsRef = useRef<StompSubscription[]>([]);
@@ -42,6 +45,7 @@ export const useChatClient = ({
   const onErrorRef = useRef<typeof onError | undefined>(undefined);
   const onStatusChangeRef = useRef<typeof onStatusChange | undefined>(undefined);
   const onPresenceRef = useRef<typeof onPresence | undefined>(undefined);
+  const onTypingRef = useRef<typeof onTyping | undefined>(undefined);
   const [status, setStatus] = useState<ChatConnectionStatus>("idle");
 
   useEffect(() => {
@@ -50,7 +54,8 @@ export const useChatClient = ({
     onErrorRef.current = onError;
     onStatusChangeRef.current = onStatusChange;
     onPresenceRef.current = onPresence;
-  }, [onAck, onError, onMessage, onPresence, onStatusChange]);
+    onTypingRef.current = onTyping;
+  }, [onAck, onError, onMessage, onPresence, onStatusChange, onTyping]);
 
   useEffect(() => {
     const brokerURL = `${toWebSocketUrl(config.apiBaseUrl)}/ws/chat`;
@@ -103,6 +108,17 @@ export const useChatClient = ({
             onErrorRef.current?.(err as Error);
           }
         }),
+      );
+
+      subscriptionsRef.current.push(
+        client.subscribe("/user/queue/chat/typing", (frame: IMessage) => {
+          try {
+            const payload = JSON.parse(frame.body);
+            onTypingRef.current?.(payload);
+          } catch (err) {
+            onErrorRef.current?.(err as Error);
+          }
+        })
       );
     };
 
@@ -162,9 +178,23 @@ export const useChatClient = ({
     [],
   );
 
+  const sendTyping = useCallback(
+    (payload: object) => {
+      if (!clientRef.current || !clientRef.current.connected) {
+        return; // Fail silently for typing events
+      }
+      clientRef.current.publish({
+        destination: "/app/chat.typing",
+        body: JSON.stringify(payload),
+      });
+    },
+    [],
+  );
+
   return {
     connected: status === "connected",
     status,
     send,
+    sendTyping,
   };
 };

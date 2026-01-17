@@ -44,3 +44,10 @@ export type ChatPresenceEvent = {
   online: boolean;
   lastActiveAt: string;
 };
+
+export type TypingEvent = {
+  conversationId: string;
+  senderId: string;
+  receiverId: string;
+  isTyping: boolean;
+};

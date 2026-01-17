@@ -18,6 +18,7 @@ import org.springframework.stereotype.Controller;
 public class ChatWebSocketController {
 
     private final SendMessageUseCase sendMessageUseCase;
+    private final org.springframework.messaging.simp.SimpMessagingTemplate simpMessagingTemplate;
 
     @MessageMapping("/chat.send")
     @SendToUser("/queue/chat/ack")
@@ -30,6 +31,20 @@ public class ChatWebSocketController {
                 .content(request.getContent())
                 .build();
         return sendMessageUseCase.send(command);
+    }
+
+    @MessageMapping("/chat.typing")
+    public void typing(@Payload com.learnfirebase.ecommerce.chat.application.dto.TypingEvent event,
+            Principal principal) {
+        // Ensure the sender is who they say they are (optional security check)
+        String senderId = principal.getName();
+        event.setSenderId(senderId);
+
+        // Forward to the receiver
+        simpMessagingTemplate.convertAndSendToUser(
+                java.util.Objects.requireNonNull(event.getReceiverId()),
+                "/queue/chat/typing",
+                event);
     }
 
     @Data

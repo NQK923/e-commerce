@@ -16,6 +16,7 @@ import {
   ChatPresenceEvent,
   SendChatMessagePayload,
   SendChatMessageResult,
+  TypingEvent,
 } from "../types/chat";
 import { useAuth } from "./auth-store";
 import { useToast } from "../components/ui/toast-provider";
@@ -26,7 +27,9 @@ type ChatContextValue = {
   setActiveConversationId: (conversationId: string | null) => void;
   getMessagesForConversation: (conversationId: string | null | undefined) => ChatMessage[];
   getPresenceForUser: (userId?: string | null) => { online: boolean; lastActiveAt: string } | undefined;
+  getTypingUsers: (conversationId: string) => string[];
   sendMessage: (payload: SendChatMessagePayload) => Promise<void>;
+  sendTyping: (conversationId: string, isTyping: boolean) => void;
   connectionStatus: ChatConnectionStatus;
   loadingConversations: boolean;
   loadingMessages: boolean;
@@ -58,6 +61,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [presenceByUser, setPresenceByUser] = useState<
     Record<string, { online: boolean; lastActiveAt: string }>
   >({});
+  const [typingUsers, setTypingUsers] = useState<Record<string, Set<string>>>({});
 
   const updatePresence = useCallback((userId: string, online: boolean) => {
     if (!userId) return;
@@ -75,11 +79,20 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     [presenceByUser],
   );
 
+  const getTypingUsers = useCallback(
+    (conversationId: string) => {
+      const users = typingUsers[conversationId];
+      return users ? Array.from(users) : [];
+    },
+    [typingUsers]
+  );
+
   const resetState = useCallback(() => {
     setConversations([]);
     setMessagesByConversation({});
     setActiveConversationId(null);
     setPresenceByUser({});
+    setTypingUsers({});
   }, []);
 
   const getMessagesForConversation = useCallback(
@@ -186,19 +199,30 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         sentAt: maybeMessage.sentAt ?? new Date().toISOString(),
         status: maybeMessage.status ?? "DELIVERED",
       };
-        setMessagesByConversation((prev) => ({
-          ...prev,
-          [message.conversationId]: mergeMessages(
-            prev[message.conversationId] ?? [],
-            message,
-          ),
-        }));
-        const incoming = message.senderId !== user?.id;
-        updatePresence(message.senderId, true);
-        upsertConversationFromMessage(message, incoming);
-      },
-      [updatePresence, upsertConversationFromMessage, user?.id],
-    );
+      setMessagesByConversation((prev) => ({
+        ...prev,
+        [message.conversationId]: mergeMessages(
+          prev[message.conversationId] ?? [],
+          message,
+        ),
+      }));
+      const incoming = message.senderId !== user?.id;
+      updatePresence(message.senderId, true);
+      upsertConversationFromMessage(message, incoming);
+
+      // Stop typing indicator if message received from that user
+      if (incoming) {
+        setTypingUsers((prev) => {
+          const currentSet = prev[message.conversationId];
+          if (!currentSet || !currentSet.has(message.senderId)) return prev;
+          const nextSet = new Set(currentSet);
+          nextSet.delete(message.senderId);
+          return { ...prev, [message.conversationId]: nextSet };
+        });
+      }
+    },
+    [updatePresence, upsertConversationFromMessage, user?.id],
+  );
 
   const handleAck = useCallback(
     (payload: unknown) => {
@@ -206,39 +230,39 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!ack?.persistedMessage) return;
       const message = ack.persistedMessage;
       const tempKey = tempConversationKey(message.receiverId);
-      
+
       setMessagesByConversation((prev) => {
         const next = { ...prev };
 
         // 1. Remove from temp key if it exists
         if (next[tempKey]) {
-            const cleanedTemp = next[tempKey].filter(
-                (msg) =>
-                !(
-                    msg.senderId === message.senderId &&
-                    msg.content === message.content &&
-                    msg.status === "PENDING"
-                ),
-            );
-            if (cleanedTemp.length) {
-                next[tempKey] = cleanedTemp;
-            } else {
-                delete next[tempKey];
-            }
-        }
-
-        // 2. Remove pending from the actual conversation ID if it exists there (case: conversation already existed)
-        const targetConversationId = message.conversationId;
-        const conversationMessages = next[targetConversationId] ?? [];
-        
-        // Filter out the pending version of this message from the target conversation
-        const cleanedConversationMessages = conversationMessages.filter(
+          const cleanedTemp = next[tempKey].filter(
             (msg) =>
               !(
                 msg.senderId === message.senderId &&
                 msg.content === message.content &&
                 msg.status === "PENDING"
               ),
+          );
+          if (cleanedTemp.length) {
+            next[tempKey] = cleanedTemp;
+          } else {
+            delete next[tempKey];
+          }
+        }
+
+        // 2. Remove pending from the actual conversation ID if it exists there (case: conversation already existed)
+        const targetConversationId = message.conversationId;
+        const conversationMessages = next[targetConversationId] ?? [];
+
+        // Filter out the pending version of this message from the target conversation
+        const cleanedConversationMessages = conversationMessages.filter(
+          (msg) =>
+            !(
+              msg.senderId === message.senderId &&
+              msg.content === message.content &&
+              msg.status === "PENDING"
+            ),
         );
 
         // 3. Merge the persisted message
@@ -261,16 +285,33 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const handlePresenceEvent = useCallback((payload: unknown) => {
     const presence = payload as Partial<ChatPresenceEvent>;
     if (!presence?.userId) return;
+    const userId = presence.userId;
     setPresenceByUser((prev) => ({
       ...prev,
-      [presence.userId]: {
+      [userId]: {
         online: Boolean(presence.online),
         lastActiveAt: presence.lastActiveAt ?? new Date().toISOString(),
       },
     }));
   }, []);
 
-  const { send, status: socketStatus } = useChatClient({
+  const handleTypingEvent = useCallback((payload: unknown) => {
+    const event = payload as TypingEvent;
+    if (!event.conversationId || !event.senderId) return;
+
+    setTypingUsers((prev) => {
+      const currentSet = prev[event.conversationId] ?? new Set();
+      const nextSet = new Set(currentSet);
+      if (event.isTyping) {
+        nextSet.add(event.senderId);
+      } else {
+        nextSet.delete(event.senderId);
+      }
+      return { ...prev, [event.conversationId]: nextSet };
+    });
+  }, []);
+
+  const { send, sendTyping: sendTypingInternal, status: socketStatus } = useChatClient({
     accessToken,
     onMessage: handleIncomingMessage,
     onAck: handleAck,
@@ -279,7 +320,25 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     },
     onStatusChange: setConnectionStatus,
     onPresence: handlePresenceEvent,
+    onTyping: handleTypingEvent,
   });
+
+  const sendTyping = useCallback(
+    (conversationId: string, isTyping: boolean) => {
+      if (!user || !activeConversationId) return;
+      // Find receiver
+      const conv = conversations.find(c => c.id === conversationId);
+      const receiver = conv?.participants.find(p => p.id !== user.id);
+      if (!receiver) return;
+
+      sendTypingInternal({
+        conversationId,
+        receiverId: receiver.id,
+        isTyping,
+      });
+    },
+    [activeConversationId, conversations, sendTypingInternal, user]
+  );
 
   useEffect(() => {
     setConnectionStatus(socketStatus);
@@ -369,6 +428,8 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       loadingMessages,
       refreshConversations,
       getPresenceForUser,
+      getTypingUsers,
+      sendTyping,
     }),
     [
       activeConversationId,
@@ -380,6 +441,8 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       refreshConversations,
       sendMessage,
       getPresenceForUser,
+      getTypingUsers,
+      sendTyping,
     ],
   );
 

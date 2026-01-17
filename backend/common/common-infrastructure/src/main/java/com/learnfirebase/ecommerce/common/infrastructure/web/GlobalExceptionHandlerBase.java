@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import com.learnfirebase.ecommerce.common.domain.DomainException;
 import com.learnfirebase.ecommerce.common.infrastructure.logging.LoggingUtils;
 
-import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.Builder;
 import lombok.Value;
