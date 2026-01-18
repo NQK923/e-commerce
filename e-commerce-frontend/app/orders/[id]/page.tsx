@@ -217,9 +217,9 @@ export default function OrderDetailPage() {
         status={order.status as OrderStatus}
         createdAt={order.createdAt}
         paidAt={order.status !== 'PENDING' ? order.createdAt : undefined}
-        shippedAt={order.shippedAt}
-        deliveredAt={order.deliveredAt}
-        trackingNumber={order.trackingNumber}
+        shippedAt={order.shippedAt || undefined}
+        deliveredAt={order.deliveredAt || undefined}
+        trackingNumber={order.trackingNumber || undefined}
       />
 
       <div className="grid gap-6 lg:grid-cols-[2fr,1fr]">

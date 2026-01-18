@@ -4,14 +4,14 @@ import React, { useState, useEffect } from 'react';
 import { Bell, Check, X, Package, CreditCard, Truck } from 'lucide-react';
 import { useAuth } from '@/src/store/auth-store';
 import { notificationApi } from '@/src/api/notificationApi';
-import { useNotificationSocket, Notification } from '@/src/hooks/use-notification-socket';
+import { useNotificationSocket, Notification as NotificationItem } from '@/src/hooks/use-notification-socket';
 import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
 export function NotificationDropdown() {
     const { user } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
-    const [notifications, setNotifications] = useState<Notification[]>([]);
+    const [notifications, setNotifications] = useState<NotificationItem[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [loading, setLoading] = useState(false);
 
@@ -49,7 +49,17 @@ export function NotificationDropdown() {
                 notificationApi.list(user.id, 20),
                 notificationApi.unreadCount(user.id),
             ]);
-            setNotifications(notifs);
+            const mappedNotifications: NotificationItem[] = notifs.map((n) => ({
+                id: n.id,
+                userId: n.userId,
+                type: 'DEFAULT', // Backend DTO does not have type
+                title: n.title,
+                message: n.body,
+                read: n.status === 'READ',
+                createdAt: n.createdAt || new Date().toISOString(),
+                metadata: {},
+            }));
+            setNotifications(mappedNotifications);
             setUnreadCount(count);
         } catch (error) {
             console.error('Failed to load notifications:', error);
