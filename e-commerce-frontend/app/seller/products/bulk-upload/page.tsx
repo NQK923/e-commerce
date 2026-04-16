@@ -149,11 +149,9 @@ export default function BulkUploadPage() {
                         className="hidden"
                         id="csv-upload"
                     />
-                    <label htmlFor="csv-upload">
-                        <Button className="mt-4" variant="outline" as="span">
-                            Chọn file CSV
-                        </Button>
-                    </label>
+                    <Button className="mt-4" variant="outline" onClick={() => document.getElementById('csv-upload')?.click()}>
+                        Chọn file CSV
+                    </Button>
 
                     {file && (
                         <div className="mt-4 inline-flex items-center gap-2 rounded-lg bg-emerald-50 px-4 py-2 text-sm text-emerald-700">

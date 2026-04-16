@@ -29,7 +29,7 @@ export function useNotificationSocket({
     onNotification,
     enabled = true
 }: UseNotificationSocketOptions = {}) {
-    const { user, token } = useAuth();
+    const { user, accessToken: token } = useAuth();
     const clientRef = useRef<Client | null>(null);
     const subscriptionRef = useRef<StompSubscription | null>(null);
 
