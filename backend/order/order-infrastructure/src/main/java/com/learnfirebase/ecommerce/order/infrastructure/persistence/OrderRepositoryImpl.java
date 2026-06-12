@@ -45,6 +45,13 @@ public class OrderRepositoryImpl implements OrderRepository {
     }
 
     @Override
+    public List<Order> findByUserId(String userId, int page, int size) {
+        return orderJpaRepository.findByUserId(userId, PageRequest.of(page, size)).stream()
+                .map(this::toDomain)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public List<Order> findBySellerId(String sellerId, int page, int size) {
         return orderJpaRepository.findBySellerId(sellerId, PageRequest.of(page, size)).stream()
                 .map(this::toDomain)
@@ -54,6 +61,11 @@ public class OrderRepositoryImpl implements OrderRepository {
     @Override
     public long count() {
         return orderJpaRepository.count();
+    }
+
+    @Override
+    public long countByUserId(String userId) {
+        return orderJpaRepository.countByUserId(userId);
     }
 
     @Override

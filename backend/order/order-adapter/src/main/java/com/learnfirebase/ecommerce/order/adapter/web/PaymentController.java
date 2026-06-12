@@ -2,7 +2,10 @@ package com.learnfirebase.ecommerce.order.adapter.web;
 
 import java.util.Map;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,8 +18,10 @@ import com.learnfirebase.ecommerce.order.application.command.HandlePaymentCallba
 import com.learnfirebase.ecommerce.order.application.command.InitiatePaymentCommand;
 import com.learnfirebase.ecommerce.order.application.dto.OrderDto;
 import com.learnfirebase.ecommerce.order.application.dto.PaymentInitResponse;
+import com.learnfirebase.ecommerce.order.application.port.in.GetOrderUseCase;
 import com.learnfirebase.ecommerce.order.application.port.in.HandlePaymentCallbackUseCase;
 import com.learnfirebase.ecommerce.order.application.port.in.InitiatePaymentUseCase;
+import org.springframework.web.server.ResponseStatusException;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -30,13 +35,16 @@ public class PaymentController {
 
     private final InitiatePaymentUseCase initiatePaymentUseCase;
     private final HandlePaymentCallbackUseCase handlePaymentCallbackUseCase;
+    private final GetOrderUseCase getOrderUseCase;
 
     @PostMapping("/orders/{orderId}/payment/vnpay")
     public ResponseEntity<PaymentInitResponse> initiateVnPay(
         @PathVariable("orderId") String orderId,
         @RequestBody InitiatePaymentRequest request,
-        jakarta.servlet.http.HttpServletRequest servletRequest
+        jakarta.servlet.http.HttpServletRequest servletRequest,
+        Authentication authentication
     ) {
+        requireBuyerOwnerOrAdmin(orderId, authentication);
         String clientIp = resolveClientIp(servletRequest);
         PaymentInitResponse response = initiatePaymentUseCase.initiate(
             InitiatePaymentCommand.builder()
@@ -46,6 +54,23 @@ public class PaymentController {
                 .build()
         );
         return ResponseEntity.ok(response);
+    }
+
+    private void requireBuyerOwnerOrAdmin(String orderId, Authentication authentication) {
+        if (authentication == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        }
+        OrderDto order = getOrderUseCase.getOrder(orderId);
+        if (!hasRole(authentication, "ADMIN") && !order.getUserId().equals(authentication.getName())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not authorized to pay this order");
+        }
+    }
+
+    private boolean hasRole(Authentication authentication, String role) {
+        String authority = "ROLE_" + role;
+        return authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(authority::equals);
     }
 
     private String resolveClientIp(jakarta.servlet.http.HttpServletRequest request) {

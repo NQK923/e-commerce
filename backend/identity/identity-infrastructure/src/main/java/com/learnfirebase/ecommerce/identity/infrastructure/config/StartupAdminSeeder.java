@@ -24,17 +24,27 @@ import lombok.extern.slf4j.Slf4j;
 public class StartupAdminSeeder implements ApplicationRunner {
     private final UserRepository userRepository;
     private final PasswordHasher passwordHasher;
+    private final boolean enabled;
+    private final String adminEmail;
+    private final String adminPassword;
 
     @Override
     public void run(ApplicationArguments args) {
-        String adminEmail = "nqk1337@gmail.com";
+        if (!enabled) {
+            log.info("Admin seed disabled");
+            return;
+        }
+        if (isBlank(adminEmail) || isBlank(adminPassword)) {
+            log.warn("Admin seed enabled but email or password is missing; skipping seed");
+            return;
+        }
         userRepository.findByEmail(adminEmail).ifPresentOrElse(
             existing -> log.info("Admin seed skipped; user {} already exists", adminEmail),
             () -> {
                 User admin = User.builder()
                     .id(new UserId(UUID.randomUUID().toString()))
                     .email(new Email(adminEmail))
-                    .password(new HashedPassword(passwordHasher.hash("Admin@123")))
+                    .password(new HashedPassword(passwordHasher.hash(adminPassword)))
                     .authProvider(AuthProvider.LOCAL)
                     .displayName("Admin")
                     .roles(EnumSet.of(Role.ADMIN))
@@ -44,5 +54,9 @@ public class StartupAdminSeeder implements ApplicationRunner {
                 userRepository.save(admin);
                 log.info("Seeded admin account {}", adminEmail);
             });
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 }

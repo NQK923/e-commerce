@@ -7,8 +7,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface SpringDataOrderJpaRepository extends JpaRepository<JpaOrderEntity, String> {
+    Page<JpaOrderEntity> findByUserId(String userId, Pageable pageable);
+
     @Query("SELECT distinct o FROM JpaOrderEntity o JOIN o.items i WHERE i.sellerId = :sellerId")
     Page<JpaOrderEntity> findBySellerId(@Param("sellerId") String sellerId, Pageable pageable);
+
+    long countByUserId(String userId);
 
     @Query("SELECT count(distinct o) FROM JpaOrderEntity o JOIN o.items i WHERE i.sellerId = :sellerId")
     long countBySellerId(@Param("sellerId") String sellerId);

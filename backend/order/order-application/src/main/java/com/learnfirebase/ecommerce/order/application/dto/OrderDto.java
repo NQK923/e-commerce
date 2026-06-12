@@ -36,6 +36,7 @@ public class OrderDto {
         String productId;
         String variantSku;
         String flashSaleId;
+        String sellerId;
         int quantity;
         String price;
     }

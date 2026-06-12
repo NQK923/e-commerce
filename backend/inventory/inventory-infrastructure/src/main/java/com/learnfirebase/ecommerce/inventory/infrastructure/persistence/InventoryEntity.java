@@ -5,6 +5,7 @@ import java.util.List;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
@@ -24,7 +25,7 @@ public class InventoryEntity {
     private String id;
     private String warehouseId;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "inventory_items", joinColumns = @JoinColumn(name = "inventory_id"))
     private List<InventoryItemEmbeddable> items;
 }

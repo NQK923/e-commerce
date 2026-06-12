@@ -34,8 +34,8 @@ spring:
       host: ${SPRING_REDIS_HOST:localhost}
       port: ${SPRING_REDIS_PORT:6379}
     mongodb:
-      uri: ${MONGO_URI}
-      database: ${MONGO_DATABASE}
+      uri: ${MONGO_URI:mongodb://localhost:27017/ecommerce}
+      database: ${MONGO_DATABASE:ecommerce}
   security:
     oauth2:
       client:
@@ -72,14 +72,27 @@ spring:
     properties:
       mail:
         smtp:
-          auth: true
+          auth: ${MAIL_SMTP_AUTH:false}
           starttls:
-            enable: true
+            enable: ${MAIL_SMTP_STARTTLS_ENABLE:false}
+
+management:
+  health:
+    elasticsearch:
+      enabled: ${MANAGEMENT_HEALTH_ELASTICSEARCH_ENABLED:false}
 
 frontend:
   origin: ${FRONTEND_ORIGIN:http://localhost:3000}
+  origins: ${FRONTEND_ORIGINS:${FRONTEND_ORIGIN:http://localhost:3000},http://127.0.0.1:3000}
   mail:
     from: ${MAIL_FROM:no-reply@example.com}
+
+identity:
+  seed:
+    admin:
+      enabled: ${IDENTITY_SEED_ADMIN_ENABLED:false}
+      email: ${IDENTITY_SEED_ADMIN_EMAIL:}
+      password: ${IDENTITY_SEED_ADMIN_PASSWORD:}
 
 vnpay:
   tmn-code: ${VNPAY_TMN_CODE:demo}

@@ -2,6 +2,8 @@ package com.learnfirebase.ecommerce.notification.application.service;
 
 import java.util.UUID;
 
+import com.learnfirebase.ecommerce.common.domain.AccessDeniedDomainException;
+import com.learnfirebase.ecommerce.common.domain.DomainException;
 import com.learnfirebase.ecommerce.notification.application.command.SendNotificationCommand;
 import com.learnfirebase.ecommerce.notification.application.command.RecordNotificationCommand;
 import com.learnfirebase.ecommerce.notification.application.command.MarkNotificationReadCommand;
@@ -64,6 +66,11 @@ public class NotificationApplicationService implements SendNotificationUseCase, 
     }
 
     public void markRead(MarkNotificationReadCommand command) {
+        NotificationDto notification = notificationRepository.findById(command.getNotificationId())
+            .orElseThrow(() -> new DomainException("Notification not found"));
+        if (command.getUserId() == null || !command.getUserId().equals(notification.getUserId())) {
+            throw new AccessDeniedDomainException("Only notification owner can mark it as read");
+        }
         notificationRepository.updateStatus(command.getNotificationId(), NotificationStatus.READ);
     }
 
