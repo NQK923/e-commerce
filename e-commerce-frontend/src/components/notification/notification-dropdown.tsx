@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { Bell, Check, X, Package, CreditCard, Truck } from 'lucide-react';
 import { useAuth } from '@/src/store/auth-store';
 import { notificationApi } from '@/src/api/notificationApi';
@@ -15,33 +15,7 @@ export function NotificationDropdown() {
     const [unreadCount, setUnreadCount] = useState(0);
     const [loading, setLoading] = useState(false);
 
-    // Load initial notifications
-    useEffect(() => {
-        if (user && isOpen) {
-            loadNotifications();
-        }
-    }, [user, isOpen]);
-
-    // Subscribe to real-time notifications
-    useNotificationSocket({
-        enabled: !!user,
-        onNotification: (notification) => {
-            setNotifications((prev) => [notification, ...prev]);
-            if (!notification.read) {
-                setUnreadCount((prev) => prev + 1);
-            }
-
-            // Show browser notification if permission granted
-            if ('Notification' in window && Notification.permission === 'granted') {
-                new Notification(notification.title, {
-                    body: notification.message,
-                    icon: '/logo.png', // Add your logo
-                });
-            }
-        },
-    });
-
-    const loadNotifications = async () => {
+    const loadNotifications = useCallback(async () => {
         if (!user) return;
         setLoading(true);
         try {
@@ -66,7 +40,33 @@ export function NotificationDropdown() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [user]);
+
+    // Load initial notifications
+    useEffect(() => {
+        if (user && isOpen) {
+            void loadNotifications();
+        }
+    }, [loadNotifications, user, isOpen]);
+
+    // Subscribe to real-time notifications
+    useNotificationSocket({
+        enabled: !!user,
+        onNotification: (notification) => {
+            setNotifications((prev) => [notification, ...prev]);
+            if (!notification.read) {
+                setUnreadCount((prev) => prev + 1);
+            }
+
+            // Show browser notification if permission granted
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification(notification.title, {
+                    body: notification.message,
+                    icon: '/logo.png', // Add your logo
+                });
+            }
+        },
+    });
 
     const markAsRead = async (id: string) => {
         if (!user) return;

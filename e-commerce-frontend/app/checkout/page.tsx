@@ -25,6 +25,20 @@ type CheckoutAddress = {
   country: string;
 };
 
+const formatCheckoutAddress = (address: CheckoutAddress) =>
+  [
+    address.fullName,
+    address.line1,
+    address.line2,
+    address.state,
+    address.city,
+    address.postalCode,
+    address.country,
+  ]
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .join(", ");
+
 function CheckoutContent() {
   const { user, isAuthenticated, initializing } = useRequireAuth();
   const router = useRouter();
@@ -49,7 +63,6 @@ function CheckoutContent() {
   // Direct Buy Params
   const flashSaleId = searchParams.get("flashSaleId");
   const directProductId = searchParams.get("productId");
-  const directPrice = searchParams.get("price");
   const directQuantity = searchParams.get("quantity");
   const isDirectBuy = !!(flashSaleId || directProductId);
   const variantSku = searchParams.get("variantSku") ?? undefined;
@@ -164,17 +177,7 @@ function CheckoutContent() {
     const shipping = cart.shippingEstimate ?? 0;
     const total = subtotal + shipping - discount;
     return { ...cart, items, subtotal, total };
-  }, [
-    cart,
-    selectedIds,
-    isDirectBuy,
-    directProductId,
-    directPrice,
-    directQuantity,
-    flashSaleId,
-    searchParams,
-    directCart,
-  ]);
+  }, [cart, directCart, isDirectBuy, selectedIds]);
 
   if (
     initializing ||
@@ -239,7 +242,7 @@ function CheckoutContent() {
         const order = await orderApi.create({
           userId: user?.id,
           currency: filteredCart.currency ?? "USD",
-          address,
+          address: formatCheckoutAddress(address),
           paymentMethod,
           items: filteredCart.items.map((item) => ({
             productId: item.product.id,

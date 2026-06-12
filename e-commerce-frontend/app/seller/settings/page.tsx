@@ -8,10 +8,10 @@ import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
 import { Spinner } from "@/src/components/ui/spinner";
 import { useToast } from "@/src/components/ui/toast-provider";
-import { Save, Upload } from "lucide-react";
+import { Save } from "lucide-react";
 
 export default function SellerSettingsPage() {
-  const { user, loading: authLoading } = useRequireAuth("/login");
+  const { user, initializing: authLoading } = useRequireAuth("/login");
   const router = useRouter();
   const { addToast } = useToast();
   

@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { X, AlertCircle } from 'lucide-react';
 import { Button } from '@/src/components/ui/button';
-import { Input } from '@/src/components/ui/input';
 import { useToast } from '@/src/components/ui/toast-provider';
 import { orderApi } from '@/src/api/orderApi';
 
