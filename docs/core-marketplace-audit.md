@@ -1,0 +1,115 @@
+# Core Marketplace Completion Audit
+
+Last updated: 2026-06-12
+
+This checklist tracks the finite "production-ready core marketplace" goal for Buyer, Seller, and Admin flows. Status values:
+
+- `[x]` verified or fixed in this audit batch
+- `[ ]` open
+- `[~]` partially verified, needs stronger runtime/smoke evidence
+
+## Verification Gates
+
+- [x] Backend compile/package gate: `.\gradlew.bat build --console=plain` passed on 2026-06-12. Current caveat: most modules still report `NO-SOURCE`, but targeted regression tests now run for identity/order/notification modules.
+- [x] Frontend dependency install completed with `npm install`.
+- [x] Frontend lint gate: `npm run lint` passed on 2026-06-12.
+- [x] Frontend production build gate: `npm run build` passed on 2026-06-12 after browser-smoke fixes. Build remains dev-safe when Supabase env vars are missing and logs the expected warning.
+- [x] Frontend dependency audit gate: `npm audit --audit-level=moderate` passed on 2026-06-12 with 0 vulnerabilities.
+- [x] Docker Compose config validates without a `.env` file and includes dev defaults for Postgres, MongoDB, Redis, Kafka, and Mailpit.
+- [x] Backend runtime health smoke: Compose dependencies healthy and `:bootstrap:bootRun` reached `/actuator/health` status `UP` on 2026-06-12.
+- [x] Runtime backend API smoke test buyer/seller/admin user flows against local services passed on 2026-06-12 using dev seed users and products.
+- [x] Browser UI smoke test passed for buyer login, product list/detail, add-to-cart, checkout COD order creation, order detail, seller dashboard/products/orders/promotions/settings, admin dashboard/users/products/orders/flash-sales/sellers/reports/settings, and 390px mobile overflow checks on core pages.
+- [x] Dev CORS smoke passed for `Origin: http://127.0.0.1:3000` preflight to `/api/products`.
+- [~] Add automated tests for critical backend and frontend flows. Initial backend regression tests now cover CORS dev origins, VNPay payment ownership, and notification mark-read ownership; broader service/UI regression coverage remains open.
+
+## P0 / Security And Build
+
+- [x] Remove hard-coded startup admin credentials from backend source. Admin seed is now opt-in via `IDENTITY_SEED_ADMIN_ENABLED`, `IDENTITY_SEED_ADMIN_EMAIL`, and `IDENTITY_SEED_ADMIN_PASSWORD`.
+- [x] Fix frontend build failure in seller settings auth hook usage.
+- [x] Fix frontend lint errors in notification socket and shared API params typing.
+- [x] Set `turbopack.root` in Next config to avoid workspace-root inference from unrelated parent lockfiles.
+- [x] Resolve `npm audit` findings. Upgraded Next tooling and forced patched transitive PostCSS with npm overrides; `npm audit --audit-level=moderate` now reports 0 vulnerabilities.
+- [x] Enforce role boundaries on high-risk backend endpoints. Admin user/application/report endpoints are admin-only, seller product/promotion/order operations require seller/admin authority, and buyer endpoints require authentication.
+- [x] Enforce order ownership/role checks. Buyer-created orders now derive `userId` from the authenticated token, buyer order listing is scoped to the authenticated buyer, seller order listing is scoped to the authenticated seller, and order state transitions reject unauthorized roles.
+- [x] Enforce payment initiation ownership. VNPay initiation for `/api/orders/{orderId}/payment/vnpay` now requires the authenticated buyer owner or admin; sellers cannot initiate payment on buyer orders.
+- [x] Enforce notification ownership. Notification list, unread count, record, and mark-read derive or validate `userId` from the authenticated principal; only admin can target another user, and cross-user mark-read returns 403.
+- [x] Return real HTTP error statuses through the shared exception handler instead of serializing errors with HTTP 200.
+- [x] Add shared `AccessDeniedDomainException` mapping to HTTP 403 for application-layer ownership violations without coupling application services to Spring Web.
+- [x] Fix checkout browser blocker: frontend now serializes checkout address to the backend `CreateOrderCommand.address` string contract instead of sending an object that caused Jackson parse failures and HTTP 500.
+- [x] Harden local dev CORS without wildcard origins. Backend now supports comma-separated `FRONTEND_ORIGINS` and defaults to both `http://localhost:3000` and `http://127.0.0.1:3000`.
+- [x] Add targeted backend regression tests for payment ownership, notification ownership, and CORS origin handling. Also fixed the Gradle/JUnit runtime by adding `org.junit.platform:junit-platform-launcher`.
+
+## P1 / Core Marketplace Flows
+
+- [x] Auth: backend login smoke passed for seeded buyer, seller, and admin accounts. `/api/auth/me` is reachable for an authenticated buyer.
+- [x] Buyer browse/search/product detail/cart/checkout: backend API smoke covered product list, product detail, advanced search, cart add/read, promotion apply, and COD order creation. Browser smoke also covered login, product list/detail, add-to-cart, checkout form, COD order creation, and order detail redirect.
+- [~] Payment: COD order payment smoke passed and VNPay initiation ownership smoke passed. VNPay sandbox return/callback verification still needs a dedicated end-to-end smoke.
+- [x] Orders/tracking/returns/refunds: backend API smoke covered create, buyer list, seller list, pay, ship, deliver, return request, and seller return approval to final status `RETURNED`.
+- [~] Seller registration/approval/product/order/promotion management: seeded seller is approved; runtime and browser smoke covered seller dashboard, product list, order list, coupon list, promotions page, and settings page. Full seller registration and product create/edit browser smoke remains open.
+- [~] Admin dashboard/users/sellers/products/orders/reports/flash sales: runtime and browser smoke covered admin dashboard, user list, seller application list, product list, order list, flash-sale list, reports page, and settings page. Full admin mutation actions remain open.
+- [~] Notifications/chat: runtime smoke covered notification record/list/unread/mark-read ownership and chat conversation list. WebSocket message delivery and Kafka notification fan-out still need deeper smoke.
+- [~] Reports: runtime smoke covered daily report endpoint availability; data correctness assertions remain open.
+- [x] Promotion usage persistence: `PromotionUsageRepositoryImpl` now writes durable rows to `promotion_usages` through Flyway migration V10.
+- [x] Seller coupon listing runtime error fixed by eagerly loading coupon applicable product ids.
+- [x] Dev seed workflow: Flyway migrations seed repeatable buyer, seller, approved seller application, smoke products/variants/images/tags, coupon, flash sale, default inventory rows, and opt-in admin account through Compose env defaults.
+- [x] Inventory smoke stock path: default inventory seed plus Redis warm-up supports local order reservation for smoke product variants.
+
+## P2 / Operations And Environment
+
+- [~] Supabase config is build-safe when env vars are missing, but upload flows need local smoke with real or dev-safe bucket config.
+- [~] Kafka, Redis, MongoDB, SMTP, OAuth, and VNPay have placeholder/default config in places; Docker Compose now provides local Kafka, Redis, MongoDB, Postgres, and Mailpit. Backend health smoke is `UP`; Elasticsearch search behavior, WebSocket delivery, and full integration flows still need validation.
+- [~] Browser UI polish: desktop and 390px smoke did not show blocking layout overflow, but seller/admin pages still mix English and Vietnamese labels and chat widget can show a connection-error state when WebSocket is unavailable.
+- [~] Document exact local smoke-test env values and commands once seed workflow is complete. Current smoke used local Postgres, MongoDB, Redis, Kafka/Zookeeper, Mailpit, `MANAGEMENT_HEALTH_ELASTICSEARCH_ENABLED=false`, and opt-in admin seed env values.
+- [ ] Add CI-friendly command set for backend build, frontend lint/build, and smoke tests.
+
+## 2026-06-12 Runtime Smoke Evidence
+
+Backend API smoke returned:
+
+```json
+{
+  "orderId": "c7890be2-f3be-4cd1-982f-f77553440d06",
+  "finalOrderStatus": "RETURNED",
+  "unauthUsersAll": 401,
+  "buyerAdminDenied": 401,
+  "buyerSellerFilterDenied": 403,
+  "couponCount": 1,
+  "flashSaleCount": 1,
+  "adminUserCount": 3,
+  "notificationCount": 1,
+  "chatConversationCount": 0
+}
+```
+
+Smoke covered seeded buyer `buyer@example.local`, seller `seller@example.local`, and opt-in admin `admin@example.local` using local services only. Remaining evidence gaps before final completion: automated regression tests, frontend browser smoke across core UI routes, VNPay sandbox initiation/return, Supabase upload with dev-safe bucket config, OAuth callback with a test provider, WebSocket chat/notification delivery, and stronger report data assertions.
+
+Additional security boundary smoke returned:
+
+```json
+{
+  "orderId": "3d8f2c35-7479-420a-b6c1-0cbfa7c965b5",
+  "sellerVnPayDenied": 403,
+  "buyerVnPayAllowed": 200,
+  "buyerOwnNotificationCount": 2,
+  "buyerUnreadCount": 2,
+  "buyerCrossListDenied": 403,
+  "buyerCrossRecordDenied": 403,
+  "buyerCrossReadDenied": 403,
+  "buyerOwnRead": 200
+}
+```
+
+Browser UI smoke returned these key evidence points:
+
+- Buyer UI: login as `buyer@example.local`, product list/detail rendered seeded products, add-to-cart incremented cart badge, checkout COD order succeeded after address serialization fix, and order detail displayed `PENDING` for order `e55f4f6e-780d-4539-9a0c-7fbd1f59314c`.
+- Seller UI: login as `seller@example.local`; dashboard, products, orders, promotions, and settings rendered seeded products/orders/coupon.
+- Admin UI: login as `admin@example.local`; dashboard, users, products, orders, flash sales, sellers, reports, and settings rendered seeded data.
+- Mobile smoke at 390px found no document-level horizontal overflow on home, products, order detail, or admin dashboard.
+- CORS smoke for `http://127.0.0.1:3000` returned `Access-Control-Allow-Origin: http://127.0.0.1:3000`.
+
+Automated regression test evidence added on 2026-06-12:
+
+- `.\gradlew.bat :order:order-adapter:test --console=plain` passed, covering VNPay initiation allowed for buyer owner and rejected for non-owner seller.
+- `.\gradlew.bat :notification:notification-application:test --console=plain` passed, covering notification mark-read allowed for owner and rejected for non-owner.
+- `.\gradlew.bat :identity:identity-adapter:test --console=plain` passed, covering CORS support for both `localhost:3000` and `127.0.0.1:3000`.
+- `.\gradlew.bat build --console=plain` passed after adding the tests.
