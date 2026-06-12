@@ -12,10 +12,14 @@ public interface OrderRepository {
     Optional<Order> findById(OrderId id);
 
     List<Order> findAll(int page, int size);
+
+    List<Order> findByUserId(String userId, int page, int size);
     
     List<Order> findBySellerId(String sellerId, int page, int size);
 
     long count();
+
+    long countByUserId(String userId);
 
     long countBySellerId(String sellerId);
 }

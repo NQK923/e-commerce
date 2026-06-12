@@ -1,6 +1,7 @@
 package com.learnfirebase.ecommerce.identity.infrastructure.config;
 
 import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -44,7 +45,12 @@ public class IdentityModuleConfig {
 
     @Bean
     @Profile("!test")
-    public StartupAdminSeeder startupAdminSeeder(UserRepository userRepository, PasswordHasher passwordHasher) {
-        return new StartupAdminSeeder(userRepository, passwordHasher);
+    public StartupAdminSeeder startupAdminSeeder(
+            UserRepository userRepository,
+            PasswordHasher passwordHasher,
+            @Value("${identity.seed.admin.enabled:false}") boolean adminSeedEnabled,
+            @Value("${identity.seed.admin.email:}") String adminSeedEmail,
+            @Value("${identity.seed.admin.password:}") String adminSeedPassword) {
+        return new StartupAdminSeeder(userRepository, passwordHasher, adminSeedEnabled, adminSeedEmail, adminSeedPassword);
     }
 }

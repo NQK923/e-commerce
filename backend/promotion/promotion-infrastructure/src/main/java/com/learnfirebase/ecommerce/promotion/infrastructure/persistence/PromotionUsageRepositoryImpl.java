@@ -1,13 +1,26 @@
 package com.learnfirebase.ecommerce.promotion.infrastructure.persistence;
 
-import org.springframework.stereotype.Component;
+import java.time.Instant;
+import java.util.Objects;
+import java.util.UUID;
 
 import com.learnfirebase.ecommerce.promotion.application.port.out.PromotionUsageRepository;
 
-@Component
+import lombok.RequiredArgsConstructor;
+
+@org.springframework.stereotype.Repository
+@RequiredArgsConstructor
 public class PromotionUsageRepositoryImpl implements PromotionUsageRepository {
+    private final PromotionUsageJpaRepository jpaRepository;
+
     @Override
     public void recordUsage(String promotionCode, String userId) {
-        // noop stub
+        PromotionUsageEntity entity = PromotionUsageEntity.builder()
+                .id(UUID.randomUUID().toString())
+                .promotionCode(Objects.requireNonNull(promotionCode))
+                .userId(Objects.requireNonNull(userId))
+                .usedAt(Instant.now())
+                .build();
+        jpaRepository.save(entity);
     }
 }

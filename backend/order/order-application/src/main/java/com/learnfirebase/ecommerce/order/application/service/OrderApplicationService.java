@@ -207,17 +207,14 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
     public PageResponse<OrderDto> listOrders(PageRequest pageRequest) {
         List<Order> orders = orderRepository.findAll(pageRequest.getPage(), pageRequest.getSize());
         long total = orderRepository.count();
-        int totalPages = (int) Math.ceil((double) total / pageRequest.getSize());
+        return toPageResponse(pageRequest, orders, total);
+    }
 
-        List<OrderDto> dtos = orders.stream().map(this::toDto).collect(Collectors.toList());
-
-        return PageResponse.<OrderDto>builder()
-                .content(dtos)
-                .page(pageRequest.getPage())
-                .size(pageRequest.getSize())
-                .totalElements(total)
-                .totalPages(totalPages)
-                .build();
+    @Override
+    public PageResponse<OrderDto> listOrdersForUser(PageRequest pageRequest, String userId) {
+        List<Order> orders = orderRepository.findByUserId(userId, pageRequest.getPage(), pageRequest.getSize());
+        long total = orderRepository.countByUserId(userId);
+        return toPageResponse(pageRequest, orders, total);
     }
 
     @Override
@@ -225,17 +222,7 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
         if (sellerId != null) {
             List<Order> orders = orderRepository.findBySellerId(sellerId, pageRequest.getPage(), pageRequest.getSize());
             long total = orderRepository.countBySellerId(sellerId);
-            int totalPages = (int) Math.ceil((double) total / pageRequest.getSize());
-
-            List<OrderDto> dtos = orders.stream().map(this::toDto).collect(Collectors.toList());
-
-            return PageResponse.<OrderDto>builder()
-                    .content(dtos)
-                    .page(pageRequest.getPage())
-                    .size(pageRequest.getSize())
-                    .totalElements(total)
-                    .totalPages(totalPages)
-                    .build();
+            return toPageResponse(pageRequest, orders, total);
         }
         return listOrders(pageRequest);
     }
@@ -431,10 +418,24 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
                                 .productId(item.getProductId())
                                 .variantSku(item.getVariantSku())
                                 .flashSaleId(item.getFlashSaleId())
+                                .sellerId(item.getSellerId())
                                 .quantity(item.getQuantity())
                                 .price(item.getPrice().getAmount().toPlainString())
                                 .build())
                         .collect(Collectors.toList()))
+                .build();
+    }
+
+    private PageResponse<OrderDto> toPageResponse(PageRequest pageRequest, List<Order> orders, long total) {
+        int totalPages = (int) Math.ceil((double) total / pageRequest.getSize());
+        List<OrderDto> dtos = orders.stream().map(this::toDto).collect(Collectors.toList());
+
+        return PageResponse.<OrderDto>builder()
+                .content(dtos)
+                .page(pageRequest.getPage())
+                .size(pageRequest.getSize())
+                .totalElements(total)
+                .totalPages(totalPages)
                 .build();
     }
 

@@ -1,7 +1,5 @@
 package com.learnfirebase.ecommerce.promotion.application.service;
 
-import java.util.UUID;
-
 import com.learnfirebase.ecommerce.promotion.application.command.ApplyPromotionCommand;
 import com.learnfirebase.ecommerce.promotion.application.dto.PromotionResultDto;
 import com.learnfirebase.ecommerce.promotion.application.port.in.ApplyPromotionUseCase;
@@ -33,7 +31,7 @@ public class PromotionApplicationService implements ApplyPromotionUseCase {
 
     private Promotion createDefaultPromotion(String code) {
         Promotion promotion = Promotion.builder()
-            .id(new PromotionId(UUID.randomUUID().toString()))
+            .id(new PromotionId(code))
             .name("DEFAULT")
             .rule(orderTotal -> orderTotal > 0)
             .build();

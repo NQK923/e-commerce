@@ -5,11 +5,15 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
+import com.learnfirebase.ecommerce.common.domain.AccessDeniedDomainException;
 import com.learnfirebase.ecommerce.common.domain.DomainException;
 import com.learnfirebase.ecommerce.common.infrastructure.logging.LoggingUtils;
 
@@ -22,13 +26,18 @@ public class GlobalExceptionHandlerBase {
     private final Logger log = LoggingUtils.logger(GlobalExceptionHandlerBase.class);
 
     @ExceptionHandler(DomainException.class)
-    public ErrorResponse handleDomainException(DomainException ex) {
+    public ResponseEntity<ErrorResponse> handleDomainException(DomainException ex) {
+        if (ex instanceof AccessDeniedDomainException) {
+            log.warn("Domain access denied", ex);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ErrorResponse.of("FORBIDDEN", ex.getMessage(), null));
+        }
         log.warn("Domain validation error", ex);
-        return ErrorResponse.of("DOMAIN_ERROR", ex.getMessage(), null);
+        return ResponseEntity.badRequest().body(ErrorResponse.of("DOMAIN_ERROR", ex.getMessage(), null));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ErrorResponse handleMethodArgumentNotValid(MethodArgumentNotValidException ex) {
+    public ResponseEntity<ErrorResponse> handleMethodArgumentNotValid(MethodArgumentNotValidException ex) {
         Map<String, String> errors = ex.getBindingResult().getFieldErrors().stream()
             .collect(Collectors.toMap(
                 FieldError::getField,
@@ -37,11 +46,11 @@ public class GlobalExceptionHandlerBase {
                 LinkedHashMap::new
             ));
         log.debug("Request validation failed {}", errors);
-        return ErrorResponse.of("VALIDATION_ERROR", "Invalid request", errors);
+        return ResponseEntity.badRequest().body(ErrorResponse.of("VALIDATION_ERROR", "Invalid request", errors));
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
-    public ErrorResponse handleConstraintViolation(ConstraintViolationException ex) {
+    public ResponseEntity<ErrorResponse> handleConstraintViolation(ConstraintViolationException ex) {
         Map<String, String> errors = ex.getConstraintViolations().stream()
             .collect(Collectors.toMap(
                 violation -> violation.getPropertyPath().toString(),
@@ -50,13 +59,25 @@ public class GlobalExceptionHandlerBase {
                 LinkedHashMap::new
             ));
         log.debug("Constraint validation failed {}", errors);
-        return ErrorResponse.of("VALIDATION_ERROR", "Invalid request", errors);
+        return ResponseEntity.badRequest().body(ErrorResponse.of("VALIDATION_ERROR", "Invalid request", errors));
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ErrorResponse> handleResponseStatusException(ResponseStatusException ex) {
+        HttpStatus status = HttpStatus.resolve(ex.getStatusCode().value());
+        HttpStatus responseStatus = status != null ? status : HttpStatus.INTERNAL_SERVER_ERROR;
+        String message = ex.getReason() == null || ex.getReason().isBlank()
+            ? responseStatus.getReasonPhrase()
+            : ex.getReason();
+        return ResponseEntity.status(responseStatus)
+            .body(ErrorResponse.of(responseStatus.name(), message, null));
     }
 
     @ExceptionHandler(Exception.class)
-    public ErrorResponse handleGenericException(Exception ex) {
+    public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
         log.error("Unexpected error", ex);
-        return ErrorResponse.of("INTERNAL_ERROR", "Internal error", null);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body(ErrorResponse.of("INTERNAL_ERROR", "Internal error", null));
     }
 
     @Value
