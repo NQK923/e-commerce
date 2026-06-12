@@ -32,7 +32,6 @@ export default function OrderDetailPage() {
 
   const [trackingNumber, setTrackingNumber] = useState("");
   const [trackingCarrier, setTrackingCarrier] = useState("");
-  const [returnReason, setReturnReason] = useState("");
   const [returnNote, setReturnNote] = useState("");
   const [refundAmount, setRefundAmount] = useState("");
   const [showReturnDialog, setShowReturnDialog] = useState(false);
@@ -77,24 +76,6 @@ export default function OrderDetailPage() {
       const updated = await orderApi.markDelivered(order.id);
       setOrder(updated);
       addToast(t.orders.marked_delivered, "success");
-    } catch {
-      addToast(t.common.error, "error");
-    } finally {
-      setWorking(false);
-    }
-  };
-
-  const handleRequestReturn = async () => {
-    if (!order || !user || !isOwner) return;
-    setWorking(true);
-    try {
-      const updated = await orderApi.requestReturn(order.id, {
-        userId: user.id,
-        reason: returnReason,
-        note: returnNote,
-      });
-      setOrder(updated);
-      addToast(t.orders.return_requested, "success");
     } catch {
       addToast(t.common.error, "error");
     } finally {

@@ -393,7 +393,6 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
     if (!effectiveLastActiveSource) return t.chat.offline;
     return `Active ${formatRelativeTime(effectiveLastActiveSource)}`;
   }, [
-    activeConversation?.lastMessage?.sentAt,
     effectiveLastActiveSource,
     isContactOnline,
     otherParticipant,

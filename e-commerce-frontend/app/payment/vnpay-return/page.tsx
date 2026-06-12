@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from "next/navigation";
-import React, { Suspense, useEffect, useState } from "react";
+import React, { Suspense, useCallback, useEffect, useState } from "react";
 import { orderApi } from "@/src/api/orderApi";
 import { Spinner } from "@/src/components/ui/spinner";
 import { useToast } from "@/src/components/ui/toast-provider";
@@ -16,7 +16,7 @@ function PaymentReturnContent() {
   const [error, setError] = useState<string | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
 
-  const verify = async () => {
+  const verify = useCallback(async () => {
     setVerifying(true);
     setError(null);
     try {
@@ -37,11 +37,11 @@ function PaymentReturnContent() {
     } finally {
       setVerifying(false);
     }
-  };
+  }, [addToast, router, searchParams, t.checkout.success]);
 
   useEffect(() => {
     void verify();
-  }, []); // run once on mount
+  }, [verify]);
 
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 text-center">

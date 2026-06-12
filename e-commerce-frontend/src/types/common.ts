@@ -11,5 +11,5 @@ export type ApiListParams = {
   size?: number;
   sort?: string;
   sellerId?: string;
-  [key: string]: any;
+  [key: string]: string | number | boolean | undefined;
 };

@@ -65,7 +65,7 @@ export default function SellerPromotionsPage() {
           setShowForm(false);
           const updated = await promotionApi.sellerListCoupons();
           setCoupons(updated);
-      } catch (err) {
+      } catch {
           addToast(t.common.error, "error");
       } finally {
           setCreating(false);

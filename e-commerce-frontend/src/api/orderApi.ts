@@ -81,15 +81,7 @@ type CreateOrderRequest = {
   userId?: string;
   items: CreateOrderItem[];
   currency: string;
-  address: {
-    fullName: string;
-    line1: string;
-    line2?: string;
-    city: string;
-    state: string;
-    postalCode: string;
-    country: string;
-  };
+  address: string;
   paymentMethod: string;
 };
 

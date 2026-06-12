@@ -111,7 +111,7 @@ function AdminContent() {
     };
 
     void loadData();
-  }, [initializing, isAuthenticated, isAdmin]);
+  }, [addToast, initializing, isAuthenticated, isAdmin]);
   const reviewApplication = async (id: string, approve: boolean) => {
     try {
       const updated = approve ? await sellerApi.approve(id) : await sellerApi.reject(id);

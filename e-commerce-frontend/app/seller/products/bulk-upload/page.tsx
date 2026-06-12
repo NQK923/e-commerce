@@ -3,12 +3,10 @@
 import React, { useState } from 'react';
 import { Upload, Download, FileText, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/src/components/ui/button';
-import { useAuth } from '@/src/store/auth-store';
 import { useToast } from '@/src/components/ui/toast-provider';
 import Link from 'next/link';
 
 export default function BulkUploadPage() {
-    const { user } = useAuth();
     const { addToast } = useToast();
     const [file, setFile] = useState<File | null>(null);
     const [uploading, setUploading] = useState(false);
@@ -55,7 +53,7 @@ export default function BulkUploadPage() {
             } else {
                 addToast(data.message || 'Tải lên thất bại', 'error');
             }
-        } catch (error) {
+        } catch {
             addToast('Không thể tải lên file', 'error');
         } finally {
             setUploading(false);

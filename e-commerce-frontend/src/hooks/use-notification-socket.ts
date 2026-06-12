@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { Client, StompSubscription } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { useAuth } from '@/src/store/auth-store';
@@ -13,7 +13,7 @@ export interface Notification {
     message: string;
     read: boolean;
     createdAt: string;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
 }
 
 interface UseNotificationSocketOptions {
@@ -32,6 +32,7 @@ export function useNotificationSocket({
     const { user, accessToken: token } = useAuth();
     const clientRef = useRef<Client | null>(null);
     const subscriptionRef = useRef<StompSubscription | null>(null);
+    const [connected, setConnected] = useState(false);
 
     const connect = useCallback(() => {
         if (!user || !token || !enabled) return;
@@ -49,6 +50,7 @@ export function useNotificationSocket({
             },
             onConnect: () => {
                 console.log('[Notification] Connected to WebSocket');
+                setConnected(true);
 
                 // Subscribe to user's notification queue
                 const subscription = client.subscribe(
@@ -68,9 +70,11 @@ export function useNotificationSocket({
             },
             onDisconnect: () => {
                 console.log('[Notification] Disconnected from WebSocket');
+                setConnected(false);
             },
             onStompError: (frame) => {
                 console.error('[Notification] STOMP error:', frame);
+                setConnected(false);
             },
         });
 
@@ -87,6 +91,7 @@ export function useNotificationSocket({
             clientRef.current.deactivate();
             clientRef.current = null;
         }
+        setConnected(false);
     }, []);
 
     useEffect(() => {
@@ -95,7 +100,7 @@ export function useNotificationSocket({
     }, [connect, disconnect]);
 
     return {
-        connected: clientRef.current?.connected ?? false,
+        connected,
         disconnect,
         reconnect: () => {
             disconnect();
