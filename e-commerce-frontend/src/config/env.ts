@@ -7,6 +7,7 @@ export type AppConfig = {
   supabaseSellerBucket?: string;
   supabaseChatBucket?: string;
   uploadFallbackMode: "disabled" | "placeholder";
+  oauthDevMode: boolean;
 };
 
 const apiBaseUrl =
@@ -23,6 +24,7 @@ const uploadFallbackMode = process.env.NEXT_PUBLIC_UPLOAD_FALLBACK_MODE === "dis
   : process.env.NEXT_PUBLIC_UPLOAD_FALLBACK_MODE === "placeholder" || process.env.NODE_ENV !== "production"
     ? "placeholder"
     : "disabled";
+const oauthDevMode = process.env.NEXT_PUBLIC_OAUTH_DEV_MODE === "enabled";
 
 export const config: AppConfig = {
   apiBaseUrl,
@@ -33,6 +35,7 @@ export const config: AppConfig = {
   supabaseSellerBucket,
   supabaseChatBucket,
   uploadFallbackMode,
+  oauthDevMode,
 };
 
 export const requireConfig = (): AppConfig => {

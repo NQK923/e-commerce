@@ -20,6 +20,10 @@ function OAuthCallbackContent() {
     const complete = async () => {
       const code = searchParams?.get("code");
       const state = searchParams?.get("state");
+      const provider = searchParams?.get("provider") as "google" | "facebook" | null;
+      const providerUserId = searchParams?.get("providerUserId");
+      const email = searchParams?.get("email");
+      const name = searchParams?.get("name");
       const accessToken = searchParams?.get("accessToken");
       const refreshToken = searchParams?.get("refreshToken");
       const error = searchParams?.get("error");
@@ -31,8 +35,15 @@ function OAuthCallbackContent() {
       }
 
       try {
-        if (code || state) {
-          const response = await authApi.completeSocialLogin({ code: code ?? undefined, state: state ?? undefined });
+        if (provider || code || state) {
+          const response = await authApi.completeSocialLogin({
+            provider: provider ?? undefined,
+            providerUserId: providerUserId ?? undefined,
+            email: email ?? undefined,
+            name: name ?? undefined,
+            code: code ?? undefined,
+            state: state ?? undefined,
+          });
           await setSessionFromOAuth(response);
         } else if (accessToken && refreshToken) {
           const user = await authApi.me();

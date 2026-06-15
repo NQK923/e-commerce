@@ -20,7 +20,7 @@ This checklist tracks the finite "production-ready core marketplace" goal for Bu
 - [x] Runtime backend API smoke test buyer/seller/admin user flows against local services passed on 2026-06-12 using dev seed users and products.
 - [x] Browser UI smoke test passed for buyer login, product list/detail, add-to-cart, checkout COD order creation, order detail, seller dashboard/products/orders/promotions/settings, admin dashboard/users/products/orders/flash-sales/sellers/reports/settings, and 390px mobile overflow checks on core pages.
 - [x] Dev CORS smoke passed for `Origin: http://127.0.0.1:3000` preflight to `/api/products`.
-- [~] Add automated tests for critical backend and frontend flows. Initial backend regression tests now cover CORS dev origins, VNPay payment ownership and callback verification, notification mark-read ownership, chat send/delivery authorization, seller product mutation ownership/preservation, and daily sales report aggregation; broader service/UI regression coverage remains open.
+- [~] Add automated tests for critical backend and frontend flows. Initial backend regression tests now cover CORS dev origins, dev-safe OAuth callback gating, VNPay payment ownership and callback verification, notification mark-read ownership, chat send/delivery authorization, seller product mutation ownership/preservation, and daily sales report aggregation; broader service/UI regression coverage remains open.
 
 ## P0 / Security And Build
 
@@ -41,7 +41,7 @@ This checklist tracks the finite "production-ready core marketplace" goal for Bu
 
 ## P1 / Core Marketplace Flows
 
-- [x] Auth: backend login smoke passed for seeded buyer, seller, and admin accounts. `/api/auth/me` is reachable for an authenticated buyer.
+- [x] Auth: backend login smoke passed for seeded buyer, seller, and admin accounts. `/api/auth/me` is reachable for an authenticated buyer. OAuth now has a dev-safe local callback path gated by `IDENTITY_OAUTH2_DEV_CALLBACK_ENABLED` and frontend `NEXT_PUBLIC_OAUTH_DEV_MODE`.
 - [x] Buyer browse/search/product detail/cart/checkout: backend API smoke covered product list, product detail, advanced search, cart add/read, promotion apply, and COD order creation. Browser smoke also covered login, product list/detail, add-to-cart, checkout form, COD order creation, and order detail redirect.
 - [~] Payment: COD order payment smoke passed and VNPay initiation ownership smoke passed. VNPay callback verification now has regression coverage for signed success, invalid signatures, signed gateway failures, idempotent duplicate callbacks, and amount mismatch protection. A dedicated runtime sandbox return smoke is still open.
 - [x] Orders/tracking/returns/refunds: backend API smoke covered create, buyer list, seller list, pay, ship, deliver, return request, and seller return approval to final status `RETURNED`.
@@ -57,7 +57,7 @@ This checklist tracks the finite "production-ready core marketplace" goal for Bu
 ## P2 / Operations And Environment
 
 - [x] Supabase config is build-safe when env vars are missing, and upload flows now have a dev-safe local placeholder fallback for smoke tests without real storage secrets. Real Supabase bucket validation remains an external deployment check.
-- [~] Kafka, Redis, MongoDB, SMTP, OAuth, and VNPay have placeholder/default config in places; Docker Compose now provides local Kafka, Redis, MongoDB, Postgres, and Mailpit. Backend health smoke is `UP`; Elasticsearch search behavior, WebSocket delivery, and full integration flows still need validation.
+- [~] Kafka, Redis, MongoDB, SMTP, OAuth, and VNPay have placeholder/default config in places; Docker Compose now provides local Kafka, Redis, MongoDB, Postgres, Mailpit, and a gated dev OAuth callback. Backend health smoke is `UP`; Elasticsearch search behavior, WebSocket delivery, VNPay runtime return, and full integration flows still need validation.
 - [~] Browser UI polish: desktop and 390px smoke did not show blocking layout overflow, but seller/admin pages still mix English and Vietnamese labels and chat widget can show a connection-error state when WebSocket is unavailable.
 - [x] Document exact local smoke-test env values and commands once seed workflow is complete. `docs/verification.md` records Docker Compose services, non-Docker backend env values, seed accounts, health checks, backend smoke commands, and frontend route smoke targets.
 - [x] Add CI-friendly command set for backend build, frontend lint/build, and smoke tests. `scripts/verify-ci.ps1` runs Docker Compose config validation, backend build/tests, frontend lint, and frontend build; `docs/verification.md` records targeted regression and runtime smoke command sets.
@@ -81,7 +81,7 @@ Backend API smoke returned:
 }
 ```
 
-Smoke covered seeded buyer `buyer@example.local`, seller `seller@example.local`, and opt-in admin `admin@example.local` using local services only. Remaining evidence gaps before final completion: broader automated regression tests, frontend browser smoke across core UI routes, VNPay runtime sandbox initiation/return, Supabase upload with dev-safe bucket config, OAuth callback with a test provider, WebSocket chat/notification delivery, and seller/admin mutation smoke.
+Smoke covered seeded buyer `buyer@example.local`, seller `seller@example.local`, and opt-in admin `admin@example.local` using local services only. Remaining evidence gaps before final completion: broader automated regression tests, frontend browser smoke across core UI routes, VNPay runtime sandbox initiation/return, WebSocket chat/notification delivery, and seller/admin mutation smoke.
 
 Additional security boundary smoke returned:
 
@@ -124,3 +124,5 @@ Automated regression test evidence added on 2026-06-15:
 - `.\gradlew.bat :chat:chat-infrastructure:test --console=plain` passed, covering STOMP delivery to `/queue/chat/messages` and Kafka offline notification events on `chat.offline.message` keyed by receiver id.
 - `.\gradlew.bat :product:product-application:test --console=plain` passed, covering seller product create mutation, initial inventory event publication, seller ownership rejection on update, search indexing failure tolerance, required seller id validation, and preserving existing variants/images on partial updates.
 - `npm run lint` and `npm run build` passed after adding the frontend upload placeholder fallback for missing Supabase env vars.
+- `.\gradlew.bat :identity:identity-adapter:test --console=plain` passed after adding the dev-safe OAuth callback endpoint, covering disabled-by-default behavior and successful enabled local callback response shape for the frontend.
+- `npm run lint`, `npm run build`, `.\gradlew.bat build --console=plain`, and `docker compose config --quiet` passed after wiring the frontend OAuth dev mode and Docker Compose local OAuth callback env.

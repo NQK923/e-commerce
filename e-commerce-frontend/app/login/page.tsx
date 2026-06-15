@@ -50,6 +50,16 @@ function LoginContent() {
 
   const socialRedirect = (provider: "google" | "facebook") => {
     const redirectUri = `${config.frontendBaseUrl}/oauth2/callback`;
+    if (config.oauthDevMode) {
+      const params = new URLSearchParams({
+        provider,
+        providerUserId: `local-${provider}-buyer`,
+        email: `${provider}.buyer@example.local`,
+        name: `Local ${provider} Buyer`,
+      });
+      window.location.href = `${redirectUri}?${params.toString()}`;
+      return;
+    }
     window.location.href = `${config.apiBaseUrl}/oauth2/authorization/${provider}?redirect_uri=${encodeURIComponent(redirectUri)}`;
   };
 
