@@ -86,6 +86,7 @@ $env:IDENTITY_SEED_ADMIN_ENABLED="true"
 $env:IDENTITY_SEED_ADMIN_EMAIL="admin@example.local"
 $env:IDENTITY_SEED_ADMIN_PASSWORD="LocalAdmin123!"
 $env:IDENTITY_OAUTH2_DEV_CALLBACK_ENABLED="true"
+$env:VNPAY_DEV_RETURN_ENABLED="true"
 .\gradlew.bat :bootstrap:bootRun
 ```
 
@@ -180,6 +181,10 @@ Invoke-RestMethod http://localhost:8080/api/auth/oauth2/callback `
   -ContentType "application/json" `
   -Body '{"provider":"google","providerUserId":"local-google-buyer","email":"local.google@example.local","name":"Local Google Buyer"}'
 ```
+
+Dev-safe VNPay return:
+
+When `VNPAY_DEV_RETURN_ENABLED=true`, `/api/orders/{orderId}/payment/vnpay` returns a signed frontend return URL instead of redirecting to the external VNPay sandbox. Open the returned `paymentUrl`; the frontend `/payment/vnpay-return` page will call `/api/payments/vnpay/return` with the signed parameters and complete the local payment callback path. Leave the flag disabled for real VNPay sandbox testing.
 
 Frontend route smoke:
 

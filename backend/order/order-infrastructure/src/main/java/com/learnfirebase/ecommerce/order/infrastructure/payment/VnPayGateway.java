@@ -32,6 +32,13 @@ public class VnPayGateway implements PaymentGatewayPort {
 
     @Override
     public PaymentSession initiatePayment(PaymentRequest request) {
+        if (properties.isDevReturnEnabled()) {
+            return PaymentSession.builder()
+                .paymentUrl(buildDevReturnUrl(request))
+                .reference(request.getOrderId())
+                .build();
+        }
+
         LocalDateTime now = LocalDateTime.now();
         Map<String, String> params = new TreeMap<>();
         params.put("vnp_Version", "2.1.0");
@@ -55,6 +62,23 @@ public class VnPayGateway implements PaymentGatewayPort {
             .paymentUrl(paymentUrl)
             .reference(request.getOrderId())
             .build();
+    }
+
+    private String buildDevReturnUrl(PaymentRequest request) {
+        LocalDateTime now = LocalDateTime.now();
+        Map<String, String> params = new TreeMap<>();
+        params.put("vnp_Amount", toVnPayAmount(request.getAmount()));
+        params.put("vnp_BankCode", "LOCAL");
+        params.put("vnp_OrderInfo", request.getDescription());
+        params.put("vnp_PayDate", now.format(VNP_DATE_FORMAT));
+        params.put("vnp_ResponseCode", SUCCESS_CODE);
+        params.put("vnp_TransactionNo", "DEV-" + request.getOrderId());
+        params.put("vnp_TxnRef", request.getOrderId());
+
+        String query = buildQuery(params);
+        String hash = hmacSHA512(properties.getHashSecret(), query);
+        String separator = request.getReturnUrl().contains("?") ? "&" : "?";
+        return request.getReturnUrl() + separator + query + "&vnp_SecureHash=" + hash;
     }
 
     @Override
