@@ -204,6 +204,14 @@ http://localhost:3000/admin/reports
 
 Realtime WebSocket smoke uses the backend STOMP endpoint at `/ws/chat` for both chat and user notification queues. The frontend derives this from `NEXT_PUBLIC_API_BASE_URL`, so non-local API base URLs should not require code changes.
 
+Repeatable local STOMP smoke:
+
+```powershell
+.\scripts\smoke-websocket.ps1
+```
+
+This logs in the seeded buyer and seller, connects both clients to `/ws/chat` with JWT-backed STOMP `CONNECT`, subscribes to `/user/queue/chat/messages`, `/user/queue/chat/ack`, and `/user/queue/notifications`, sends a seller-to-buyer chat message through `/app/chat.send`, and verifies both the seller ack and buyer delivery frames. It requires the backend and local backing services to be running.
+
 Stop local services when finished:
 
 ```powershell
