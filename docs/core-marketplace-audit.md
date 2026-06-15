@@ -1,6 +1,6 @@
 # Core Marketplace Completion Audit
 
-Last updated: 2026-06-12
+Last updated: 2026-06-15
 
 This checklist tracks the finite "production-ready core marketplace" goal for Buyer, Seller, and Admin flows. Status values:
 
@@ -20,7 +20,7 @@ This checklist tracks the finite "production-ready core marketplace" goal for Bu
 - [x] Runtime backend API smoke test buyer/seller/admin user flows against local services passed on 2026-06-12 using dev seed users and products.
 - [x] Browser UI smoke test passed for buyer login, product list/detail, add-to-cart, checkout COD order creation, order detail, seller dashboard/products/orders/promotions/settings, admin dashboard/users/products/orders/flash-sales/sellers/reports/settings, and 390px mobile overflow checks on core pages.
 - [x] Dev CORS smoke passed for `Origin: http://127.0.0.1:3000` preflight to `/api/products`.
-- [~] Add automated tests for critical backend and frontend flows. Initial backend regression tests now cover CORS dev origins, VNPay payment ownership, and notification mark-read ownership; broader service/UI regression coverage remains open.
+- [~] Add automated tests for critical backend and frontend flows. Initial backend regression tests now cover CORS dev origins, VNPay payment ownership, notification mark-read ownership, and daily sales report aggregation; broader service/UI regression coverage remains open.
 
 ## P0 / Security And Build
 
@@ -48,7 +48,7 @@ This checklist tracks the finite "production-ready core marketplace" goal for Bu
 - [~] Seller registration/approval/product/order/promotion management: seeded seller is approved; runtime and browser smoke covered seller dashboard, product list, order list, coupon list, promotions page, and settings page. Full seller registration and product create/edit browser smoke remains open.
 - [~] Admin dashboard/users/sellers/products/orders/reports/flash sales: runtime and browser smoke covered admin dashboard, user list, seller application list, product list, order list, flash-sale list, reports page, and settings page. Full admin mutation actions remain open.
 - [~] Notifications/chat: runtime smoke covered notification record/list/unread/mark-read ownership and chat conversation list. WebSocket message delivery and Kafka notification fan-out still need deeper smoke.
-- [~] Reports: runtime smoke covered daily report endpoint availability; data correctness assertions remain open.
+- [x] Reports: runtime smoke covered daily report endpoint availability, and daily sales report aggregation now reads real order rows, excludes non-revenue statuses, persists a daily snapshot, and has regression tests for date/status filtering.
 - [x] Promotion usage persistence: `PromotionUsageRepositoryImpl` now writes durable rows to `promotion_usages` through Flyway migration V10.
 - [x] Seller coupon listing runtime error fixed by eagerly loading coupon applicable product ids.
 - [x] Dev seed workflow: Flyway migrations seed repeatable buyer, seller, approved seller application, smoke products/variants/images/tags, coupon, flash sale, default inventory rows, and opt-in admin account through Compose env defaults.
@@ -81,7 +81,7 @@ Backend API smoke returned:
 }
 ```
 
-Smoke covered seeded buyer `buyer@example.local`, seller `seller@example.local`, and opt-in admin `admin@example.local` using local services only. Remaining evidence gaps before final completion: automated regression tests, frontend browser smoke across core UI routes, VNPay sandbox initiation/return, Supabase upload with dev-safe bucket config, OAuth callback with a test provider, WebSocket chat/notification delivery, and stronger report data assertions.
+Smoke covered seeded buyer `buyer@example.local`, seller `seller@example.local`, and opt-in admin `admin@example.local` using local services only. Remaining evidence gaps before final completion: broader automated regression tests, frontend browser smoke across core UI routes, VNPay sandbox initiation/return, Supabase upload with dev-safe bucket config, OAuth callback with a test provider, WebSocket chat/notification delivery, and seller/admin mutation smoke.
 
 Additional security boundary smoke returned:
 
@@ -113,3 +113,7 @@ Automated regression test evidence added on 2026-06-12:
 - `.\gradlew.bat :notification:notification-application:test --console=plain` passed, covering notification mark-read allowed for owner and rejected for non-owner.
 - `.\gradlew.bat :identity:identity-adapter:test --console=plain` passed, covering CORS support for both `localhost:3000` and `127.0.0.1:3000`.
 - `.\gradlew.bat build --console=plain` passed after adding the tests.
+
+Automated regression test evidence added on 2026-06-15:
+
+- `.\gradlew.bat :report:report-infrastructure:test --console=plain` passed, covering daily report aggregation from real `orders` rows, date-boundary filtering, exclusion of `PENDING`, `CANCELLED`, and `RETURNED` statuses, zero-result behavior, and daily snapshot upsert wiring.
