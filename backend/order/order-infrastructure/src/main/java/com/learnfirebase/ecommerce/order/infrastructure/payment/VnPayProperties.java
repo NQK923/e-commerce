@@ -23,4 +23,9 @@ public class VnPayProperties {
      * Return URL where VNPAY redirects after payment.
      */
     private String returnUrl;
+    /**
+     * Local/dev-only mode that returns a signed success callback URL instead of
+     * redirecting to the external VNPAY sandbox.
+     */
+    private boolean devReturnEnabled = false;
 }
