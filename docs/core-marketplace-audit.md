@@ -20,7 +20,7 @@ This checklist tracks the finite "production-ready core marketplace" goal for Bu
 - [x] Runtime backend API smoke test buyer/seller/admin user flows against local services passed on 2026-06-12 using dev seed users and products.
 - [x] Browser UI smoke test passed for buyer login, product list/detail, add-to-cart, checkout COD order creation, order detail, seller dashboard/products/orders/promotions/settings, admin dashboard/users/products/orders/flash-sales/sellers/reports/settings, and 390px mobile overflow checks on core pages.
 - [x] Dev CORS smoke passed for `Origin: http://127.0.0.1:3000` preflight to `/api/products`.
-- [~] Add automated tests for critical backend and frontend flows. Initial backend regression tests now cover CORS dev origins, VNPay payment ownership and callback verification, notification mark-read ownership, and daily sales report aggregation; broader service/UI regression coverage remains open.
+- [~] Add automated tests for critical backend and frontend flows. Initial backend regression tests now cover CORS dev origins, VNPay payment ownership and callback verification, notification mark-read ownership, chat send/delivery authorization, and daily sales report aggregation; broader service/UI regression coverage remains open.
 
 ## P0 / Security And Build
 
@@ -47,7 +47,7 @@ This checklist tracks the finite "production-ready core marketplace" goal for Bu
 - [x] Orders/tracking/returns/refunds: backend API smoke covered create, buyer list, seller list, pay, ship, deliver, return request, and seller return approval to final status `RETURNED`.
 - [~] Seller registration/approval/product/order/promotion management: seeded seller is approved; runtime and browser smoke covered seller dashboard, product list, order list, coupon list, promotions page, and settings page. Full seller registration and product create/edit browser smoke remains open.
 - [~] Admin dashboard/users/sellers/products/orders/reports/flash sales: runtime and browser smoke covered admin dashboard, user list, seller application list, product list, order list, flash-sale list, reports page, and settings page. Full admin mutation actions remain open.
-- [~] Notifications/chat: runtime smoke covered notification record/list/unread/mark-read ownership and chat conversation list. WebSocket message delivery and Kafka notification fan-out still need deeper smoke.
+- [~] Notifications/chat: runtime smoke covered notification record/list/unread/mark-read ownership and chat conversation list. Chat send/delivery now has regression coverage for conversation participant authorization, online STOMP delivery, offline Kafka fan-out, and offline notification event creation. Full browser/WebSocket runtime delivery smoke remains open.
 - [x] Reports: runtime smoke covered daily report endpoint availability, and daily sales report aggregation now reads real order rows, excludes non-revenue statuses, persists a daily snapshot, and has regression tests for date/status filtering.
 - [x] Promotion usage persistence: `PromotionUsageRepositoryImpl` now writes durable rows to `promotion_usages` through Flyway migration V10.
 - [x] Seller coupon listing runtime error fixed by eagerly loading coupon applicable product ids.
@@ -120,3 +120,5 @@ Automated regression test evidence added on 2026-06-15:
 - `.\gradlew.bat :order:order-application:test --console=plain` passed, covering VNPay callback success transitioning a pending order to paid, transaction success update, inventory confirmation, failed gateway callbacks, payment amount mismatch rejection, idempotent duplicate callbacks, and raw callback parameter forwarding to the gateway verifier.
 - `.\gradlew.bat :order:order-infrastructure:test --console=plain` passed, covering VNPAY signed success callback parsing, invalid signature rejection, signed gateway failure parsing, amount conversion, transaction reference mapping, and raw payload capture.
 - `.\scripts\verify-ci.ps1` passed, covering the new CI script's Docker Compose config validation, backend Gradle build/tests, frontend lint, and frontend production build command set.
+- `.\gradlew.bat :chat:chat-application:test --console=plain` passed, covering chat message send validation, conversation participant authorization, online delivered status handling, offline pending notification fan-out, and new conversation creation.
+- `.\gradlew.bat :chat:chat-infrastructure:test --console=plain` passed, covering STOMP delivery to `/queue/chat/messages` and Kafka offline notification events on `chat.offline.message` keyed by receiver id.
