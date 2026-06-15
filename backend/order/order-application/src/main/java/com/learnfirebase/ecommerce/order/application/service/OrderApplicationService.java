@@ -291,6 +291,13 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
         Order order = orderRepository.findById(new OrderId(verification.getOrderId()))
                 .orElseThrow(() -> new OrderDomainException("Order not found"));
 
+        if (verification.getAmount() == null
+                || verification.getAmount().compareTo(order.getTotalAmount().getAmount()) != 0) {
+            paymentTransactionPort.updateStatus(verification.getReference(), PaymentStatus.FAILED,
+                    verification.getTransactionNo(), verification.getRawPayload());
+            throw new OrderDomainException("Payment amount mismatch");
+        }
+
         // Idempotency check: If order is already paid, ignore duplicate callback
         if (order.getStatus() == OrderStatus.PAID || order.getStatus() == OrderStatus.SHIPPING ||
                 order.getStatus() == OrderStatus.DELIVERED || order.getStatus() == OrderStatus.RETURNED) {

@@ -20,7 +20,7 @@ This checklist tracks the finite "production-ready core marketplace" goal for Bu
 - [x] Runtime backend API smoke test buyer/seller/admin user flows against local services passed on 2026-06-12 using dev seed users and products.
 - [x] Browser UI smoke test passed for buyer login, product list/detail, add-to-cart, checkout COD order creation, order detail, seller dashboard/products/orders/promotions/settings, admin dashboard/users/products/orders/flash-sales/sellers/reports/settings, and 390px mobile overflow checks on core pages.
 - [x] Dev CORS smoke passed for `Origin: http://127.0.0.1:3000` preflight to `/api/products`.
-- [~] Add automated tests for critical backend and frontend flows. Initial backend regression tests now cover CORS dev origins, VNPay payment ownership, notification mark-read ownership, and daily sales report aggregation; broader service/UI regression coverage remains open.
+- [~] Add automated tests for critical backend and frontend flows. Initial backend regression tests now cover CORS dev origins, VNPay payment ownership and callback verification, notification mark-read ownership, and daily sales report aggregation; broader service/UI regression coverage remains open.
 
 ## P0 / Security And Build
 
@@ -43,7 +43,7 @@ This checklist tracks the finite "production-ready core marketplace" goal for Bu
 
 - [x] Auth: backend login smoke passed for seeded buyer, seller, and admin accounts. `/api/auth/me` is reachable for an authenticated buyer.
 - [x] Buyer browse/search/product detail/cart/checkout: backend API smoke covered product list, product detail, advanced search, cart add/read, promotion apply, and COD order creation. Browser smoke also covered login, product list/detail, add-to-cart, checkout form, COD order creation, and order detail redirect.
-- [~] Payment: COD order payment smoke passed and VNPay initiation ownership smoke passed. VNPay sandbox return/callback verification still needs a dedicated end-to-end smoke.
+- [~] Payment: COD order payment smoke passed and VNPay initiation ownership smoke passed. VNPay callback verification now has regression coverage for signed success, invalid signatures, signed gateway failures, idempotent duplicate callbacks, and amount mismatch protection. A dedicated runtime sandbox return smoke is still open.
 - [x] Orders/tracking/returns/refunds: backend API smoke covered create, buyer list, seller list, pay, ship, deliver, return request, and seller return approval to final status `RETURNED`.
 - [~] Seller registration/approval/product/order/promotion management: seeded seller is approved; runtime and browser smoke covered seller dashboard, product list, order list, coupon list, promotions page, and settings page. Full seller registration and product create/edit browser smoke remains open.
 - [~] Admin dashboard/users/sellers/products/orders/reports/flash sales: runtime and browser smoke covered admin dashboard, user list, seller application list, product list, order list, flash-sale list, reports page, and settings page. Full admin mutation actions remain open.
@@ -81,7 +81,7 @@ Backend API smoke returned:
 }
 ```
 
-Smoke covered seeded buyer `buyer@example.local`, seller `seller@example.local`, and opt-in admin `admin@example.local` using local services only. Remaining evidence gaps before final completion: broader automated regression tests, frontend browser smoke across core UI routes, VNPay sandbox initiation/return, Supabase upload with dev-safe bucket config, OAuth callback with a test provider, WebSocket chat/notification delivery, and seller/admin mutation smoke.
+Smoke covered seeded buyer `buyer@example.local`, seller `seller@example.local`, and opt-in admin `admin@example.local` using local services only. Remaining evidence gaps before final completion: broader automated regression tests, frontend browser smoke across core UI routes, VNPay runtime sandbox initiation/return, Supabase upload with dev-safe bucket config, OAuth callback with a test provider, WebSocket chat/notification delivery, and seller/admin mutation smoke.
 
 Additional security boundary smoke returned:
 
@@ -117,3 +117,5 @@ Automated regression test evidence added on 2026-06-12:
 Automated regression test evidence added on 2026-06-15:
 
 - `.\gradlew.bat :report:report-infrastructure:test --console=plain` passed, covering daily report aggregation from real `orders` rows, date-boundary filtering, exclusion of `PENDING`, `CANCELLED`, and `RETURNED` statuses, zero-result behavior, and daily snapshot upsert wiring.
+- `.\gradlew.bat :order:order-application:test --console=plain` passed, covering VNPay callback success transitioning a pending order to paid, transaction success update, inventory confirmation, failed gateway callbacks, payment amount mismatch rejection, idempotent duplicate callbacks, and raw callback parameter forwarding to the gateway verifier.
+- `.\gradlew.bat :order:order-infrastructure:test --console=plain` passed, covering VNPAY signed success callback parsing, invalid signature rejection, signed gateway failure parsing, amount conversion, transaction reference mapping, and raw payload capture.
