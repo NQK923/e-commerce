@@ -182,11 +182,13 @@ public class ProductController {
     private ProductDto enrichWithInventory(ProductDto product) {
         try {
             InventoryDto inventory = queryInventoryUseCase.getInventoryByProductId(product.getId());
-            Integer totalStock = inventory.getItems().stream()
-                    .filter(item -> item.getProductId().equals(product.getId()))
-                    .map(item -> Math.max(0, item.getAvailable() - item.getReserved()))
-                    .findFirst()
-                    .orElse(product.getQuantity() != null ? product.getQuantity() : 0);
+            Integer totalStock = product.getQuantity() != null && product.getQuantity() == 0
+                    ? 0
+                    : inventory.getItems().stream()
+                            .filter(item -> item.getProductId().equals(product.getId()))
+                            .map(item -> Math.max(0, item.getAvailable() - item.getReserved()))
+                            .findFirst()
+                            .orElse(product.getQuantity() != null ? product.getQuantity() : 0);
 
             // Create a NEW ProductDto builder based on existing one (Dto is immutable)
             return ProductDto.builder()

@@ -14,7 +14,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, subtitl
       {/* Left side: Editorial Image */}
       <div className="hidden lg:block lg:w-1/2 relative bg-zinc-100">
         <Image 
-          src="/images/auth-bg-v2.png"
+          src="/images/auth-bg-v4.png"
           alt="Auth background"
           fill
           className="object-cover"

@@ -1,79 +1,4 @@
 services:
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    env_file:
-      - path: .env
-        required: false
-    environment:
-      DB_URL: ${DB_URL:-jdbc:postgresql://postgres:5432/ecommerce}
-      DB_USERNAME: ${DB_USERNAME:-postgres}
-      DB_PASSWORD: ${DB_PASSWORD:-postgres}
-      DB_MAX_POOL_SIZE: ${DB_MAX_POOL_SIZE:-2}
-      DB_MIN_IDLE: ${DB_MIN_IDLE:-0}
-      DB_CONNECTION_TIMEOUT: ${DB_CONNECTION_TIMEOUT:-60000}
-      FLYWAY_ENABLED: ${FLYWAY_ENABLED:-true}
-      FLYWAY_CONNECT_RETRIES: ${FLYWAY_CONNECT_RETRIES:-5}
-      FLYWAY_CONNECT_RETRIES_INTERVAL: ${FLYWAY_CONNECT_RETRIES_INTERVAL:-PT5S}
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      SPRING_REDIS_HOST: redis
-      SPRING_REDIS_PORT: 6379
-      MONGO_URI: ${MONGO_URI:-mongodb://mongo:27017/ecommerce}
-      MONGO_DATABASE: ${MONGO_DATABASE:-ecommerce}
-      MAIL_HOST: mailpit
-      MAIL_PORT: 1025
-      MAIL_SMTP_AUTH: "false"
-      MAIL_SMTP_STARTTLS_ENABLE: "false"
-      MANAGEMENT_HEALTH_ELASTICSEARCH_ENABLED: "false"
-      IDENTITY_SEED_ADMIN_ENABLED: ${IDENTITY_SEED_ADMIN_ENABLED:-true}
-      IDENTITY_SEED_ADMIN_EMAIL: ${IDENTITY_SEED_ADMIN_EMAIL:-admin@example.local}
-      IDENTITY_SEED_ADMIN_PASSWORD: ${IDENTITY_SEED_ADMIN_PASSWORD:-LocalAdmin123!}
-      IDENTITY_OAUTH2_DEV_CALLBACK_ENABLED: ${IDENTITY_OAUTH2_DEV_CALLBACK_ENABLED:-true}
-      VNPAY_DEV_RETURN_ENABLED: ${VNPAY_DEV_RETURN_ENABLED:-true}
-    ports:
-      - "8080:8080"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
-      mongo:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    restart: unless-stopped
-
-  postgres:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB:-ecommerce}
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-ecommerce}"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-    restart: unless-stopped
-
-  mongo:
-    image: mongo:7
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo_data:/data/db
-    healthcheck:
-      test: ["CMD-SHELL", "mongosh --quiet --eval 'db.adminCommand({ ping: 1 }).ok' | grep 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-    restart: unless-stopped
-
   mailpit:
     image: axllent/mailpit:v1.22
     ports:
@@ -139,8 +64,6 @@ services:
     restart: unless-stopped
 
 volumes:
-  postgres_data:
-  mongo_data:
   kafka_data:
   zookeeper_data:
   zookeeper_log:
