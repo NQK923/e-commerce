@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900" role="img" aria-labelledby="title desc">
+  <title id="title">Local upload placeholder</title>
+  <desc id="desc">Placeholder image used only for local smoke tests when Supabase storage is not configured.</desc>
+  <rect width="1200" height="900" fill="#f4f4f5"/>
+  <rect x="72" y="72" width="1056" height="756" rx="28" fill="#ffffff" stroke="#d4d4d8" stroke-width="4"/>
+  <path d="M422 546l105-128 84 97 58-70 109 129H422z" fill="#d1fae5" stroke="#10b981" stroke-width="10" stroke-linejoin="round"/>
+  <circle cx="752" cy="340" r="58" fill="#a7f3d0" stroke="#10b981" stroke-width="10"/>
+  <text x="600" y="666" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="44" font-weight="700" fill="#18181b">Local Upload Placeholder</text>
+  <text x="600" y="724" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="28" fill="#52525b">Configure Supabase storage for real uploaded assets.</text>
+</svg>

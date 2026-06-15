@@ -92,6 +92,14 @@ cd e-commerce-frontend
 npm run dev
 ```
 
+When Supabase credentials are unavailable, the frontend dev server uses a local upload placeholder by default so seller registration, seller product image upload, profile avatar upload, and chat attachment smoke tests can continue without real storage secrets. To make this explicit or to use the same behavior outside `npm run dev`, set:
+
+```powershell
+$env:NEXT_PUBLIC_UPLOAD_FALLBACK_MODE="placeholder"
+```
+
+This returns `/upload-placeholder.svg?...` for new uploaded files only when `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are missing. Set `NEXT_PUBLIC_UPLOAD_FALLBACK_MODE="disabled"` and provide the Supabase URL, anon key, and bucket names to smoke real bucket uploads.
+
 ## Runtime Smoke Accounts
 
 Flyway dev seed migrations create these local smoke users:
