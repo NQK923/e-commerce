@@ -1,4 +1,7 @@
-﻿plugins {
+import java.util.Properties
+import java.io.FileInputStream
+
+plugins {
     java
     id("org.springframework.boot") version "3.5.8"
     id("io.spring.dependency-management") version "1.1.7"
@@ -46,4 +49,16 @@ dependencies {
     implementation("org.flywaydb:flyway-core")
     implementation("org.flywaydb:flyway-database-postgresql")
     runtimeOnly("org.postgresql:postgresql")
+}
+
+val env = Properties()
+val envFile = rootProject.file(".env")
+if (envFile.exists()) {
+    env.load(FileInputStream(envFile))
+}
+
+tasks.withType<org.springframework.boot.gradle.tasks.run.BootRun> {
+    env.forEach { k, v ->
+        environment(k as String, v as String)
+    }
 }
