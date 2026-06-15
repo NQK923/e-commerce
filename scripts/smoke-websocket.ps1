@@ -237,6 +237,30 @@ try {
         throw "Buyer delivery sender/receiver did not match the seeded smoke users."
     }
 
+    $notificationTitle = "WebSocket smoke"
+    $notificationBody = "notification-smoke-$([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds())"
+    $notificationPayload = @{
+        userId = $BuyerUserId
+        title = $notificationTitle
+        body = $notificationBody
+        channel = "PUSH"
+    } | ConvertTo-Json -Compress
+
+    Write-Host "Recording buyer notification and waiting for realtime delivery..."
+    Invoke-RestMethod `
+        -Uri (Join-Url $ApiBaseUrl "/api/notifications/record") `
+        -Method POST `
+        -ContentType "application/json" `
+        -Headers @{ Authorization = "Bearer $buyerToken" } `
+        -Body $notificationPayload | Out-Null
+
+    $buyerNotification = Receive-StompFrame -Socket $buyerSocket -Label "buyer notification delivery" -TimeoutSeconds $TimeoutSeconds
+    Assert-StompCommand -Frame $buyerNotification -ExpectedCommand "MESSAGE" -Label "buyer notification delivery"
+    $notificationDelivery = Get-StompBody $buyerNotification | ConvertFrom-Json
+    if ($notificationDelivery.body -ne $notificationBody -or $notificationDelivery.userId -ne $BuyerUserId) {
+        throw "Buyer notification delivery did not contain the expected payload."
+    }
+
     Send-StompFrame `
         -Socket $buyerSocket `
         -Command "SEND" `
@@ -246,7 +270,7 @@ try {
         } `
         -Body (@{ notificationId = "websocket-smoke-read-ack" } | ConvertTo-Json -Compress)
 
-    Write-Host "WebSocket smoke passed: authenticated STOMP connect, user subscriptions, chat ack, and chat delivery."
+    Write-Host "WebSocket smoke passed: authenticated STOMP connect, user subscriptions, chat ack, chat delivery, and notification delivery."
 } finally {
     foreach ($socket in @($buyerSocket, $sellerSocket)) {
         if ($socket -and $socket.State -eq [System.Net.WebSockets.WebSocketState]::Open) {

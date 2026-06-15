@@ -1,6 +1,7 @@
 package com.learnfirebase.ecommerce.notification.adapter.websocket;
 
 import com.learnfirebase.ecommerce.notification.application.dto.NotificationDto;
+import com.learnfirebase.ecommerce.notification.application.port.out.RealtimeNotificationGateway;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -16,7 +17,7 @@ import java.security.Principal;
  */
 @Controller
 @RequiredArgsConstructor
-public class NotificationWebSocketController {
+public class NotificationWebSocketController implements RealtimeNotificationGateway {
 
     private final SimpMessagingTemplate simpMessagingTemplate;
 
@@ -40,6 +41,12 @@ public class NotificationWebSocketController {
                 java.util.Objects.requireNonNull(userId, "userId must not be null"),
                 "/queue/notifications",
                 java.util.Objects.requireNonNull(notification, "notification must not be null"));
+    }
+
+    @Override
+    public void deliver(NotificationDto notification) {
+        java.util.Objects.requireNonNull(notification, "notification must not be null");
+        sendNotificationToUser(notification.getUserId(), notification);
     }
 
     /**
