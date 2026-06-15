@@ -7,7 +7,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 @Getter
-@Builder
+@Builder(toBuilder = true)
 public class CreateFlashSaleCommand {
     private String productId;
     private BigDecimal price;
