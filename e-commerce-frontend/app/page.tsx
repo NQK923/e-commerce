@@ -8,13 +8,7 @@ import {
   ShieldCheck,
   Truck,
   Clock,
-  Smartphone,
-  Shirt,
-  HomeIcon,
-  BookOpen,
   Sparkles,
-  Zap,
-  Star,
 } from "lucide-react";
 import { productApi } from "@/src/api/productApi";
 import { ProductCard } from "@/src/components/product/product-card";
@@ -57,167 +51,126 @@ export default function HomePage() {
     void loadData();
   }, [loadData]);
 
-  const Categories = [
-    { name: t.home.categories.electronics, icon: Smartphone, color: "text-blue-600", bg: "bg-blue-50", href: "electronics" },
-    { name: t.home.categories.fashion, icon: Shirt, color: "text-rose-600", bg: "bg-rose-50", href: "fashion" },
-    { name: t.home.categories.home, icon: HomeIcon, color: "text-amber-600", bg: "bg-amber-50", href: "home" },
-    { name: t.home.categories.books, icon: BookOpen, color: "text-indigo-600", bg: "bg-indigo-50", href: "books" },
-  ];
-
   const Benefits = [
     { icon: Truck, title: t.home.features.shipping, desc: t.home.features.shipping_desc },
     { icon: ShieldCheck, title: t.home.features.payment, desc: t.home.features.payment_desc },
     { icon: Clock, title: t.home.features.support, desc: t.home.features.support_desc },
-    { icon: Star, title: t.home.quality, desc: t.home.quality_desc },
   ];
 
   const renderErrorState = () => (
-    <div className="col-span-full rounded-xl border border-dashed border-rose-200 bg-rose-50 p-4 text-center">
-      <p className="text-sm font-medium text-rose-700">{loadError}</p>
-      <Button variant="outline" size="sm" className="mt-3" onClick={() => void loadData()}>
+    <div className="col-span-full border border-black p-6 text-center">
+      <p className="text-sm font-medium text-black">{loadError}</p>
+      <Button variant="outline" size="sm" className="mt-4 rounded-md border-black hover:bg-black hover:text-white" onClick={() => void loadData()}>
         {t.common.retry}
       </Button>
     </div>
   );
 
   return (
-    <div className="flex flex-col gap-16 pb-20 bg-zinc-50/50">
+    <div className="flex flex-col bg-white">
       
-      {/* 1. Hero Section */}
-      <section className="relative overflow-hidden bg-emerald-900 pt-16 pb-20 lg:pt-24">
-        {/* Abstract Background Pattern */}
-        <div className="absolute inset-0 opacity-10">
-            <svg className="h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-              <path d="M0 100 C 20 0 50 0 100 100 Z" fill="white" />
-            </svg>
-        </div>
+      {/* 1. Minimalist Hero Section */}
+      <section className="relative h-[80vh] w-full bg-zinc-100 flex items-center overflow-hidden">
+        <Image
+          src="/images/hero-bg-v3.png"
+          alt="Hero background"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover opacity-90"
+        />
+        <div className="absolute inset-0 bg-black/20" /> {/* Subtle overlay */}
         
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid gap-12 lg:grid-cols-2 lg:gap-8 items-center">
-            <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
-              <div className="mb-6 inline-flex items-center rounded-full bg-emerald-800/50 px-3 py-1 text-sm font-medium text-emerald-100 border border-emerald-700/50 backdrop-blur-sm">
-                <Sparkles className="mr-2 h-4 w-4 text-yellow-400" />
-                <span>{t.home.hero_badge}</span>
-              </div>
-              <h1 className="text-4xl font-bold tracking-tight text-white sm:text-6xl mb-6 leading-tight">
-                {t.home.hero_title} <br/>
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-200 to-teal-400">
-                  {t.home.hero_title_highlight}
-                </span>
-              </h1>
-              <p className="text-lg text-emerald-100/80 mb-8 max-w-lg">
-                {t.home.hero_desc}
-              </p>
-              <div className="flex flex-wrap gap-4 justify-center lg:justify-start">
-                <Link href="/products">
-                  <Button size="lg" className="h-14 px-8 text-lg bg-white text-emerald-900 hover:bg-emerald-50 rounded-full font-bold shadow-xl shadow-emerald-900/20">
-                    {t.home.shop_now} <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </Link>
-                <Link href="/products?category=sale">
-                  <Button size="lg" variant="outline" className="h-14 px-8 text-lg border-emerald-200/30 text-emerald-100 hover:bg-white/10 hover:text-white rounded-full bg-transparent">
-                    {t.home.view_promotions}
-                  </Button>
-                </Link>
-              </div>
-            </div>
-            
-            {/* Hero Image / Illustration Placeholder */}
-            <div className="relative hidden lg:block">
-               {/* Decorative circles */}
-               <div className="absolute top-0 right-0 -mr-20 -mt-20 h-96 w-96 rounded-full bg-emerald-500/20 blur-3xl" />
-               <div className="absolute bottom-0 left-0 -ml-20 -mb-20 h-96 w-96 rounded-full bg-teal-500/20 blur-3xl" />
-               
-               <div className="relative rounded-2xl bg-white/5 border border-white/10 p-6 backdrop-blur-sm shadow-2xl rotate-3 hover:rotate-0 transition-transform duration-500">
-                  <div className="aspect-[4/3] w-full rounded-lg bg-gradient-to-br from-zinc-100 to-zinc-200 flex items-center justify-center overflow-hidden relative">
-                    {/* Placeholder for Hero Image */}
-                    <div className="relative text-zinc-400 font-medium flex flex-col items-center h-full w-full">
-                        <Image 
-                          src="https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=2070&auto=format&fit=crop" 
-                          alt="Shopping" 
-                          fill
-                          priority
-                          loading="eager"
-                          sizes="(min-width: 1024px) 50vw, 100vw"
-                          className="object-cover opacity-90"
-                        />
-                    </div>
-                  </div>
-                  <div className="mt-4 flex items-center justify-between">
-                     <div className="h-2 w-24 rounded bg-white/20" />
-                     <div className="h-8 w-24 rounded bg-emerald-500" />
-                  </div>
-               </div>
+        <div className="relative mx-auto w-full max-w-7xl px-6 lg:px-8 z-10 flex flex-col justify-center">
+          <div className="max-w-2xl text-white">
+            <h1 className="text-5xl font-light tracking-tight sm:text-7xl mb-6">
+              Essential<br/><span className="font-bold">Elegance.</span>
+            </h1>
+            <p className="text-lg text-white/90 mb-10 max-w-md font-light">
+              Khám phá bộ sưu tập sản phẩm tuyển chọn mang đậm phong cách tối giản và hiện đại.
+            </p>
+            <div className="flex gap-4">
+              <Link href="/products">
+                <Button size="lg" className="rounded-md h-14 px-10 bg-white text-black hover:bg-zinc-200 text-sm tracking-widest font-semibold uppercase">
+                  {t.home.shop_now}
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 2. Benefits / Trust Signals */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 -mt-10 relative z-10">
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {Benefits.map((item, idx) => (
-            <div key={idx} className="flex items-center gap-4 rounded-xl border border-zinc-100 bg-white p-6 shadow-lg shadow-zinc-200/50 transition-all hover:-translate-y-1 hover:shadow-xl">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
-                <item.icon size={24} />
-              </div>
-              <div>
-                <h3 className="font-bold text-zinc-900">{item.title}</h3>
-                <p className="text-sm text-zinc-500">{item.desc}</p>
-              </div>
+      {/* 2. Editorial Categories */}
+      <section className="mx-auto w-full max-w-7xl px-6 lg:px-8 py-24">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <Link href="/products?category=fashion" className="group relative h-[500px] overflow-hidden bg-zinc-100">
+            <Image
+              src="/images/cat-fashion-v2.png"
+              alt="Fashion"
+              fill
+              className="object-cover transition-transform duration-700 group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-black/10 transition-opacity group-hover:bg-black/20" />
+            <div className="absolute bottom-10 left-10 text-white">
+              <h2 className="text-3xl font-bold tracking-tight mb-2">Fashion</h2>
+              <span className="text-sm uppercase tracking-widest flex items-center gap-2">
+                Explore <ArrowRight size={16} className="transition-transform group-hover:translate-x-2" />
+              </span>
             </div>
-          ))}
-        </div>
-      </section>
-
-      {/* 3. Categories */}
-      <section className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl font-bold text-zinc-900">{t.home.categories.title}{t.home.categories.featured_suffix}</h2>
-        </div>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:gap-8">
-          {Categories.map((cat, i) => (
-            <Link 
-              key={i} 
-              href={`/products?category=${cat.href}`}
-              className="group relative flex flex-col items-center justify-center overflow-hidden rounded-2xl bg-white p-8 text-center shadow-sm border border-zinc-100 transition-all hover:border-emerald-200 hover:shadow-md"
-            >
-              <div className={`mb-4 flex h-16 w-16 items-center justify-center rounded-full ${cat.bg} ${cat.color} transition-transform duration-300 group-hover:scale-110`}>
-                <cat.icon size={32} />
+          </Link>
+          
+          <div className="grid grid-rows-2 gap-8">
+            <Link href="/products?category=electronics" className="group relative h-full overflow-hidden bg-zinc-100">
+              <Image
+                src="/images/cat-electronics-v3.png"
+                alt="Electronics"
+                fill
+                className="object-cover transition-transform duration-700 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-black/10 transition-opacity group-hover:bg-black/20" />
+              <div className="absolute bottom-8 left-8 text-white">
+                <h2 className="text-2xl font-bold tracking-tight mb-2">Electronics</h2>
               </div>
-              <span className="text-lg font-medium text-zinc-900 group-hover:text-emerald-700">{cat.name}</span>
-              <span className="mt-1 text-xs text-zinc-400 group-hover:text-emerald-500/70">{t.home.explore_now}</span>
             </Link>
-          ))}
+            <Link href="/products?category=home" className="group relative h-full overflow-hidden bg-zinc-100">
+              <Image
+                src="/images/cat-home-v2.png"
+                alt="Home & Living"
+                fill
+                className="object-cover transition-transform duration-700 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-black/10 transition-opacity group-hover:bg-black/20" />
+              <div className="absolute bottom-8 left-8 text-white">
+                <h2 className="text-2xl font-bold tracking-tight mb-2">Living</h2>
+              </div>
+            </Link>
+          </div>
         </div>
       </section>
 
-      {/* 4. Best Sellers (Bán chạy) */}
-      <section className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between mb-8">
-           <div className="flex items-center gap-2">
-              <Zap className="h-6 w-6 text-amber-500 fill-amber-500 animate-pulse" />
-              <h2 className="text-2xl font-bold text-zinc-900">{t.home.best_sellers_title}</h2>
-           </div>
-           <Link href="/products?sort=soldCount,desc" className="text-sm font-medium text-emerald-600 hover:text-emerald-700 hover:underline">
-              {t.home.view_all_arrow} &rarr;
+      {/* 3. Curated Best Sellers */}
+      <section className="mx-auto w-full max-w-7xl px-6 lg:px-8 pb-24">
+        <div className="flex items-end justify-between mb-12 border-b border-black pb-4">
+           <h2 className="text-2xl font-bold uppercase tracking-wide text-black">{t.home.best_sellers_title}</h2>
+           <Link href="/products?sort=soldCount,desc" className="text-sm font-medium text-zinc-500 hover:text-black uppercase tracking-widest transition-colors">
+              {t.home.view_all_arrow}
            </Link>
         </div>
 
         {loading ? (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
                 {[...Array(4)].map((_, i) => (
-                    <div key={i} className="flex flex-col space-y-3">
-                        <Skeleton className="h-[300px] w-full rounded-xl" />
+                    <div key={i} className="flex flex-col space-y-4">
+                        <Skeleton className="h-[400px] w-full rounded-md" />
                         <div className="space-y-2">
-                            <Skeleton className="h-4 w-[250px]" />
-                            <Skeleton className="h-4 w-[200px]" />
+                            <Skeleton className="h-4 w-3/4 rounded-md" />
+                            <Skeleton className="h-4 w-1/4 rounded-md" />
                         </div>
                     </div>
                 ))}
             </div>
         ) : (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
             {loadError ? (
               renderErrorState()
             ) : (
@@ -226,7 +179,7 @@ export default function HomePage() {
                   <ProductCard key={product.id} product={product} />
                 ))}
                 {bestSellers.length === 0 && (
-                  <div className="col-span-full py-12 text-center text-zinc-500 bg-white rounded-xl border border-dashed">
+                  <div className="col-span-full py-12 text-center text-zinc-500 border border-zinc-200">
                      {t.home.no_best_sellers}
                   </div>
                 )}
@@ -236,64 +189,55 @@ export default function HomePage() {
         )}
       </section>
 
-      {/* 5. Promotional Banner */}
-      <section className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="relative overflow-hidden rounded-3xl bg-zinc-900 text-white">
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-900 to-indigo-900 opacity-90" />
-            <div className="absolute -right-20 -top-20 h-96 w-96 rounded-full bg-pink-500/30 blur-3xl" />
-            
-            <div className="relative grid items-center gap-8 px-8 py-12 lg:grid-cols-2 lg:px-16 lg:py-20">
-                <div className="space-y-6">
-                    <span className="inline-block rounded-lg bg-white/10 px-3 py-1 text-sm font-medium text-purple-200 backdrop-blur">
-                        {t.home.special_offer}
-                    </span>
-                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
-                        {t.home.discount_up_to} <br/>
-                        <span className="text-purple-300">{t.home.flash_sale_daily}</span>
-                    </h2>
-                    <p className="max-w-md text-lg text-purple-100/80">
-                        {t.home.promo_desc}
-                    </p>
-                    <Button size="lg" className="bg-white text-purple-900 hover:bg-purple-50 border-0 font-bold">
-                        <Link href="/flash-sales">{t.home.hunt_flash_sale}</Link>
-                    </Button>
-                </div>
-                {/* Decorative Element */}
-                <div className="hidden lg:flex justify-end relative">
-                     <div className="relative h-64 w-64 rounded-2xl bg-gradient-to-tr from-yellow-400 to-pink-500 rotate-6 shadow-2xl">
-                         <div className="absolute inset-1 rounded-xl bg-black/20 backdrop-blur-sm flex items-center justify-center text-white font-bold text-4xl">
-                             SALE
-                         </div>
-                     </div>
-                     <div className="absolute -bottom-6 right-24 h-64 w-64 rounded-2xl bg-white/10 backdrop-blur-md -rotate-6 border border-white/20 shadow-xl" />
-                </div>
-            </div>
+      {/* 4. Soft Vibrant Promo Banner */}
+      <section className="mx-auto w-full max-w-7xl px-6 lg:px-8 py-12">
+        <div className="relative overflow-hidden rounded-md bg-gradient-to-br from-rose-100 via-orange-50 to-amber-100 px-6 py-24 sm:px-12 sm:py-32 lg:px-20 text-center shadow-lg border border-rose-200/50">
+          {/* Background decorative elements */}
+          <div className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-40 pointer-events-none">
+            <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-white blur-3xl"></div>
+            <div className="absolute -bottom-24 -right-24 w-96 h-96 rounded-full bg-rose-200 blur-3xl"></div>
+          </div>
+          
+          <div className="relative z-10">
+            <Sparkles className="mx-auto mb-6 h-12 w-12 text-rose-400 animate-pulse" strokeWidth={1.5} />
+            <h2 className="text-4xl font-black tracking-tighter text-zinc-900 sm:text-6xl mb-6 uppercase">
+              Mega <span className="font-light text-rose-500">Sale</span> Event
+            </h2>
+            <p className="mx-auto max-w-2xl text-zinc-600 mb-10 text-lg sm:text-xl font-medium">
+              Giảm giá lên đến 50% cho các sản phẩm tuyển chọn. Làm mới phong cách của bạn với bộ sưu tập rạng rỡ nhất mùa này.
+            </p>
+            <Link href="/flash-sales">
+              <Button size="lg" className="rounded-md border-0 bg-rose-500 text-white hover:bg-rose-600 px-12 h-14 tracking-widest uppercase text-sm font-bold shadow-md transition-all hover:scale-105 active:scale-95">
+                Khám phá ngay
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
 
-      {/* 6. New Arrivals */}
-      <section className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-2xl font-bold text-zinc-900">{t.home.new_arrivals_title}</h2>
-          <Link href="/products" className="text-sm font-medium text-emerald-600 hover:underline">
-            {t.home.view_all_arrow} &rarr;
+      {/* 5. New Arrivals */}
+      <section className="mx-auto w-full max-w-7xl px-6 lg:px-8 py-24">
+        <div className="flex items-end justify-between mb-12 border-b border-black pb-4">
+          <h2 className="text-2xl font-bold uppercase tracking-wide text-black">{t.home.new_arrivals_title}</h2>
+          <Link href="/products" className="text-sm font-medium text-zinc-500 hover:text-black uppercase tracking-widest transition-colors">
+            {t.home.view_all_arrow}
           </Link>
         </div>
 
         {loading ? (
-             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+             <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
                 {[...Array(8)].map((_, i) => (
-                    <div key={i} className="flex flex-col space-y-3">
-                        <Skeleton className="h-[300px] w-full rounded-xl" />
+                    <div key={i} className="flex flex-col space-y-4">
+                        <Skeleton className="h-[400px] w-full rounded-md" />
                         <div className="space-y-2">
-                            <Skeleton className="h-4 w-[250px]" />
-                            <Skeleton className="h-4 w-[200px]" />
+                            <Skeleton className="h-4 w-3/4 rounded-md" />
+                            <Skeleton className="h-4 w-1/4 rounded-md" />
                         </div>
                     </div>
                 ))}
             </div>
         ) : (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
               {loadError ? (
                 renderErrorState()
               ) : (
@@ -304,12 +248,27 @@ export default function HomePage() {
             </div>
         )}
         
-        <div className="mt-12 text-center">
+        <div className="mt-16 text-center">
             <Link href="/products">
-                <Button variant="outline" size="lg" className="min-w-[200px] border-zinc-300 bg-white hover:bg-zinc-50">
+                <Button variant="outline" size="lg" className="rounded-md border-black text-black hover:bg-black hover:text-white px-12 tracking-widest uppercase text-sm">
                     {t.home.load_more_products}
                 </Button>
             </Link>
+        </div>
+      </section>
+
+      {/* 6. Benefits Footer */}
+      <section className="border-t border-zinc-100 bg-white py-16">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+            {Benefits.map((item, idx) => (
+              <div key={idx} className="flex flex-col items-center text-center p-6">
+                <item.icon size={28} strokeWidth={1} className="mb-4 text-black" />
+                <h3 className="font-bold text-black uppercase tracking-wider text-sm mb-2">{item.title}</h3>
+                <p className="text-sm text-zinc-500 font-light">{item.desc}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 

@@ -19,7 +19,7 @@ export const QuantitySelector: React.FC<Props> = ({ quantity, onChange, min = 1,
   };
 
   const isSmall = size === "sm";
-  const btnClass = `rounded-none border-0 bg-transparent hover:bg-zinc-100 text-zinc-600 disabled:opacity-30 ${isSmall ? "h-7 w-7 p-0" : "h-9 w-9"}`;
+  const btnClass = `rounded-md border-0 bg-transparent hover:bg-zinc-100 text-zinc-600 disabled:opacity-30 ${isSmall ? "h-7 w-7 p-0" : "h-9 w-9"}`;
   const iconSize = isSmall ? 12 : 14;
 
   return (

@@ -112,7 +112,7 @@ function ProductsContent() {
             <div>
               <div className="flex items-center justify-between">
                 <h3 className="font-bold text-zinc-900">{t.home.categories.title}</h3>
-                <button onClick={clearFilters} className="text-xs text-emerald-600 hover:underline">
+                <button onClick={clearFilters} className="text-xs text-primary hover:underline">
                   {t.nav.clear_filters}
                 </button>
               </div>
@@ -132,25 +132,25 @@ function ProductsContent() {
                 <div>
                   <label className="text-xs font-semibold text-zinc-500 uppercase">{t.home.categories.title}</label>
                   <div className="mt-2 space-y-2 max-h-[300px] overflow-y-auto">
-                    <label className="flex items-center gap-2 text-sm text-zinc-700 cursor-pointer hover:text-emerald-600 transition-colors">
+                    <label className="flex items-center gap-2 text-sm text-zinc-700 cursor-pointer hover:text-primary transition-colors">
                       <input 
                         type="radio" 
                         name="category" 
                         checked={category === ""} 
                         onChange={() => { setCategory(""); setPage(0); }}
-                        className="accent-emerald-600 h-4 w-4"
+                        className="accent-primary h-4 w-4"
                       />
                       {t.home.categories.view_all}
                     </label>
                     {PRODUCT_CATEGORIES.map((cat) => (
-                      <label key={cat.value} className="flex items-center gap-2 text-sm text-zinc-700 cursor-pointer hover:text-emerald-600 transition-colors">
+                      <label key={cat.value} className="flex items-center gap-2 text-sm text-zinc-700 cursor-pointer hover:text-primary transition-colors">
                         <input 
                           type="radio" 
                           name="category" 
                           value={cat.value} 
                           checked={category === cat.value} 
                           onChange={() => { setCategory(cat.value); setPage(0); }}
-                          className="accent-emerald-600 h-4 w-4"
+                          className="accent-primary h-4 w-4"
                         />
                         {cat.label}
                       </label>
@@ -210,7 +210,7 @@ function ProductsContent() {
               <select 
                 value={sort}
                 onChange={(e) => { setSort(e.target.value); setPage(0); }}
-                className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 cursor-pointer hover:border-emerald-400 transition-colors"
+                className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 cursor-pointer hover:border-primary/50 transition-colors"
               >
                 {SORT_OPTIONS.map(opt => (
                   <option key={opt.value} value={opt.value}>

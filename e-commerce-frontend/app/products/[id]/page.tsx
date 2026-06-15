@@ -69,7 +69,7 @@ const ProductCardSimple = ({ product }: { product: Product }) => {
           />
         </div>
         <div className="p-3">
-          <h3 className="line-clamp-2 text-sm font-medium text-zinc-900 group-hover:text-emerald-600">
+          <h3 className="line-clamp-2 text-sm font-medium text-zinc-900 group-hover:text-primary">
             {product.name}
           </h3>
           <div className="mt-2 font-bold text-red-600">
@@ -216,11 +216,11 @@ export default function ProductDetailPage() {
       {/* Breadcrumbs */}
       <div className="border-b border-zinc-200 bg-white">
         <div className="mx-auto flex max-w-7xl items-center gap-2 px-4 py-3 text-sm text-zinc-500">
-            <Link href="/" className="flex items-center hover:text-emerald-600">
+            <Link href="/" className="flex items-center hover:text-primary">
                 <Home size={14} className="mr-1"/> {t.nav.home}
             </Link>
             <ChevronRight size={14} />
-            <Link href={`/search?category=${product.category}`} className="hover:text-emerald-600">
+            <Link href={`/search?category=${product.category}`} className="hover:text-primary">
                 {product.category || t.nav.products}
             </Link>
             <ChevronRight size={14} />
@@ -308,7 +308,7 @@ export default function ProductDetailPage() {
                                         onClick={() => setSelectedVariantIndex(idx)}
                                         className={`min-w-[4rem] rounded-lg border px-4 py-2 text-sm transition-all
                                             ${selectedVariantIndex === idx 
-                                                ? 'border-emerald-600 bg-emerald-50 font-bold text-emerald-700 ring-1 ring-emerald-600' 
+                                                ? 'border-primary bg-primary/10 font-bold text-primary ring-1 ring-primary' 
                                                 : 'border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300'
                                             }
                                         `}
@@ -359,12 +359,12 @@ export default function ProductDetailPage() {
                             <Button 
                                 onClick={handleAdd} 
                                 disabled={outOfStock || saleEnded} 
-                                className="h-12 flex-1 bg-emerald-600 text-base font-semibold hover:bg-emerald-700 shadow-emerald-200 shadow-lg"
+                                className="h-12 flex-1 bg-primary text-base font-semibold hover:bg-primary/90 shadow-primary/20 shadow-lg"
                             >
                                 {saleEnded ? t.product.sale_ended : outOfStock ? t.common.out_of_stock : t.product.add_to_cart}
                             </Button>
                             
-                            <Button variant="outline" className="h-12 w-12 border-zinc-200 text-zinc-500 hover:bg-zinc-50 hover:text-emerald-600">
+                            <Button variant="outline" className="h-12 w-12 border-zinc-200 text-zinc-500 hover:bg-zinc-50 hover:text-primary">
                                 <Share2 size={20} />
                             </Button>
                         </div>
@@ -396,7 +396,7 @@ export default function ProductDetailPage() {
                                         type="button"
                                         variant="outline"
                                         size="sm"
-                                        className="w-full text-emerald-600 hover:bg-emerald-50 border-emerald-200"
+                                        className="w-full text-primary hover:bg-primary/10 border-primary/20"
                                         onClick={() => openChatWidget({ userId: displayProduct.sellerId })}
                                       >
                                         <MessageSquare size={16} className="mr-2" /> {t.product.chat}
@@ -418,7 +418,7 @@ export default function ProductDetailPage() {
                                 <div className="flex-1">
                                     <h4 className="font-bold text-zinc-900">{t.product.official_store}</h4>
                                     <div className="flex items-center gap-2 text-xs text-zinc-500">
-                                        <span className="flex items-center gap-1"><ShieldCheck size={12} className="text-emerald-500"/> {t.product.verified}</span>
+                                        <span className="flex items-center gap-1"><ShieldCheck size={12} className="text-primary"/> {t.product.verified}</span>
                                     </div>
                                 </div>
                                 <div className="flex flex-col gap-2 sm:flex-row">
@@ -434,19 +434,19 @@ export default function ProductDetailPage() {
                 {/* Policy / Trust Badges */}
                 <div className="grid grid-cols-3 gap-4 rounded-xl border border-zinc-200 bg-white p-4 text-center shadow-sm">
                     <div className="flex flex-col items-center gap-2">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
                             <ShieldCheck size={20} />
                         </div>
                         <span className="text-xs font-medium text-zinc-600">{t.product.genuine_100}</span>
                     </div>
                     <div className="flex flex-col items-center gap-2 border-l border-zinc-100">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
                             <Truck size={20} />
                         </div>
                         <span className="text-xs font-medium text-zinc-600">{t.product.free_shipping}</span>
                     </div>
                     <div className="flex flex-col items-center gap-2 border-l border-zinc-100">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
                             <RefreshCcw size={20} />
                         </div>
                         <span className="text-xs font-medium text-zinc-600">{t.product.return_7_days}</span>

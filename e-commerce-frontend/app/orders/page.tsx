@@ -67,7 +67,7 @@ function OrdersContent() {
       )}
 
       {error && (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">{error}</div>
+        <div className="rounded-md border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">{error}</div>
       )}
 
       <div className="space-y-3">
@@ -75,7 +75,7 @@ function OrdersContent() {
           <OrderCard key={order.id} order={order} />
         ))}
         {!orders.length && !loading && (
-          <div className="rounded-xl border border-dashed border-zinc-200 bg-white p-6 text-sm text-zinc-600">
+          <div className="rounded-md border border-dashed border-zinc-200 bg-white p-6 text-sm text-zinc-600">
             {t.orders.empty}
           </div>
         )}

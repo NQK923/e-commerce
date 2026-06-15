@@ -113,9 +113,9 @@ function ProfileContent() {
       <div className="grid gap-8 md:grid-cols-[1fr_2fr]">
         {/* Left Column: Profile Card */}
         <div className="space-y-6">
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+          <div className="rounded-md border border-zinc-200 bg-white p-6 shadow-none">
             <div className="flex flex-col items-center gap-4 text-center">
-              <div className="relative h-24 w-24 overflow-hidden rounded-full border-2 border-emerald-50 bg-zinc-100">
+              <div className="relative h-24 w-24 overflow-hidden rounded-full border-2 border-zinc-200 bg-zinc-100">
                 {avatarPreview || avatarUrl ? (
                   <Image src={avatarPreview || avatarUrl} alt="Avatar" fill className="object-cover" />
                 ) : (
@@ -143,7 +143,7 @@ function ProfileContent() {
                 <h2 className="text-xl font-bold text-zinc-900">{user.displayName}</h2>
                 <p className="text-sm text-zinc-500">{user.email}</p>
                 {user.roles.includes("SELLER") && (
-                  <span className="mt-2 inline-block rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                  <span className="mt-2 inline-block rounded-md bg-black px-2 py-0.5 text-xs font-medium text-white uppercase tracking-wider">
                     {t.profile.seller_badge}
                   </span>
                 )}
@@ -168,7 +168,7 @@ function ProfileContent() {
                     onChange={(e) => setDisplayName(e.target.value)}
                     required
                   />
-                 <Button type="submit" disabled={loading || uploading} className="w-full bg-emerald-600 hover:bg-emerald-700">
+                 <Button type="submit" disabled={loading || uploading} className="w-full bg-black hover:bg-zinc-800 text-white rounded-md">
                     {loading ? t.profile.saving : t.profile.save_changes}
                   </Button>
               </form>
@@ -178,49 +178,49 @@ function ProfileContent() {
 
         {/* Right Column: Quick Links / Dashboard */}
         <div className="grid gap-4 sm:grid-cols-2">
-            <Link href="/orders" className="group flex flex-col justify-between rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition-all hover:border-emerald-500 hover:shadow-md">
+            <Link href="/orders" className="group flex flex-col justify-between rounded-md border border-zinc-200 bg-white p-6 shadow-none transition-all hover:border-black">
                <div>
-                 <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-blue-600 group-hover:bg-blue-100">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                 <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100 text-black group-hover:bg-zinc-200 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
                  </div>
-                 <h3 className="font-semibold text-zinc-900">{t.profile.my_orders}</h3>
+                 <h3 className="font-semibold text-black uppercase tracking-wider text-sm">{t.profile.my_orders}</h3>
                  <p className="text-sm text-zinc-500 mt-1">{t.profile.my_orders_desc}</p>
                </div>
-               <span className="mt-4 text-sm font-medium text-emerald-600 group-hover:underline">{t.profile.view_details} &rarr;</span>
+               <span className="mt-4 text-xs font-medium text-black underline underline-offset-4 group-hover:text-zinc-600 transition-colors uppercase tracking-widest">{t.profile.view_details}</span>
             </Link>
 
-            <Link href="/cart" className="group flex flex-col justify-between rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition-all hover:border-emerald-500 hover:shadow-md">
+            <Link href="/cart" className="group flex flex-col justify-between rounded-md border border-zinc-200 bg-white p-6 shadow-none transition-all hover:border-black">
                <div>
-                 <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-full bg-amber-50 text-amber-600 group-hover:bg-amber-100">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+                 <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100 text-black group-hover:bg-zinc-200 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
                  </div>
-                 <h3 className="font-semibold text-zinc-900">{t.nav.cart}</h3>
+                 <h3 className="font-semibold text-black uppercase tracking-wider text-sm">{t.nav.cart}</h3>
                  <p className="text-sm text-zinc-500 mt-1">{t.profile.cart_desc}</p>
                </div>
-               <span className="mt-4 text-sm font-medium text-emerald-600 group-hover:underline">{t.profile.go_to_cart} &rarr;</span>
+               <span className="mt-4 text-xs font-medium text-black underline underline-offset-4 group-hover:text-zinc-600 transition-colors uppercase tracking-widest">{t.profile.go_to_cart}</span>
             </Link>
 
-            <Link href="/profile/addresses" className="group flex flex-col justify-between rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition-all hover:border-emerald-500 hover:shadow-md">
+            <Link href="/profile/addresses" className="group flex flex-col justify-between rounded-md border border-zinc-200 bg-white p-6 shadow-none transition-all hover:border-black">
                <div>
-                 <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-full bg-purple-50 text-purple-600 group-hover:bg-purple-100">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                 <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100 text-black group-hover:bg-zinc-200 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
                  </div>
-                 <h3 className="font-semibold text-zinc-900">{t.profile.address_book}</h3>
+                 <h3 className="font-semibold text-black uppercase tracking-wider text-sm">{t.profile.address_book}</h3>
                  <p className="text-sm text-zinc-500 mt-1">{t.profile.address_book_desc}</p>
                </div>
-               <span className="mt-4 text-sm font-medium text-emerald-600 group-hover:underline">{t.profile.view_details} &rarr;</span>
+               <span className="mt-4 text-xs font-medium text-black underline underline-offset-4 group-hover:text-zinc-600 transition-colors uppercase tracking-widest">{t.profile.view_details}</span>
             </Link>
 
              {/* Seller Link */}
-             <Link href="/seller/dashboard" className="group flex flex-col justify-between rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition-all hover:border-emerald-500 hover:shadow-md">
+             <Link href="/seller/dashboard" className="group flex flex-col justify-between rounded-md border border-zinc-200 bg-white p-6 shadow-none transition-all hover:border-black">
                <div>
-                 <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                 <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100 text-black group-hover:bg-zinc-200 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
                  </div>
-                 <h3 className="font-semibold text-zinc-900">{t.profile.seller_channel}</h3>
+                 <h3 className="font-semibold text-black uppercase tracking-wider text-sm">{t.profile.seller_channel}</h3>
                  <p className="text-sm text-zinc-500 mt-1">{t.profile.seller_channel_desc}</p>
                </div>
-               <span className="mt-4 text-sm font-medium text-emerald-600 group-hover:underline">{t.profile.access} &rarr;</span>
+               <span className="mt-4 text-xs font-medium text-black underline underline-offset-4 group-hover:text-zinc-600 transition-colors uppercase tracking-widest">{t.profile.access}</span>
              </Link>
         </div>
       </div>

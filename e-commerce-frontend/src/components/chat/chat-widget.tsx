@@ -138,7 +138,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   const bubbleClass = isImage
     ? "bg-transparent shadow-none p-0"
     : isMine
-      ? "bg-gradient-to-br from-emerald-500 to-emerald-600 text-white px-3 py-2 shadow-lg shadow-emerald-200/60"
+      ? "bg-gradient-to-br from-black to-black text-white px-3 py-2 shadow-lg shadow-zinc-300/60"
       : "bg-white text-zinc-800 border border-zinc-100 px-3 py-2 shadow-sm";
 
   return (
@@ -149,7 +149,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           {showAvatar ? (
             <Avatar className="h-8 w-8 ring-2 ring-white shadow-sm">
               <AvatarImage src={senderAvatar} />
-              <AvatarFallback className="text-[10px] bg-emerald-100 text-emerald-700 font-bold">
+              <AvatarFallback className="text-[10px] bg-zinc-200 text-black font-bold">
                 {senderName?.charAt(0) || <User size={12} />}
               </AvatarFallback>
             </Avatar>
@@ -164,7 +164,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
         style={{ borderRadius: getBorderRadius(), maxWidth: isImage ? "320px" : "100%" }}
       >
         {isImage ? (
-          <a href={message.content} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-xl">
+          <a href={message.content} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-md">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={message.content} alt="Chat attachment" className="max-h-72 w-full object-cover" />
           </a>
@@ -173,7 +173,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
         )}
         {isMine && isLastInGroup && ( // Show status only for my last message in a group
           <div className="mt-1 text-[10px] flex justify-end items-center gap-1">
-            {message.status === 'READ' ? <CheckCheck size={12} className="text-emerald-200" /> : <Check size={12} className="text-emerald-200" />}
+            {message.status === 'READ' ? <CheckCheck size={12} className="text-zinc-300" /> : <Check size={12} className="text-zinc-300" />}
           </div>
         )}
       </div>
@@ -187,10 +187,10 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
 
 const TypingIndicator = () => (
   <div className="flex w-full justify-start mb-2 animate-in fade-in slide-in-from-bottom-1 duration-300 pl-2">
-    <div className="bg-white border border-zinc-100 px-3 py-2.5 rounded-2xl rounded-tl-sm flex items-center gap-1 shadow-sm">
-      <span className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce [animation-delay:-0.32s]"></span>
-      <span className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce [animation-delay:-0.16s]"></span>
-      <span className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce"></span>
+    <div className="bg-white border border-zinc-100 px-3 py-2.5 rounded-md rounded-tl-sm flex items-center gap-1 shadow-sm">
+      <span className="w-1.5 h-1.5 bg-zinc-400 rounded-md animate-bounce [animation-delay:-0.32s]"></span>
+      <span className="w-1.5 h-1.5 bg-zinc-400 rounded-md animate-bounce [animation-delay:-0.16s]"></span>
+      <span className="w-1.5 h-1.5 bg-zinc-400 rounded-md animate-bounce"></span>
     </div>
   </div>
 );
@@ -220,24 +220,24 @@ const ConversationItem: React.FC<{
   return (
     <div
       onClick={onSelect}
-      className={`relative group flex cursor-pointer items-center gap-3 rounded-2xl p-3.5 mx-2 border transition-all duration-200 ${active
-        ? "bg-white border-emerald-200 shadow-[0_12px_40px_-24px_rgba(16,185,129,0.8)]"
-        : "bg-white/80 border-transparent hover:border-emerald-100 hover:shadow-sm"
+      className={`relative group flex cursor-pointer items-center gap-3 rounded-md p-3.5 mx-2 border transition-all duration-200 ${active
+        ? "bg-white border-zinc-300 shadow-[0_12px_40px_-24px_rgba(16,185,129,0.8)]"
+        : "bg-white/80 border-transparent hover:border-zinc-200 hover:shadow-sm"
         }`}
     >
       <span
-        className={`absolute left-0 top-2 bottom-2 w-1 rounded-full transition-all duration-200 ${active || isUnread ? "bg-emerald-500" : "bg-transparent group-hover:bg-emerald-200"
+        className={`absolute left-0 top-2 bottom-2 w-1 rounded-md transition-all duration-200 ${active || isUnread ? "bg-black" : "bg-transparent group-hover:bg-zinc-300"
           }`}
       />
       <div className="relative shrink-0">
-        <Avatar className="h-12 w-12 border-2 border-white shadow-sm group-hover:border-emerald-100 transition-colors">
+        <Avatar className="h-12 w-12 border-2 border-white shadow-sm group-hover:border-zinc-200 transition-colors">
           <AvatarImage src={other?.avatarUrl} />
           <AvatarFallback className="bg-gradient-to-br from-zinc-100 to-zinc-200 text-zinc-600 font-semibold">
             {otherName.trim().charAt(0).toUpperCase() || <User size={20} />}
           </AvatarFallback>
         </Avatar>
         {isOnline && (
-          <span className="absolute bottom-0.5 right-0.5 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-white shadow-sm" />
+          <span className="absolute bottom-0.5 right-0.5 h-3 w-3 rounded-md bg-black ring-2 ring-white shadow-sm" />
         )}
       </div>
 
@@ -250,7 +250,7 @@ const ConversationItem: React.FC<{
             {otherName}
           </h4>
           {last && (
-            <span className={`text-[10px] flex-none ml-2 ${isUnread ? "font-bold text-emerald-600" : "text-zinc-400"}`}>
+            <span className={`text-[10px] flex-none ml-2 ${isUnread ? "font-bold text-black" : "text-zinc-400"}`}>
               {formatTimeShort(last.sentAt)}
             </span>
           )}
@@ -271,7 +271,7 @@ const ConversationItem: React.FC<{
             )}
           </p>
           {isUnread && (
-            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-emerald-500 px-1.5 text-[10px] font-bold text-white shadow-sm">
+            <span className="flex h-5 min-w-5 items-center justify-center rounded-md bg-black px-1.5 text-[10px] font-bold text-white shadow-sm">
               {conversation.unreadCount}
             </span>
           )}
@@ -609,21 +609,21 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
   // --- Views ---
 
   const renderConversationList = () => (
-    <div className="flex h-full flex-col bg-gradient-to-b from-emerald-50/70 via-white to-white">
+    <div className="flex h-full flex-col bg-gradient-to-b from-zinc-100/70 via-white to-white">
       {/* Header */}
-      <div className="relative overflow-hidden px-4 py-4 border-b border-emerald-100/70 bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-600 text-white sticky top-0 z-10 shadow-sm">
+      <div className="relative overflow-hidden px-4 py-4 border-b border-zinc-200/70 bg-gradient-to-r from-black via-black to-black text-white sticky top-0 z-10 shadow-sm">
         <div className="absolute inset-y-0 right-0 w-32 bg-white/10 blur-3xl pointer-events-none" />
         <div className="flex items-center justify-between relative z-10">
           <div className="flex items-center gap-3">
-            <div className="h-11 w-11 rounded-xl bg-white/15 border border-white/20 shadow-inner flex items-center justify-center">
+            <div className="h-11 w-11 rounded-md bg-white/15 border border-white/20 shadow-inner flex items-center justify-center">
               <MessageCircle size={22} className="text-white" />
             </div>
             <div>
               <h1 className="text-xl font-bold leading-tight">{t.chat.chats}</h1>
               <div className="flex items-center gap-2 text-[11px] font-semibold text-white/80">
                 <span
-                  className={`h-2.5 w-2.5 rounded-full ${connectionStatus === "connected"
-                    ? "bg-emerald-200 shadow-[0_0_0_5px_rgba(16,185,129,0.25)]"
+                  className={`h-2.5 w-2.5 rounded-md ${connectionStatus === "connected"
+                    ? "bg-zinc-300 shadow-[0_0_0_5px_rgba(16,185,129,0.25)]"
                     : "bg-amber-200 shadow-[0_0_0_5px_rgba(251,191,36,0.25)]"
                     } animate-pulse`}
                 />
@@ -635,7 +635,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
             <Button
               variant="ghost"
               size="icon"
-              className="h-9 w-9 rounded-full text-white/80 hover:bg-white/10"
+              className="h-9 w-9 rounded-md text-white/80 hover:bg-white/10"
             >
               <MoreHorizontal size={20} />
             </Button>
@@ -643,7 +643,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 rounded-full text-white/80 hover:bg-white/10"
+                className="h-9 w-9 rounded-md text-white/80 hover:bg-white/10"
                 onClick={() => setIsOpen(false)}
               >
                 <Minimize2 size={18} />
@@ -657,11 +657,11 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
       <div className="px-4 py-3">
         <div className="relative group">
           <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-400 group-focus-within:text-emerald-600 transition-colors"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-400 group-focus-within:text-black transition-colors"
             size={16}
           />
           <Input
-            className="h-11 pl-10 rounded-2xl bg-white/80 border border-emerald-100/70 shadow-sm focus:border-emerald-300 focus:bg-white focus:ring-4 focus:ring-emerald-500/15 transition-all text-[14px] placeholder:text-zinc-400"
+            className="h-11 pl-10 rounded-md bg-white/80 border border-zinc-200/70 shadow-sm focus:border-emerald-300 focus:bg-white focus:ring-4 focus:ring-black/15 transition-all text-[14px] placeholder:text-zinc-400"
             placeholder={t.chat.search_placeholder}
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
@@ -672,10 +672,10 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
       {/* List */}
       <div className="flex-1 overflow-y-auto pt-2 pb-1 space-y-2 custom-scrollbar scroll-smooth px-1.5">
         {loadingConversations && conversations.length === 0 ? (
-          <div className="flex justify-center py-8"><Loader2 className="animate-spin text-emerald-500" /></div>
+          <div className="flex justify-center py-8"><Loader2 className="animate-spin text-black" /></div>
         ) : filteredConversations.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-40 text-center px-6">
-            <div className="bg-zinc-50 p-3 rounded-full mb-3">
+            <div className="bg-zinc-50 p-3 rounded-md mb-3">
               <MessageCircle className="text-zinc-300" size={24} />
             </div>
             <p className="text-zinc-500 text-sm font-medium">{t.chat.no_messages}</p>
@@ -708,9 +708,9 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
       </div>
 
       {/* New Chat Input */}
-      <div className="p-4 border-t border-emerald-100/70 bg-white/70 backdrop-blur">
-        <div className="flex items-center gap-2 bg-white p-2 rounded-2xl border border-emerald-100 shadow-sm">
-          <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider px-2 rounded-lg bg-emerald-50 border border-emerald-100">
+      <div className="p-4 border-t border-zinc-200/70 bg-white/70 backdrop-blur">
+        <div className="flex items-center gap-2 bg-white p-2 rounded-md border border-zinc-200 shadow-sm">
+          <span className="text-[10px] font-bold text-black uppercase tracking-wider px-2 rounded-md bg-zinc-100 border border-zinc-200">
             {t.chat.to}
           </span>
           <input
@@ -734,8 +734,8 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
     if (!activeConversationId && !composeTarget) {
       return (
         <div className="flex h-full flex-col items-center justify-center bg-zinc-50/50 text-center p-6">
-          <div className="h-24 w-24 bg-white rounded-full shadow-sm flex items-center justify-center mb-6 ring-1 ring-zinc-100">
-            <MessageCircle size={40} className="text-emerald-500" />
+          <div className="h-24 w-24 bg-white rounded-md shadow-sm flex items-center justify-center mb-6 ring-1 ring-zinc-100">
+            <MessageCircle size={40} className="text-black" />
           </div>
           <h3 className="text-xl font-bold text-zinc-900">{t.chat.welcome_title}</h3>
           <p className="text-zinc-500 text-sm mt-2 max-w-xs leading-relaxed">
@@ -754,13 +754,13 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
     return (
       <div className="flex h-full flex-col bg-gradient-to-b from-slate-50 via-white to-white relative">
         {/* Chat Header */}
-        <div className="flex items-center justify-between px-5 py-4 bg-gradient-to-r from-white via-emerald-50/60 to-white backdrop-blur-md border-b border-emerald-100/70 shadow-sm z-20 sticky top-0">
+        <div className="flex items-center justify-between px-5 py-4 bg-gradient-to-r from-white via-zinc-100/60 to-white backdrop-blur-md border-b border-zinc-200/70 shadow-sm z-20 sticky top-0">
           <div className="flex items-center gap-3">
             {!fullPage && (
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 text-emerald-700 hover:bg-emerald-50 rounded-full -ml-2 border border-emerald-100"
+                className="h-9 w-9 text-black hover:bg-zinc-100 rounded-md -ml-2 border border-zinc-200"
                 onClick={() => {
                   userClearedSelection.current = true;
                   setActiveConversationId(null);
@@ -774,12 +774,12 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
             <div className="relative">
               <Avatar className="h-10 w-10 border border-zinc-100 shadow-sm">
                 <AvatarImage src={otherParticipant?.avatarUrl} />
-                <AvatarFallback className="bg-gradient-to-br from-emerald-100 to-emerald-200 text-emerald-700 font-bold">
+                <AvatarFallback className="bg-gradient-to-br from-zinc-200 to-zinc-300 text-black font-bold">
                   {displayName.trim().charAt(0)}
                 </AvatarFallback>
               </Avatar>
               {isContactOnline && (
-                <span className="absolute bottom-0 right-0 h-3 w-3 bg-emerald-500 border-2 border-white rounded-full shadow-sm"></span>
+                <span className="absolute bottom-0 right-0 h-3 w-3 bg-black border-2 border-white rounded-md shadow-sm"></span>
               )}
             </div>
 
@@ -790,10 +790,10 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
                   {isSeller && <span className="text-[9px] bg-orange-50 text-orange-600 px-1.5 py-0.5 rounded-md font-extrabold tracking-wide border border-orange-100">{t.profile.seller_badge.toUpperCase()}</span>}
                 </span>
               </div>
-              <div className="flex items-center gap-2 text-[11px] font-semibold text-emerald-700">
+              <div className="flex items-center gap-2 text-[11px] font-semibold text-black">
                 <span
-                  className={`h-2.5 w-2.5 rounded-full ${isContactOnline
-                    ? "bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.18)]"
+                  className={`h-2.5 w-2.5 rounded-md ${isContactOnline
+                    ? "bg-black shadow-[0_0_0_4px_rgba(16,185,129,0.18)]"
                     : "bg-amber-400 shadow-[0_0_0_4px_rgba(251,191,36,0.24)]"
                     } animate-pulse`}
                 />
@@ -803,11 +803,11 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
           </div>
 
           {!fullPage && (
-            <div className="flex items-center text-emerald-600">
+            <div className="flex items-center text-black">
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 rounded-full hover:bg-red-50 text-zinc-400 hover:text-red-500 transition-colors border border-zinc-200"
+                className="h-9 w-9 rounded-md hover:bg-red-50 text-zinc-400 hover:text-red-500 transition-colors border border-zinc-200"
                 onClick={() => setIsOpen(false)}
               >
                 <X size={20} />
@@ -826,12 +826,12 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
         >
           <div className="max-w-3xl mx-auto w-full space-y-3">
             {loadingMessages && messages.length === 0 ? (
-              <div className="flex h-full items-center justify-center"><Loader2 className="animate-spin text-emerald-500 h-8 w-8" /></div>
+              <div className="flex h-full items-center justify-center"><Loader2 className="animate-spin text-black h-8 w-8" /></div>
             ) : (
               <>
                 {/* Initial User Info Header */}
                 <div className="flex flex-col items-center py-6 gap-3 opacity-90 mb-3">
-                  <Avatar className="h-20 w-20 ring-4 ring-white shadow-md border border-emerald-50">
+                  <Avatar className="h-20 w-20 ring-4 ring-white shadow-md border border-zinc-100">
                     <AvatarImage src={otherParticipant?.avatarUrl} />
                     <AvatarFallback className="text-2xl bg-zinc-100 text-zinc-400">
                       {displayName.trim().charAt(0)}
@@ -875,13 +875,13 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
         </div>
 
         {/* Input Area */}
-        <div className="p-4 bg-white/95 border-t border-emerald-100/80 shadow-[0_-10px_30px_-28px_rgba(0,0,0,0.25)] backdrop-blur">
+        <div className="p-4 bg-white/95 border-t border-zinc-200/80 shadow-[0_-10px_30px_-28px_rgba(0,0,0,0.25)] backdrop-blur">
           <div className="flex items-end gap-2 max-w-full">
-            <div className="flex gap-1 pb-2 text-emerald-600 shrink-0">
+            <div className="flex gap-1 pb-2 text-black shrink-0">
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-10 w-10 rounded-full hover:bg-emerald-50 transition-colors border border-emerald-100"
+                className="h-10 w-10 rounded-md hover:bg-zinc-100 transition-colors border border-zinc-200"
                 onClick={handleSelectImage}
                 disabled={uploadingImage}
               >
@@ -892,7 +892,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
             <div className="flex-1 relative min-w-0">
               <Input
                 ref={inputRef}
-                className="w-full rounded-3xl bg-emerald-50/60 border border-emerald-100 py-2.5 px-4 focus:bg-white focus:border-emerald-300 focus:ring-4 focus:ring-emerald-500/15 transition-all shadow-sm min-h-[44px] max-h-[120px] text-[15px] resize-none overflow-hidden"
+                className="w-full rounded-md bg-zinc-100/60 border border-zinc-200 py-2.5 px-4 focus:bg-white focus:border-emerald-300 focus:ring-4 focus:ring-black/15 transition-all shadow-sm min-h-[44px] max-h-[120px] text-[15px] resize-none overflow-hidden"
                 placeholder={t.chat.type_message}
                 value={draft}
                 onChange={(e) => handleTyping(e.target.value)}
@@ -911,8 +911,8 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
               variant="ghost"
               onClick={handleSend}
               disabled={!draft.trim() && !uploadingImage}
-              className={`h-11 w-11 rounded-full mb-0.5 shrink-0 transition-all duration-300 ${draft.trim()
-                ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white hover:shadow-lg hover:-translate-y-0.5"
+              className={`h-11 w-11 rounded-md mb-0.5 shrink-0 transition-all duration-300 ${draft.trim()
+                ? "bg-gradient-to-r from-black to-black text-white hover:shadow-lg hover:-translate-y-0.5"
                 : "bg-white text-zinc-300 border border-zinc-200 hover:bg-zinc-50"
                 }`}
             >
@@ -936,8 +936,8 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
 
   if (fullPage) {
     return (
-      <div className="mx-auto max-w-7xl h-[calc(100vh-80px)] p-4 md:p-6 bg-gradient-to-br from-emerald-50 via-white to-slate-50 rounded-3xl shadow-[0_30px_90px_-60px_rgba(16,185,129,0.6)] border border-emerald-50">
-        <div className="flex h-full overflow-hidden rounded-2xl border border-zinc-100 shadow-2xl bg-white/90 backdrop-blur-sm ring-1 ring-black/5">
+      <div className="mx-auto max-w-7xl h-[calc(100vh-80px)] p-4 md:p-6 bg-gradient-to-br from-zinc-100 via-white to-slate-50 rounded-md shadow-[0_30px_90px_-60px_rgba(16,185,129,0.6)] border border-zinc-100">
+        <div className="flex h-full overflow-hidden rounded-md border border-zinc-100 shadow-2xl bg-white/90 backdrop-blur-sm ring-1 ring-black/5">
           <div className="w-[380px] border-r border-zinc-100 flex flex-col bg-white/90 backdrop-blur">
             {renderConversationList()}
           </div>
@@ -956,18 +956,18 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
       {!isOpen && (
         <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3 group">
           {unreadTotal > 0 && (
-            <div className="bg-white px-4 py-2 rounded-xl shadow-lg border border-zinc-100 mb-2 animate-in slide-in-from-bottom-2 fade-in duration-300 origin-bottom-right">
+            <div className="bg-white px-4 py-2 rounded-md shadow-lg border border-zinc-100 mb-2 animate-in slide-in-from-bottom-2 fade-in duration-300 origin-bottom-right">
               <p className="text-sm font-semibold text-zinc-800" dangerouslySetInnerHTML={{ __html: t.chat.new_messages.replace("{{count}}", unreadTotal.toString()) }} />
             </div>
           )}
           <Button
             onClick={() => setIsOpen(true)}
             variant="primary"
-            className="relative h-14 w-14 rounded-full shadow-xl bg-gradient-to-br from-emerald-500 to-emerald-600 hover:shadow-2xl hover:scale-110 transition-all duration-300 border border-emerald-400/30 focus:ring-0 focus:ring-offset-0"
+            className="relative h-14 w-14 rounded-md shadow-xl bg-gradient-to-br from-black to-black hover:shadow-2xl hover:scale-110 transition-all duration-300 border border-emerald-400/30 focus:ring-0 focus:ring-offset-0"
           >
             <MessageCircle size={26} className="text-white" />
             {unreadTotal > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 ring-2 ring-white/90 text-[11px] font-bold text-white shadow-md">
+              <span className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-md bg-red-500 ring-2 ring-white/90 text-[11px] font-bold text-white shadow-md">
                 {unreadTotal}
               </span>
             )}
@@ -978,7 +978,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
       {/* Widget Window */}
       <div
         className={`
-                fixed bottom-0 right-0 z-50 flex flex-col bg-white/95 backdrop-blur-lg shadow-[0_20px_60px_-35px_rgba(0,0,0,0.4)] rounded-t-2xl overflow-hidden border border-emerald-100/80
+                fixed bottom-0 right-0 z-50 flex flex-col bg-white/95 backdrop-blur-lg shadow-[0_20px_60px_-35px_rgba(0,0,0,0.4)] rounded-t-2xl overflow-hidden border border-zinc-200/80
                 transition-all duration-400 cubic-bezier(0.16, 1, 0.3, 1) origin-bottom-right
                 ${isOpen ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-12 scale-95 pointer-events-none"}
             `}
@@ -993,14 +993,14 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
         }}
       >
         {!isAuthenticated ? (
-          <div className="flex flex-col h-full bg-gradient-to-b from-emerald-50 to-white">
+          <div className="flex flex-col h-full bg-gradient-to-b from-zinc-100 to-white">
             <div className="flex justify-between items-center p-4">
               <span className="font-bold text-emerald-800 tracking-tight text-lg">{t.chat.support_title}</span>
-              <Button variant="ghost" size="sm" onClick={() => setIsOpen(false)} className="hover:bg-black/5 rounded-full h-8 w-8 p-0"><X size={20} /></Button>
+              <Button variant="ghost" size="sm" onClick={() => setIsOpen(false)} className="hover:bg-black/5 rounded-md h-8 w-8 p-0"><X size={20} /></Button>
             </div>
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center gap-6">
-              <div className="h-20 w-20 bg-white rounded-2xl shadow-lg flex items-center justify-center rotate-3 ring-1 ring-emerald-100">
-                <MessageCircle size={40} className="text-emerald-500 fill-emerald-50" />
+              <div className="h-20 w-20 bg-white rounded-md shadow-lg flex items-center justify-center rotate-3 ring-1 ring-zinc-200">
+                <MessageCircle size={40} className="text-black fill-zinc-100" />
               </div>
               <div className="space-y-2">
                 <h3 className="font-bold text-xl text-zinc-900">{t.chat.hello}</h3>
@@ -1008,7 +1008,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ fullPage = false, initia
                   {t.chat.login_prompt}
                 </p>
               </div>
-              <Button className="w-full max-w-[200px] bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-200" onClick={() => router.push(loginHref)}>
+              <Button className="w-full max-w-[200px] bg-black hover:bg-black shadow-lg shadow-zinc-300" onClick={() => router.push(loginHref)}>
                 {t.chat.login_now}
               </Button>
             </div>

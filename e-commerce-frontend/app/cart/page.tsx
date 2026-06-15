@@ -136,7 +136,7 @@ function CartContent() {
             </p>
         </div>
         <Link href="/products">
-          <Button size="lg" className="gap-2 bg-emerald-600 hover:bg-emerald-700 font-semibold shadow-lg shadow-emerald-600/20">
+          <Button size="lg" className="gap-2 bg-black hover:bg-zinc-800 font-semibold shadow-none rounded-md text-white">
              <ArrowLeft size={16} />
              {t.cart.continue_shopping}
           </Button>
@@ -154,7 +154,7 @@ function CartContent() {
                  <span className="text-sm font-medium text-zinc-500">({cart.items.length} {t.nav.products.toLowerCase()})</span>
             </div>
             <Link href="/products">
-                <Button variant="ghost" className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 -ml-4 sm:ml-0">
+                <Button variant="ghost" className="text-black hover:text-zinc-600 hover:bg-zinc-100 rounded-md -ml-4 sm:ml-0">
                     <ArrowLeft size={16} className="mr-2" />
                     {t.cart.continue_shopping}
                 </Button>

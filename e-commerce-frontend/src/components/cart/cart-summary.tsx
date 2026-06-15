@@ -23,9 +23,9 @@ export const CartSummary: React.FC<Props> = ({ cart, onCheckout, actionLabel, di
   );
 
   return (
-    <div className="sticky top-24 rounded-2xl border border-zinc-100 bg-white p-6 shadow-lg shadow-zinc-200/50">
+    <div className="sticky top-24 rounded-md border border-zinc-200 bg-white p-6 shadow-none">
       <h3 className="flex items-center gap-2 text-lg font-bold text-zinc-900 mb-6">
-        <Receipt className="h-5 w-5 text-emerald-600" />
+        <Receipt className="h-5 w-5 text-black" />
         {t.cart.summary_title}
       </h3>
 
@@ -40,9 +40,9 @@ export const CartSummary: React.FC<Props> = ({ cart, onCheckout, actionLabel, di
         <div className="flex gap-2">
             <div className="relative flex-1">
                 <Tag className="absolute left-2.5 top-2.5 h-4 w-4 text-zinc-400" />
-                <Input placeholder={t.cart.coupon_placeholder} className="pl-9 bg-zinc-50 border-zinc-200 focus-visible:ring-emerald-500" />
+                <Input placeholder={t.cart.coupon_placeholder} className="pl-9 bg-transparent border-zinc-300 focus-visible:ring-black rounded-md" />
             </div>
-            <Button variant="outline" size="sm" className="shrink-0 text-emerald-700 border-emerald-200 hover:bg-emerald-50">
+            <Button variant="outline" size="sm" className="shrink-0 text-black border-zinc-300 hover:bg-zinc-100 rounded-md">
                 {t.cart.apply}
             </Button>
         </div>
@@ -56,7 +56,7 @@ export const CartSummary: React.FC<Props> = ({ cart, onCheckout, actionLabel, di
             </div>
             
             {cart.discountTotal !== undefined && cart.discountTotal > 0 && (
-            <div className="flex justify-between items-center text-emerald-600">
+            <div className="flex justify-between items-center text-zinc-900">
                 <dt className="flex items-center gap-1.5"><Tag size={14} /> {t.cart.discount}</dt>
                 <dd>-{formatCurrency(cart.discountTotal ?? 0, cart.currency ?? "USD")}</dd>
             </div>
@@ -71,7 +71,7 @@ export const CartSummary: React.FC<Props> = ({ cart, onCheckout, actionLabel, di
             
             <div className="flex justify-between items-end pt-2">
             <dt className="text-base font-bold text-zinc-900">{t.cart.total}</dt>
-            <dd className="text-2xl font-bold text-emerald-700">
+            <dd className="text-2xl font-bold text-black">
                 {formatCurrency(cart.total, cart.currency ?? "USD")}
             </dd>
             </div>
@@ -84,7 +84,7 @@ export const CartSummary: React.FC<Props> = ({ cart, onCheckout, actionLabel, di
       {onCheckout && (
         <div className="mt-8 space-y-4">
             <Button
-            className="w-full h-12 text-base bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 shadow-lg shadow-emerald-600/20 transition-all hover:-translate-y-0.5"
+            className="w-full h-14 text-sm font-bold uppercase tracking-widest bg-black hover:bg-zinc-800 text-white rounded-md disabled:opacity-60 transition-colors"
             onClick={onCheckout}
             disabled={disableAction}
             >
@@ -92,8 +92,8 @@ export const CartSummary: React.FC<Props> = ({ cart, onCheckout, actionLabel, di
             <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
             
-            <div className="flex items-center justify-center gap-2 text-xs text-zinc-400 bg-zinc-50 py-2 rounded-lg">
-                <ShieldCheck size={14} className="text-emerald-500" />
+            <div className="flex items-center justify-center gap-2 text-xs text-zinc-500 bg-transparent py-2 rounded-md border border-zinc-100 mt-2">
+                <ShieldCheck size={14} className="text-black" />
                 {t.cart.secure_payment}
             </div>
         </div>

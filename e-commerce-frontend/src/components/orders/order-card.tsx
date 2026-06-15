@@ -22,7 +22,7 @@ export const OrderCard: React.FC<{ order: Order }> = ({ order }) => {
   return (
     <Link
       href={`/orders/${order.id}`}
-      className="block rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+      className="block rounded-md border border-zinc-200 bg-white p-4 shadow-none transition hover:-translate-y-0.5 hover:border-black"
     >
       <div className="flex items-center justify-between">
         <div className="flex flex-col gap-1">

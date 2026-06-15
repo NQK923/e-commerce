@@ -15,7 +15,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
       <input
         ref={ref}
         className={cx(
-          "w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10",
+          "w-full rounded-md border border-zinc-300 bg-transparent px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black",
           error && "border-rose-400 focus:ring-rose-200",
           className,
         )}

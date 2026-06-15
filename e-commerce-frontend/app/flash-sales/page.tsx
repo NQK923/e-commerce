@@ -72,8 +72,8 @@ export default function FlashSalesPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center gap-3 mb-8">
-          <div className="p-3 bg-red-100 rounded-full">
-              <Zap className="h-8 w-8 text-red-600 fill-red-600 animate-pulse" />
+          <div className="p-3 bg-zinc-100 rounded-md">
+              <Zap className="h-8 w-8 text-black fill-black animate-pulse" />
           </div>
           <div>
               <h1 className="text-3xl font-bold text-zinc-900">{t.flash_sales.title}</h1>
@@ -85,7 +85,7 @@ export default function FlashSalesPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {[...Array(4)].map((_, i) => (
                   <div key={i} className="flex flex-col space-y-3">
-                      <Skeleton className="h-[250px] w-full rounded-xl" />
+                      <Skeleton className="h-[250px] w-full rounded-md" />
                       <div className="space-y-2">
                           <Skeleton className="h-4 w-[250px]" />
                           <Skeleton className="h-4 w-[200px]" />
@@ -96,14 +96,14 @@ export default function FlashSalesPage() {
       ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {sales.length === 0 ? (
-                <div className="col-span-full py-12 text-center text-zinc-500 bg-white rounded-xl border border-dashed">
+                <div className="col-span-full py-12 text-center text-zinc-500 bg-white rounded-md border border-dashed">
                     {t.flash_sales.empty}
                 </div>
             ) : (
                 sales.map(sale => {
                     const progress = ((sale.totalQuantity - sale.remainingQuantity) / sale.totalQuantity) * 100;
                     return (
-                      <Card key={sale.id.value} className="overflow-hidden border-zinc-200 hover:shadow-lg transition-shadow bg-white flex flex-col">
+                      <Card key={sale.id.value} className="overflow-hidden border-zinc-200 hover:border-black shadow-none hover:shadow-none transition-colors bg-white flex flex-col rounded-md">
                         <div className="relative aspect-square bg-zinc-100 flex items-center justify-center">
                             {sale.product?.images?.[0] ? (
                                 <Image 
@@ -116,7 +116,7 @@ export default function FlashSalesPage() {
                                 <div className="text-zinc-400 font-medium">{t.common.no_image}</div>
                             )}
                             <div className="absolute top-3 left-3">
-                                <Badge className="bg-red-600 text-white border-red-600 animate-pulse">
+                                <Badge className="bg-black text-white border-black rounded-md uppercase tracking-wider text-[10px]">
                                     {t.flash_sales.on_sale_badge}
                                 </Badge>
                             </div>
@@ -128,7 +128,7 @@ export default function FlashSalesPage() {
                             </h3>
                             
                             <div className="flex items-baseline gap-2 mb-3">
-                                <span className="text-xl font-bold text-red-600">
+                                <span className="text-xl font-bold text-black">
                                     {formatCurrency(sale.price.amount, sale.price.currency)}
                                 </span>
                                 <span className="text-sm text-zinc-400 line-through">
@@ -141,9 +141,9 @@ export default function FlashSalesPage() {
                                     <span>{t.flash_sales.sold.replace("{{count}}", (sale.totalQuantity - sale.remainingQuantity).toString())}</span>
                                     <span>{t.flash_sales.remaining.replace("{{count}}", sale.remainingQuantity.toString())}</span>
                                 </div>
-                                <div className="h-2 w-full bg-zinc-100 rounded-full overflow-hidden">
+                                <div className="h-2 w-full bg-zinc-100 rounded-md overflow-hidden border border-zinc-200">
                                     <div 
-                                        className="h-full bg-red-500 transition-all duration-500" 
+                                        className="h-full bg-black transition-all duration-500" 
                                         style={{ width: `${progress}%` }} 
                                     />
                                 </div>
@@ -158,7 +158,7 @@ export default function FlashSalesPage() {
 
                             <Button 
                                 onClick={() => handleBuy(sale)}
-                                className="mt-4 w-full bg-red-600 hover:bg-red-700 text-white font-semibold"
+                                className="mt-4 w-full bg-black hover:bg-zinc-800 text-white font-semibold rounded-md uppercase tracking-widest text-xs h-12"
                                 disabled={sale.remainingQuantity <= 0}
                             >
                                 {sale.remainingQuantity > 0 ? t.flash_sales.buy_now : t.flash_sales.sold_out}

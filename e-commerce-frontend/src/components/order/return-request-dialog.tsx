@@ -60,20 +60,20 @@ export function ReturnRequestDialog({ orderId, isOpen, onClose, onSuccess }: Ret
             />
 
             {/* Dialog */}
-            <div className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl">
+            <div className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-md border border-zinc-200 bg-white p-6 shadow-2xl">
                 {/* Header */}
                 <div className="mb-6 flex items-center justify-between">
                     <h2 className="text-xl font-bold text-zinc-900">Yêu cầu hoàn trả</h2>
                     <button
                         onClick={onClose}
-                        className="rounded-lg p-2 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900"
+                        className="rounded-md p-2 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900"
                     >
                         <X size={20} />
                     </button>
                 </div>
 
                 {/* Alert */}
-                <div className="mb-6 flex gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4">
+                <div className="mb-6 flex gap-3 rounded-md border border-amber-200 bg-amber-50 p-4">
                     <AlertCircle size={20} className="shrink-0 text-amber-600" />
                     <p className="text-sm text-amber-800">
                         Yêu cầu hoàn trả sẽ được xem xét trong vòng 24-48 giờ. Vui lòng cung cấp thông tin chi tiết để hỗ trợ nhanh chóng.
@@ -90,7 +90,7 @@ export function ReturnRequestDialog({ orderId, isOpen, onClose, onSuccess }: Ret
                         <select
                             value={reason}
                             onChange={(e) => setReason(e.target.value)}
-                            className="w-full rounded-lg border border-zinc-300 bg-white px-4 py-2.5 text-sm outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                            className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2.5 text-sm outline-none transition-colors focus:border-black focus:ring-1 focus:ring-black"
                             required
                         >
                             {RETURN_REASONS.map((r) => (
@@ -109,7 +109,7 @@ export function ReturnRequestDialog({ orderId, isOpen, onClose, onSuccess }: Ret
                         <textarea
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
-                            className="w-full rounded-lg border border-zinc-300 bg-white px-4 py-2.5 text-sm outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                            className="w-full rounded-md border border-zinc-300 bg-white px-4 py-2.5 text-sm outline-none transition-colors focus:border-black focus:ring-1 focus:ring-black"
                             rows={4}
                             placeholder="Mô tả vấn đề gặp phải với sản phẩm..."
                             required
@@ -123,7 +123,7 @@ export function ReturnRequestDialog({ orderId, isOpen, onClose, onSuccess }: Ret
                         <Button
                             type="button"
                             variant="outline"
-                            className="flex-1"
+                            className="flex-1 rounded-md"
                             onClick={onClose}
                             disabled={loading}
                         >
@@ -131,7 +131,7 @@ export function ReturnRequestDialog({ orderId, isOpen, onClose, onSuccess }: Ret
                         </Button>
                         <Button
                             type="submit"
-                            className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                            className="flex-1 bg-black text-white hover:bg-zinc-800 rounded-md uppercase tracking-wider"
                             disabled={loading}
                         >
                             {loading ? 'Đang gửi...' : 'Gửi yêu cầu'}

@@ -11,7 +11,7 @@ import { config } from "@/src/config/env";
 import { useTranslation } from "@/src/providers/language-provider";
 import { Spinner } from "@/src/components/ui/spinner";
 import { AuthLayout } from "@/src/components/auth/auth-layout";
-import { Chrome, Facebook, ArrowRight } from "lucide-react";
+import { Chrome, ArrowRight } from "lucide-react";
 
 function LoginContent() {
   const router = useRouter();
@@ -98,7 +98,7 @@ function LoginContent() {
             className="h-10"
           />
           <div className="flex justify-end">
-            <Link href="/forgot-password" className="text-xs font-medium text-emerald-600 hover:text-emerald-500">
+            <Link href="/forgot-password" className="text-xs font-medium text-zinc-500 hover:text-black hover:underline">
               {t.auth.forgot_password_link}
             </Link>
           </div>
@@ -107,7 +107,7 @@ function LoginContent() {
         <Button
           type="submit"
           disabled={loading}
-          className="w-full h-10 bg-emerald-600 hover:bg-emerald-700 text-sm font-semibold shadow-lg shadow-emerald-600/20"
+          className="w-full h-12 bg-black hover:bg-zinc-800 text-white text-sm font-semibold rounded-md"
         >
           {loading ? <Spinner size="sm" className="mr-2 text-white" /> : null}
           {loading ? t.auth.signing_in : t.auth.login_button}
@@ -125,7 +125,7 @@ function LoginContent() {
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-3">
+        <div className="mt-4 grid grid-cols-1 gap-3">
           <Button
             variant="outline"
             onClick={() => socialRedirect("google")}
@@ -134,20 +134,12 @@ function LoginContent() {
             <Chrome size={16} className="mr-2" />
             Google
           </Button>
-          <Button
-            variant="outline"
-            onClick={() => socialRedirect("facebook")}
-            className="h-10 text-xs border-zinc-200 hover:bg-zinc-50 hover:text-zinc-900"
-          >
-            <Facebook size={16} className="mr-2" />
-            Facebook
-          </Button>
         </div>
       </div>
 
       <p className="mt-6 text-center text-xs text-zinc-600">
         {t.auth.no_account}{" "}
-        <Link href="/register" className="font-semibold text-emerald-600 hover:text-emerald-500 hover:underline transition-all">
+        <Link href="/register" className="font-semibold text-black hover:underline transition-all">
           {t.auth.create_one}
         </Link>
       </p>

@@ -39,7 +39,7 @@ export const CartItemCard: React.FC<Props> = ({ item, onQuantityChange, onRemove
   };
 
   return (
-    <div className="group relative flex flex-col sm:flex-row gap-5 rounded-2xl border border-zinc-100 bg-white p-4 shadow-sm transition-all hover:shadow-md hover:border-emerald-100">
+    <div className="group relative flex flex-col sm:flex-row gap-5 rounded-md border border-zinc-200 bg-white p-4 shadow-none transition-colors hover:border-black">
       {/* Selection & Image */}
       <div className="flex items-start gap-4">
         {selectable && (
@@ -47,11 +47,11 @@ export const CartItemCard: React.FC<Props> = ({ item, onQuantityChange, onRemove
              <Checkbox
                 checked={selected}
                 onCheckedChange={(v) => onSelectChange?.(!!v)}
-                className="h-5 w-5 border-zinc-300 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
+                className="h-5 w-5 rounded-md border-zinc-300 data-[state=checked]:bg-black data-[state=checked]:border-black"
               />
           </div>
         )}
-        <Link href={`/products/${item.product.id}`} className="relative h-28 w-24 shrink-0 overflow-hidden rounded-xl bg-zinc-50 border border-zinc-100 group-hover:border-emerald-200 transition-colors">
+        <Link href={`/products/${item.product.id}`} className="relative h-28 w-24 shrink-0 overflow-hidden rounded-md bg-zinc-50 border border-zinc-100 group-hover:border-black transition-colors">
           {image ? (
             <Image
               src={image.url}
@@ -72,7 +72,7 @@ export const CartItemCard: React.FC<Props> = ({ item, onQuantityChange, onRemove
       <div className="flex flex-1 flex-col justify-between gap-3 min-w-0">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
           <div className="space-y-1.5 pr-8">
-            <Link href={`/products/${item.product.id}`} className="text-base font-medium text-zinc-900 hover:text-emerald-700 transition-colors line-clamp-2" title={item.product.name}>
+            <Link href={`/products/${item.product.id}`} className="text-base font-medium text-black hover:underline underline-offset-4 transition-all line-clamp-2" title={item.product.name}>
               {item.product.name}
             </Link>
             
@@ -84,7 +84,7 @@ export const CartItemCard: React.FC<Props> = ({ item, onQuantityChange, onRemove
                             value={currentVariantSku || ''} 
                             onChange={handleVariantChange}
                             disabled={!onVariantChange}
-                            className="appearance-none cursor-pointer rounded-lg bg-zinc-50 border border-zinc-200 py-1 pl-2.5 pr-8 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:border-zinc-300 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                            className="appearance-none cursor-pointer rounded-md bg-zinc-50 border border-zinc-200 py-1 pl-2.5 pr-8 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:border-zinc-300 focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
                         >
                             {item.product.variants?.map((v) => (
                                 <option key={v.sku} value={v.sku}>
@@ -97,7 +97,7 @@ export const CartItemCard: React.FC<Props> = ({ item, onQuantityChange, onRemove
                 ) : (
                    null
                 )}
-                 {item.product.flashSaleEndAt && <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-200 border-0 text-[10px] px-2 py-0.5">{t.product.flash_sale}</Badge>}
+                 {item.product.flashSaleEndAt && <Badge className="bg-black text-white hover:bg-zinc-800 rounded-md border-0 text-[10px] px-2 py-0.5 uppercase tracking-wider">{t.product.flash_sale}</Badge>}
             </div>
           </div>
           
@@ -127,7 +127,7 @@ export const CartItemCard: React.FC<Props> = ({ item, onQuantityChange, onRemove
           <div className="flex flex-col items-end">
              {/* Subtotal */}
              <span className="text-xs text-zinc-500 font-medium">Thành tiền</span>
-             <span className="text-lg font-bold text-emerald-700">
+             <span className="text-lg font-bold text-black">
                {formatCurrency(item.subtotal, item.product.currency ?? "USD")}
              </span>
           </div>

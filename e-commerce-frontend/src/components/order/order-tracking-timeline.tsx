@@ -74,7 +74,7 @@ export function OrderTrackingTimeline({
 
     if (isCancelled) {
         return (
-            <div className="rounded-xl border border-red-200 bg-red-50 p-6">
+            <div className="rounded-md border border-red-200 bg-red-50 p-6">
                 <div className="flex items-center gap-3">
                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 text-red-600">
                         <XCircle size={24} />
@@ -93,7 +93,7 @@ export function OrderTrackingTimeline({
     }
 
     return (
-        <div className="rounded-xl border border-zinc-200 bg-white p-6">
+        <div className="rounded-md border border-zinc-200 bg-white p-6">
             <h3 className="text-lg font-semibold text-zinc-900 mb-6">Theo dõi đơn hàng</h3>
 
             <div className="relative">
@@ -128,7 +128,7 @@ export function OrderTrackingTimeline({
                                         {step.label}
                                     </h4>
                                     {step.active && (
-                                        <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                                        <span className="rounded-md bg-black px-2 py-0.5 text-xs font-medium text-white">
                                             Hiện tại
                                         </span>
                                     )}
@@ -156,7 +156,7 @@ export function OrderTrackingTimeline({
             </div>
 
             {isReturned && (
-                <div className="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-4">
+                <div className="mt-6 rounded-md border border-amber-200 bg-amber-50 p-4">
                     <div className="flex items-center gap-2 text-amber-800">
                         <Circle size={16} />
                         <span className="font-medium">Đơn hàng đã được hoàn trả</span>

@@ -169,7 +169,7 @@ export default function OrderDetailPage() {
       <div className="mx-auto flex max-w-3xl flex-col items-center gap-3 px-4 py-10 text-center">
         <p className="text-lg font-semibold text-black">{t.orders.load_failed}</p>
         <p className="text-sm text-zinc-600">{error}</p>
-        <Button variant="secondary" onClick={loadOrder}>
+        <Button variant="secondary" onClick={loadOrder} className="rounded-md">
           {t.orders.retry}
         </Button>
       </div>
@@ -204,13 +204,13 @@ export default function OrderDetailPage() {
       />
 
       <div className="grid gap-6 lg:grid-cols-[2fr,1fr]">
-        <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+        <div className="rounded-md border border-zinc-200 bg-white p-5 shadow-none">
           <h2 className="text-lg font-semibold text-black">{t.orders.items}</h2>
           <div className="mt-4 space-y-3">
             {order.items.map((item) => (
-              <div key={item.id} className="flex items-center justify-between rounded-xl border border-zinc-200 p-3">
+              <div key={item.id} className="flex items-center justify-between rounded-md border border-zinc-200 p-3">
                 <div className="flex items-center gap-3">
-                  <div className="relative h-14 w-14 overflow-hidden rounded-lg border border-zinc-100 bg-zinc-50">
+                  <div className="relative h-14 w-14 overflow-hidden rounded-md border border-zinc-100 bg-zinc-50">
                     {productDetails[item.productId]?.image ? (
                       <Image
                         src={productDetails[item.productId]!.image!}
@@ -245,7 +245,7 @@ export default function OrderDetailPage() {
           </div>
         </div>
         <div className="space-y-4">
-          <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+          <div className="rounded-md border border-zinc-200 bg-white p-5 shadow-none">
             <h3 className="text-lg font-semibold text-black">{t.orders.payment}</h3>
             <p className="mt-2 text-sm text-zinc-600">{t.orders.status}: {order.status}</p>
             <p className="text-sm text-zinc-600">
@@ -258,7 +258,7 @@ export default function OrderDetailPage() {
             ) : null}
           </div>
 
-          <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm space-y-2">
+          <div className="rounded-md border border-zinc-200 bg-white p-5 shadow-none space-y-2">
             <h3 className="text-lg font-semibold text-black">{t.orders.shipment}</h3>
             {order.trackingNumber ? (
               <div className="text-sm text-zinc-700 space-y-1">
@@ -274,18 +274,18 @@ export default function OrderDetailPage() {
             {isAdmin && order.status === "PAID" ? (
               <div className="space-y-2 pt-2 border-t border-zinc-100">
                 <input
-                  className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+                  className="w-full rounded-md border border-zinc-200 px-3 py-2 text-sm focus:border-black focus:ring-black"
                   placeholder={t.orders.tracking_number_placeholder}
                   value={trackingNumber}
                   onChange={(e) => setTrackingNumber(e.target.value)}
                 />
                 <input
-                  className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+                  className="w-full rounded-md border border-zinc-200 px-3 py-2 text-sm focus:border-black focus:ring-black"
                   placeholder={t.orders.carrier_placeholder}
                   value={trackingCarrier}
                   onChange={(e) => setTrackingCarrier(e.target.value)}
                 />
-                <Button onClick={handleShip} disabled={working || !trackingNumber}>
+                <Button onClick={handleShip} disabled={working || !trackingNumber} className="rounded-md bg-black text-white hover:bg-zinc-800">
                   {working ? <Spinner className="mr-2 h-4 w-4" /> : null}
                   {t.orders.start_shipping}
                 </Button>
@@ -293,14 +293,14 @@ export default function OrderDetailPage() {
             ) : null}
 
             {isAdmin && order.status === "SHIPPING" ? (
-              <Button onClick={handleMarkDelivered} disabled={working}>
+              <Button onClick={handleMarkDelivered} disabled={working} className="rounded-md bg-black text-white hover:bg-zinc-800">
                 {working ? <Spinner className="mr-2 h-4 w-4" /> : null}
                 {t.orders.mark_delivered}
               </Button>
             ) : null}
           </div>
 
-          <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm space-y-2">
+          <div className="rounded-md border border-zinc-200 bg-white p-5 shadow-none space-y-2">
             <h3 className="text-lg font-semibold text-black">{t.orders.returns_refunds}</h3>
             <div className="text-sm text-zinc-700 space-y-1">
               <p>{t.orders.return_status.replace("{{status}}", order.returnStatus ?? "NONE")}</p>
@@ -312,7 +312,7 @@ export default function OrderDetailPage() {
               <div className="pt-2 border-t border-zinc-100">
                 <Button
                   onClick={() => setShowReturnDialog(true)}
-                  className="w-full bg-amber-600 hover:bg-amber-700"
+                  className="w-full bg-black text-white hover:bg-zinc-800 rounded-md uppercase tracking-wider"
                 >
                   {t.orders.request_return}
                 </Button>
@@ -322,23 +322,23 @@ export default function OrderDetailPage() {
             {isAdmin && order.returnStatus === "REQUESTED" ? (
               <div className="space-y-2 pt-2 border-t border-zinc-100">
                 <input
-                  className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+                  className="w-full rounded-md border border-zinc-200 px-3 py-2 text-sm focus:border-black focus:ring-black"
                   placeholder={t.orders.refund_amount_placeholder.replace("{{currency}}", order.currency ?? "USD")}
                   value={refundAmount}
                   onChange={(e) => setRefundAmount(e.target.value)}
                 />
                 <textarea
-                  className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+                  className="w-full rounded-md border border-zinc-200 px-3 py-2 text-sm focus:border-black focus:ring-black"
                   placeholder={t.orders.resolution_note_placeholder}
                   value={returnNote}
                   onChange={(e) => setReturnNote(e.target.value)}
                 />
                 <div className="flex gap-2">
-                  <Button onClick={handleApproveReturn} disabled={working}>
+                  <Button onClick={handleApproveReturn} disabled={working} className="rounded-md bg-black text-white hover:bg-zinc-800">
                     {working ? <Spinner className="mr-2 h-4 w-4" /> : null}
                     {t.orders.approve_refund}
                   </Button>
-                  <Button variant="secondary" onClick={handleRejectReturn} disabled={working}>
+                  <Button variant="secondary" onClick={handleRejectReturn} disabled={working} className="rounded-md">
                     {t.orders.reject}
                   </Button>
                 </div>

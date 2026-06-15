@@ -56,13 +56,13 @@ function PaymentReturnContent() {
           <p className="text-sm text-zinc-600">{error}</p>
           <div className="flex flex-wrap justify-center gap-3">
             <button
-              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white"
+              className="rounded-md bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800 transition-colors uppercase tracking-wider"
               onClick={() => void verify()}
             >
               {t.common.retry}
             </button>
             <button
-              className="rounded-lg border border-zinc-200 px-4 py-2 text-sm font-semibold text-zinc-700 hover:bg-zinc-50"
+              className="rounded-md border border-zinc-200 px-4 py-2 text-sm font-semibold text-zinc-700 hover:bg-zinc-50 transition-colors uppercase tracking-wider"
               onClick={() => router.replace("/orders")}
             >
               {t.orders.title}
@@ -71,7 +71,7 @@ function PaymentReturnContent() {
         </div>
       ) : (
         <div className="space-y-2">
-          <p className="text-lg font-semibold text-emerald-700">{t.checkout.success}</p>
+          <p className="text-lg font-semibold text-black uppercase tracking-wider">{t.checkout.success}</p>
           <p className="text-sm text-zinc-600">
             {orderId ? t.orders.order_id.replace("{{id}}", orderId) : t.checkout.preparing}
           </p>

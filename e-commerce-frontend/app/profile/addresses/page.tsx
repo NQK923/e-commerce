@@ -79,36 +79,36 @@ export default function AddressesPage() {
         {/* List */}
         <div className="grid gap-4">
             {user?.addresses?.map((addr) => (
-                <div key={addr.id} className="relative rounded-xl border border-zinc-200 p-4 shadow-sm bg-white">
+                <div key={addr.id} className="relative rounded-md border border-zinc-200 p-5 shadow-none bg-white">
                     <div className="flex justify-between items-start">
                         <div>
                             <div className="flex items-center gap-2">
-                                <span className="font-semibold text-zinc-900">{addr.label}</span>
-                                {addr.isDefault && <span className="rounded bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">{t.profile.addresses.default_badge}</span>}
+                                <span className="font-semibold text-black">{addr.label}</span>
+                                {addr.isDefault && <span className="rounded-md bg-black px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">{t.profile.addresses.default_badge}</span>}
                             </div>
-                            <p className="text-sm text-zinc-900 mt-1 font-medium">{addr.address.fullName} - {addr.address.phoneNumber}</p>
-                            <p className="text-sm text-zinc-500">{addr.address.line1}, {addr.address.city}, {addr.address.country}</p>
+                            <p className="text-sm text-black mt-2 font-medium">{addr.address.fullName} - {addr.address.phoneNumber}</p>
+                            <p className="text-sm text-zinc-500 mt-1">{addr.address.line1}, {addr.address.city}, {addr.address.country}</p>
                         </div>
                         <Button variant="ghost" className="text-red-600 hover:bg-red-50 hover:text-red-700 h-8 px-3" onClick={() => handleDelete(addr.id)}>{t.profile.addresses.delete}</Button>
                     </div>
                 </div>
             ))}
             {(!user?.addresses || user.addresses.length === 0) && (
-                <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-zinc-300 py-10">
+                <div className="flex flex-col items-center justify-center rounded-md border border-dashed border-zinc-300 py-10">
                      <p className="text-zinc-500 mb-4">{t.profile.addresses.empty}</p>
-                     {!adding && <Button onClick={() => setAdding(true)}>{t.profile.addresses.add_now}</Button>}
+                     {!adding && <Button onClick={() => setAdding(true)} className="rounded-md">{t.profile.addresses.add_now}</Button>}
                 </div>
             )}
         </div>
 
         {/* Add Form */}
         {!adding && (user?.addresses && user.addresses.length > 0) && (
-            <Button onClick={() => setAdding(true)} className="w-full bg-emerald-600 hover:bg-emerald-700">{t.profile.addresses.add_new}</Button>
+            <Button onClick={() => setAdding(true)} className="w-full bg-black hover:bg-zinc-800 text-white rounded-md">{t.profile.addresses.add_new}</Button>
         )}
 
         {adding && (
-            <form onSubmit={handleSubmit} className="rounded-xl border border-zinc-200 bg-white p-6 space-y-4 shadow-sm">
-                <h3 className="font-semibold text-lg">{t.profile.addresses.add_title}</h3>
+            <form onSubmit={handleSubmit} className="rounded-md border border-zinc-200 bg-white p-6 space-y-4 shadow-none">
+                <h3 className="font-semibold text-lg uppercase tracking-wide">{t.profile.addresses.add_title}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Input label={t.profile.addresses.label_label} value={form.label} onChange={e => setForm({...form, label: e.target.value})} required />
                     <Input label={t.profile.addresses.fullname_label} value={form.fullName} onChange={e => setForm({...form, fullName: e.target.value})} required />
@@ -125,14 +125,14 @@ export default function AddressesPage() {
                     <Input label={t.profile.addresses.postal_code_label} value={form.postalCode} onChange={e => setForm({...form, postalCode: e.target.value})} />
                 </div>
                 <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
-                    <input type="checkbox" className="h-4 w-4 rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500" checked={form.isDefault} onChange={e => setForm({...form, isDefault: e.target.checked})} />
+                    <input type="checkbox" className="h-4 w-4 rounded-md border-zinc-300 text-black focus:ring-black accent-black" checked={form.isDefault} onChange={e => setForm({...form, isDefault: e.target.checked})} />
                     {t.profile.addresses.set_default}
                 </label>
-                <div className="flex gap-3 pt-2">
-                    <Button type="submit" disabled={loading} className="bg-emerald-600 hover:bg-emerald-700 flex-1">
+                <div className="flex gap-3 pt-4">
+                    <Button type="submit" disabled={loading} className="bg-black hover:bg-zinc-800 text-white rounded-md flex-1">
                          {loading ? t.profile.saving : t.profile.addresses.save_address}
                     </Button>
-                    <Button type="button" variant="ghost" onClick={() => setAdding(false)} className="flex-1">{t.profile.cancel}</Button>
+                    <Button type="button" variant="ghost" onClick={() => setAdding(false)} className="flex-1 rounded-md border border-zinc-200 hover:bg-zinc-50">{t.profile.cancel}</Button>
                 </div>
             </form>
         )}

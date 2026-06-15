@@ -139,7 +139,7 @@ export default function RegisterPage() {
         <div className="pt-2">
             <Button 
                 type="submit" 
-                className="w-full h-10 bg-emerald-600 hover:bg-emerald-700 text-sm font-semibold shadow-lg shadow-emerald-600/20" 
+                className="w-full h-12 bg-black hover:bg-zinc-800 text-white text-sm font-semibold rounded-md" 
                 disabled={loading}
             >
                 {loading ? <Spinner size="sm" className="mr-2 text-white" /> : null}
@@ -151,7 +151,7 @@ export default function RegisterPage() {
       
       <p className="mt-6 text-center text-xs text-zinc-600">
         {t.auth.already_have_account}{" "}
-        <Link className="font-semibold text-emerald-600 hover:text-emerald-500 hover:underline transition-all" href="/login">
+        <Link className="font-semibold text-black hover:underline transition-all" href="/login">
           {t.auth.login_button}
         </Link>
       </p>
