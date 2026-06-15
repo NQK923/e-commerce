@@ -130,7 +130,7 @@ public class ProductApplicationService implements ManageProductUseCase, QueryPro
                 throw new IllegalArgumentException("Product must have a seller");
             }
 
-            List<ProductVariant> variantsToUse = command.getVariants() != null ? command.getVariants().stream()
+            List<ProductVariant> variantsToUse = hasEntries(command.getVariants()) ? command.getVariants().stream()
                 .map(v -> {
                     String vPrice = v.getPrice();
                     if (vPrice == null || vPrice.trim().isEmpty()) {
@@ -145,7 +145,7 @@ public class ProductApplicationService implements ManageProductUseCase, QueryPro
                 })
                 .collect(Collectors.toList()) : (existingProduct != null ? existingProduct.getVariants() : Collections.emptyList());
 
-            List<ProductImage> imagesToUse = command.getImages() != null ? command.getImages().stream()
+            List<ProductImage> imagesToUse = hasEntries(command.getImages()) ? command.getImages().stream()
                 .map(img -> ProductImage.builder()
                     .id(img.getId() != null ? new ProductImageId(img.getId()) : new ProductImageId(UUID.randomUUID().toString()))
                     .url(img.getUrl())
@@ -290,5 +290,9 @@ public class ProductApplicationService implements ManageProductUseCase, QueryPro
                     .build())
                 .toList() : java.util.Collections.emptyList())
             .build();
+    }
+
+    private boolean hasEntries(List<?> values) {
+        return values != null && !values.isEmpty();
     }
 }
