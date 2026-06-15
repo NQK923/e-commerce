@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { Client, StompSubscription } from '@stomp/stompjs';
-import SockJS from 'sockjs-client';
 import { useAuth } from '@/src/store/auth-store';
+import { config } from '@/src/config/env';
 
 export interface Notification {
     id: string;
@@ -21,9 +21,15 @@ interface UseNotificationSocketOptions {
     enabled?: boolean;
 }
 
+const toWebSocketUrl = (httpUrl: string): string => {
+    if (httpUrl.startsWith('https://')) return `wss://${httpUrl.slice('https://'.length)}`;
+    if (httpUrl.startsWith('http://')) return `ws://${httpUrl.slice('http://'.length)}`;
+    return httpUrl;
+};
+
 /**
  * Hook to subscribe to real-time notifications via WebSocket
- * Reuses existing STOMP configuration from chat
+ * Reuses the backend STOMP endpoint shared with chat.
  */
 export function useNotificationSocket({
     onNotification,
@@ -37,9 +43,10 @@ export function useNotificationSocket({
     const connect = useCallback(() => {
         if (!user || !token || !enabled) return;
 
-        // Create STOMP client over SockJS
+        const brokerURL = `${toWebSocketUrl(config.apiBaseUrl)}/ws/chat`;
+
         const client = new Client({
-            webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+            brokerURL,
             connectHeaders: {
                 Authorization: `Bearer ${token}`,
             },
@@ -49,7 +56,6 @@ export function useNotificationSocket({
                 }
             },
             onConnect: () => {
-                console.log('[Notification] Connected to WebSocket');
                 setConnected(true);
 
                 // Subscribe to user's notification queue
@@ -58,10 +64,11 @@ export function useNotificationSocket({
                     (message) => {
                         try {
                             const notification: Notification = JSON.parse(message.body);
-                            console.log('[Notification] Received:', notification);
                             onNotification?.(notification);
                         } catch (error) {
-                            console.error('[Notification] Failed to parse notification:', error);
+                            if (process.env.NODE_ENV === 'development') {
+                                console.error('[Notification] Failed to parse notification:', error);
+                            }
                         }
                     }
                 );
@@ -69,11 +76,21 @@ export function useNotificationSocket({
                 subscriptionRef.current = subscription;
             },
             onDisconnect: () => {
-                console.log('[Notification] Disconnected from WebSocket');
+                setConnected(false);
+            },
+            onWebSocketClose: () => {
                 setConnected(false);
             },
             onStompError: (frame) => {
-                console.error('[Notification] STOMP error:', frame);
+                if (process.env.NODE_ENV === 'development') {
+                    console.error('[Notification] STOMP error:', frame);
+                }
+                setConnected(false);
+            },
+            onWebSocketError: (event) => {
+                if (process.env.NODE_ENV === 'development') {
+                    console.error('[Notification] WebSocket error:', event);
+                }
                 setConnected(false);
             },
         });
