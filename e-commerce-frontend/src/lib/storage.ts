@@ -2,10 +2,17 @@ import { supabase } from "./supabase-client";
 import { config } from "../config/env";
 
 export const uploadToBucket = async (bucket: string | undefined, file: File): Promise<string> => {
-  if (!supabase) {
-    throw new Error("Supabase is not configured");
-  }
   const bucketName = (bucket || config.supabaseProductBucket || "product-images").toLowerCase();
+
+  if (!supabase) {
+    if (config.uploadFallbackMode === "placeholder") {
+      return placeholderUploadUrl(bucketName, file);
+    }
+    throw new Error(
+      "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL/NEXT_PUBLIC_SUPABASE_ANON_KEY or enable NEXT_PUBLIC_UPLOAD_FALLBACK_MODE=placeholder for local smoke tests.",
+    );
+  }
+
   const ext = file.name.split(".").pop() ?? "bin";
   const path = `${crypto.randomUUID()}.${ext}`;
   const { data, error } = await supabase.storage.from(bucketName).upload(path, file, {
@@ -23,4 +30,13 @@ export const uploadToBucket = async (bucket: string | undefined, file: File): Pr
   }
   const { data: publicUrl } = supabase.storage.from(bucketName).getPublicUrl(data.path);
   return publicUrl.publicUrl;
+};
+
+const placeholderUploadUrl = (bucketName: string, file: File): string => {
+  const params = new URLSearchParams({
+    bucket: bucketName,
+    file: file.name || "local-upload",
+  });
+
+  return `/upload-placeholder.svg?${params.toString()}`;
 };

@@ -6,6 +6,7 @@ export type AppConfig = {
   supabaseProductBucket?: string;
   supabaseSellerBucket?: string;
   supabaseChatBucket?: string;
+  uploadFallbackMode: "disabled" | "placeholder";
 };
 
 const apiBaseUrl =
@@ -17,6 +18,11 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabaseProductBucket = process.env.NEXT_PUBLIC_SUPABASE_PRODUCT_BUCKET || "product-images";
 const supabaseSellerBucket = process.env.NEXT_PUBLIC_SUPABASE_SELLER_BUCKET || "seller-assets";
 const supabaseChatBucket = process.env.NEXT_PUBLIC_SUPABASE_CHAT_BUCKET || "chat-attachments";
+const uploadFallbackMode = process.env.NEXT_PUBLIC_UPLOAD_FALLBACK_MODE === "disabled"
+  ? "disabled"
+  : process.env.NEXT_PUBLIC_UPLOAD_FALLBACK_MODE === "placeholder" || process.env.NODE_ENV !== "production"
+    ? "placeholder"
+    : "disabled";
 
 export const config: AppConfig = {
   apiBaseUrl,
@@ -26,6 +32,7 @@ export const config: AppConfig = {
   supabaseProductBucket,
   supabaseSellerBucket,
   supabaseChatBucket,
+  uploadFallbackMode,
 };
 
 export const requireConfig = (): AppConfig => {

@@ -56,7 +56,7 @@ This checklist tracks the finite "production-ready core marketplace" goal for Bu
 
 ## P2 / Operations And Environment
 
-- [~] Supabase config is build-safe when env vars are missing, but upload flows need local smoke with real or dev-safe bucket config.
+- [x] Supabase config is build-safe when env vars are missing, and upload flows now have a dev-safe local placeholder fallback for smoke tests without real storage secrets. Real Supabase bucket validation remains an external deployment check.
 - [~] Kafka, Redis, MongoDB, SMTP, OAuth, and VNPay have placeholder/default config in places; Docker Compose now provides local Kafka, Redis, MongoDB, Postgres, and Mailpit. Backend health smoke is `UP`; Elasticsearch search behavior, WebSocket delivery, and full integration flows still need validation.
 - [~] Browser UI polish: desktop and 390px smoke did not show blocking layout overflow, but seller/admin pages still mix English and Vietnamese labels and chat widget can show a connection-error state when WebSocket is unavailable.
 - [x] Document exact local smoke-test env values and commands once seed workflow is complete. `docs/verification.md` records Docker Compose services, non-Docker backend env values, seed accounts, health checks, backend smoke commands, and frontend route smoke targets.
@@ -123,3 +123,4 @@ Automated regression test evidence added on 2026-06-15:
 - `.\gradlew.bat :chat:chat-application:test --console=plain` passed, covering chat message send validation, conversation participant authorization, online delivered status handling, offline pending notification fan-out, and new conversation creation.
 - `.\gradlew.bat :chat:chat-infrastructure:test --console=plain` passed, covering STOMP delivery to `/queue/chat/messages` and Kafka offline notification events on `chat.offline.message` keyed by receiver id.
 - `.\gradlew.bat :product:product-application:test --console=plain` passed, covering seller product create mutation, initial inventory event publication, seller ownership rejection on update, search indexing failure tolerance, required seller id validation, and preserving existing variants/images on partial updates.
+- `npm run lint` and `npm run build` passed after adding the frontend upload placeholder fallback for missing Supabase env vars.
