@@ -4,6 +4,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Set;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,18 +14,21 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.learnfirebase.ecommerce.identity.application.command.LoginCommand;
+import com.learnfirebase.ecommerce.identity.application.command.OAuth2LoginCommand;
 import com.learnfirebase.ecommerce.identity.application.command.RegisterUserCommand;
 import com.learnfirebase.ecommerce.identity.application.command.ResetPasswordCommand;
 import com.learnfirebase.ecommerce.identity.application.dto.AuthTokenDto;
 import com.learnfirebase.ecommerce.identity.application.dto.OtpChallengeDto;
 import com.learnfirebase.ecommerce.identity.application.dto.UserDto;
 import com.learnfirebase.ecommerce.identity.application.port.in.AuthenticateUserUseCase;
+import com.learnfirebase.ecommerce.identity.application.port.in.OAuth2LoginUseCase;
 import com.learnfirebase.ecommerce.identity.application.port.in.RequestLoginOtpUseCase;
 import com.learnfirebase.ecommerce.identity.application.port.in.RotateRefreshTokenUseCase;
 import com.learnfirebase.ecommerce.identity.application.port.in.RegisterUserUseCase;
 import com.learnfirebase.ecommerce.identity.application.port.in.ResetPasswordUseCase;
 import com.learnfirebase.ecommerce.identity.application.port.in.UserQueryUseCase;
 import com.learnfirebase.ecommerce.identity.domain.exception.IdentityDomainException;
+import com.learnfirebase.ecommerce.identity.domain.model.AuthProvider;
 
 import lombok.Builder;
 import lombok.Data;
@@ -42,6 +46,10 @@ public class AuthController {
     private final ResetPasswordUseCase resetPasswordUseCase;
     private final UserQueryUseCase userQueryUseCase;
     private final RotateRefreshTokenUseCase rotateRefreshTokenUseCase;
+    private final OAuth2LoginUseCase oAuth2LoginUseCase;
+
+    @org.springframework.beans.factory.annotation.Value("${identity.oauth2.dev-callback-enabled:false}")
+    private boolean devOAuth2CallbackEnabled;
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterUserCommand command) {
@@ -141,6 +149,55 @@ public class AuthController {
         return ResponseEntity.noContent().build();
     }
 
+    @PostMapping("/oauth2/callback")
+    public ResponseEntity<?> completeOAuth2Callback(@RequestBody OAuthCallbackRequest request) {
+        if (!devOAuth2CallbackEnabled) {
+            return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body(ErrorResponse.builder()
+                .code("OAUTH_PROVIDER_CALLBACK_REQUIRED")
+                .message("OAuth2 provider callback is not enabled. Use /oauth2/authorization/{provider} or enable the local dev callback.")
+                .build());
+        }
+
+        if (request.getProvider() == null || request.getProvider().isBlank()) {
+            return ResponseEntity.badRequest().body(ErrorResponse.builder()
+                .code("OAUTH_PROVIDER_REQUIRED")
+                .message("OAuth provider is required")
+                .build());
+        }
+
+        try {
+            AuthProvider provider = AuthProvider.valueOf(request.getProvider().trim().toUpperCase());
+            String providerUserId = firstNonBlank(request.getProviderUserId(), request.getCode(), request.getToken());
+            if (providerUserId == null) {
+                return ResponseEntity.badRequest().body(ErrorResponse.builder()
+                    .code("OAUTH_PROVIDER_USER_REQUIRED")
+                    .message("OAuth provider user id, code, or token is required")
+                    .build());
+            }
+
+            AuthTokenDto tokens = oAuth2LoginUseCase.execute(OAuth2LoginCommand.builder()
+                .provider(provider)
+                .providerUserId(providerUserId)
+                .email(request.getEmail())
+                .name(request.getName())
+                .build());
+            UserDto user = request.getEmail() != null && !request.getEmail().isBlank()
+                ? userQueryUseCase.getByEmail(request.getEmail())
+                : userQueryUseCase.getById(extractUserIdFromAccessToken(tokens.getAccessToken()));
+            return ResponseEntity.ok(toResponse(user, tokens));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(ErrorResponse.builder()
+                .code("OAUTH_PROVIDER_UNSUPPORTED")
+                .message("OAuth provider is not supported")
+                .build());
+        } catch (IdentityDomainException ex) {
+            return ResponseEntity.badRequest().body(ErrorResponse.builder()
+                .code("OAUTH_LOGIN_FAILED")
+                .message(ex.getMessage())
+                .build());
+        }
+    }
+
     @GetMapping("/logout")
     public ResponseEntity<Void> logoutGet() {
         return ResponseEntity.noContent().build();
@@ -182,6 +239,28 @@ public class AuthController {
         return null;
     }
 
+    private String extractUserIdFromAccessToken(String token) {
+        try {
+            String decoded = new String(Base64.getDecoder().decode(token), StandardCharsets.UTF_8);
+            String[] parts = decoded.split(":");
+            if (parts.length >= 1) {
+                return parts[0];
+            }
+        } catch (IllegalArgumentException ignored) {
+            // invalid token
+        }
+        throw new IdentityDomainException("OAuth token did not contain a user id");
+    }
+
+    private String firstNonBlank(String... values) {
+        for (String value : values) {
+            if (value != null && !value.isBlank()) {
+                return value;
+            }
+        }
+        return null;
+    }
+
     @Data
     @NoArgsConstructor
     private static class RefreshRequest {
@@ -207,6 +286,18 @@ public class AuthController {
         private String newPassword;
         private String otpCode;
         private String challengeId;
+    }
+
+    @Data
+    @NoArgsConstructor
+    static class OAuthCallbackRequest {
+        private String provider;
+        private String providerUserId;
+        private String email;
+        private String name;
+        private String code;
+        private String state;
+        private String token;
     }
 
     @Value

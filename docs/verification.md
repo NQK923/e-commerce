@@ -47,7 +47,7 @@ Run from the repository root:
 .\gradlew.bat :report:report-infrastructure:test --console=plain
 ```
 
-These cover the current high-risk regression areas: dev CORS origins, VNPay ownership and callback verification, notification ownership, and daily sales report aggregation.
+These cover the current high-risk regression areas: dev CORS origins, dev-safe OAuth callback gating, VNPay ownership and callback verification, notification ownership, and daily sales report aggregation.
 
 ## Local Runtime Smoke Prerequisites
 
@@ -82,6 +82,7 @@ $env:MANAGEMENT_HEALTH_ELASTICSEARCH_ENABLED="false"
 $env:IDENTITY_SEED_ADMIN_ENABLED="true"
 $env:IDENTITY_SEED_ADMIN_EMAIL="admin@example.local"
 $env:IDENTITY_SEED_ADMIN_PASSWORD="LocalAdmin123!"
+$env:IDENTITY_OAUTH2_DEV_CALLBACK_ENABLED="true"
 .\gradlew.bat :bootstrap:bootRun
 ```
 
@@ -99,6 +100,14 @@ $env:NEXT_PUBLIC_UPLOAD_FALLBACK_MODE="placeholder"
 ```
 
 This returns `/upload-placeholder.svg?...` for new uploaded files only when `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are missing. Set `NEXT_PUBLIC_UPLOAD_FALLBACK_MODE="disabled"` and provide the Supabase URL, anon key, and bucket names to smoke real bucket uploads.
+
+For local OAuth smoke tests without Google/Facebook credentials, keep `IDENTITY_OAUTH2_DEV_CALLBACK_ENABLED=true` on the backend and enable the frontend stub redirect:
+
+```powershell
+$env:NEXT_PUBLIC_OAUTH_DEV_MODE="enabled"
+```
+
+With that flag, the login page's Google/Facebook buttons route through `/oauth2/callback` using deterministic local provider ids instead of leaving the app for an external provider. Leave both flags disabled outside local/dev smoke testing.
 
 ## Runtime Smoke Accounts
 
@@ -158,6 +167,15 @@ Invoke-RestMethod "http://localhost:8080/api/orders?page=0&size=10" -Headers $bu
 Invoke-RestMethod "http://localhost:8080/api/orders?sellerId=00000000-0000-0000-0000-000000000102&page=0&size=10" -Headers $sellerHeaders
 Invoke-RestMethod "http://localhost:8080/api/users/all?page=0&size=10" -Headers $adminHeaders
 Invoke-RestMethod "http://localhost:8080/api/reports/daily?date=$((Get-Date).ToString('yyyy-MM-dd'))" -Headers $adminHeaders
+```
+
+Dev-safe OAuth callback:
+
+```powershell
+Invoke-RestMethod http://localhost:8080/api/auth/oauth2/callback `
+  -Method POST `
+  -ContentType "application/json" `
+  -Body '{"provider":"google","providerUserId":"local-google-buyer","email":"local.google@example.local","name":"Local Google Buyer"}'
 ```
 
 Frontend route smoke:

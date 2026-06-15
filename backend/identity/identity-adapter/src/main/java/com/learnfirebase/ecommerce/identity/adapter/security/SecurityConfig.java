@@ -46,6 +46,7 @@ public class SecurityConfig {
                     "/api/auth/password/forgot",
                     "/api/auth/password/reset",
                     "/api/auth/refresh-token",
+                    "/api/auth/oauth2/callback",
                     "/api/users",
                     "/api/users/login").permitAll()
                 .requestMatchers(HttpMethod.GET,

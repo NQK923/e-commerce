@@ -53,7 +53,15 @@ export const authApi = {
 
   me: () => apiRequest<User>("/api/users/me"),
 
-  completeSocialLogin: (payload: { code?: string; state?: string; token?: string }) =>
+  completeSocialLogin: (payload: {
+    provider?: "google" | "facebook";
+    providerUserId?: string;
+    email?: string;
+    name?: string;
+    code?: string;
+    state?: string;
+    token?: string;
+  }) =>
     apiRequest<AuthResponse>("/api/auth/oauth2/callback", {
       method: "POST",
       body: payload,
