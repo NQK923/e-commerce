@@ -86,8 +86,12 @@ public class SendMessageService implements SendMessageUseCase {
 
     private Conversation resolveConversation(String conversationIdRaw, ParticipantId sender, ParticipantId receiver) {
         if (conversationIdRaw != null && !conversationIdRaw.isBlank()) {
-            return conversationRepository.findById(ConversationId.of(conversationIdRaw))
+            Conversation conversation = conversationRepository.findById(ConversationId.of(conversationIdRaw))
                     .orElseThrow(() -> new IllegalArgumentException("Conversation not found: " + conversationIdRaw));
+            if (!conversation.includes(sender) || !conversation.includes(receiver)) {
+                throw new IllegalArgumentException("Sender and receiver must belong to the conversation");
+            }
+            return conversation;
         }
 
         Optional<Conversation> existing = conversationRepository.findByParticipants(sender, receiver);
