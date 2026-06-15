@@ -47,10 +47,11 @@ Run from the repository root:
 .\gradlew.bat :notification:notification-application:test --console=plain
 .\gradlew.bat :promotion:promotion-application:test --console=plain
 .\gradlew.bat :product:product-application:test --console=plain
+.\gradlew.bat :product:product-infrastructure:test --console=plain
 .\gradlew.bat :report:report-infrastructure:test --console=plain
 ```
 
-These cover the current high-risk regression areas: dev CORS origins, dev-safe OAuth callback gating, seller application review, VNPay ownership and callback verification, notification ownership, seller product/report mutations, admin flash sale creation validation/cache warm-up, and daily sales report aggregation.
+These cover the current high-risk regression areas: dev CORS origins, dev-safe OAuth callback gating, seller application review, VNPay ownership and callback verification, notification ownership/realtime delivery, seller product/report mutations, Elasticsearch adapter query/mapping behavior, admin flash sale creation validation/cache warm-up, and daily sales report aggregation.
 
 ## Local Runtime Smoke Prerequisites
 

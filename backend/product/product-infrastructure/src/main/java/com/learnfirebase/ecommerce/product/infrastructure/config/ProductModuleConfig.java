@@ -3,6 +3,9 @@ package com.learnfirebase.ecommerce.product.infrastructure.config;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.elasticsearch.client.RestClient;
 import org.apache.http.HttpHost;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -31,7 +34,16 @@ import com.learnfirebase.ecommerce.product.infrastructure.search.ElasticsearchPr
 public class ProductModuleConfig {
     @Bean
     public RestClient elasticsearchRestClient(ElasticsearchProperties properties) {
-        return RestClient.builder(HttpHost.create(properties.getHost())).build();
+        var builder = RestClient.builder(HttpHost.create(properties.getHost()));
+        if (properties.getUsername() != null && !properties.getUsername().isBlank()) {
+            var credentialsProvider = new BasicCredentialsProvider();
+            credentialsProvider.setCredentials(
+                    AuthScope.ANY,
+                    new UsernamePasswordCredentials(properties.getUsername(), properties.getPassword()));
+            builder.setHttpClientConfigCallback(httpClientBuilder ->
+                    httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider));
+        }
+        return builder.build();
     }
 
     @Bean
