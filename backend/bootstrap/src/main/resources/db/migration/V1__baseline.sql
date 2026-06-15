@@ -1,6 +1,7 @@
--- Consolidated baseline (includes previous V1-V12), keeps seed data
+-- Consolidated baseline schema (combining V1 to V15)
+-- Excludes smoke test products that were seeded and then deleted.
 
--- identity
+-- 1. users
 CREATE TABLE users (
     id VARCHAR(255) PRIMARY KEY,
     email VARCHAR(255) UNIQUE,
@@ -9,18 +10,22 @@ CREATE TABLE users (
     avatar_url VARCHAR(1024),
     auth_provider VARCHAR(50) NOT NULL,
     provider_user_id VARCHAR(255),
+    shop_description TEXT,
+    shop_banner_url VARCHAR(1024),
     created_at TIMESTAMP,
     updated_at TIMESTAMP
 );
 
 CREATE UNIQUE INDEX idx_users_provider ON users(auth_provider, provider_user_id);
 
+-- 2. user_roles
 CREATE TABLE user_roles (
     user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     role VARCHAR(50) NOT NULL,
     PRIMARY KEY (user_id, role)
 );
 
+-- 3. seller_applications
 CREATE TABLE seller_applications (
     id VARCHAR(255) PRIMARY KEY,
     user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -40,6 +45,7 @@ CREATE TABLE seller_applications (
 CREATE INDEX idx_seller_applications_user ON seller_applications(user_id);
 CREATE INDEX idx_seller_applications_status ON seller_applications(status);
 
+-- 4. user_addresses
 CREATE TABLE user_addresses (
     id VARCHAR(36) PRIMARY KEY,
     user_id VARCHAR(36) NOT NULL REFERENCES users(id),
@@ -57,16 +63,7 @@ CREATE TABLE user_addresses (
 
 CREATE INDEX idx_user_addresses_user_id ON user_addresses(user_id);
 
--- seed admin
-INSERT INTO users (id, email, password, auth_provider, provider_user_id, created_at, updated_at)
-VALUES ('11111111-2222-3333-4444-555555555555', 'nqk1337@gmail.com', 'QWRtaW5AMTIz', 'LOCAL', NULL, NOW(), NOW())
-ON CONFLICT (email) DO NOTHING;
-
-INSERT INTO user_roles (user_id, role)
-SELECT id, 'ADMIN' FROM users WHERE email = 'nqk1337@gmail.com'
-ON CONFLICT DO NOTHING;
-
--- product
+-- 5. products
 CREATE TABLE products (
     id VARCHAR(255) PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -81,6 +78,7 @@ CREATE TABLE products (
     updated_at TIMESTAMP
 );
 
+-- 6. product_variants
 CREATE TABLE product_variants (
     sku VARCHAR(255) PRIMARY KEY,
     name VARCHAR(255),
@@ -90,6 +88,7 @@ CREATE TABLE product_variants (
     product_id VARCHAR(255) NOT NULL REFERENCES products(id) ON DELETE CASCADE
 );
 
+-- 7. product_images
 CREATE TABLE product_images (
     id VARCHAR(255) PRIMARY KEY,
     url VARCHAR(1024) NOT NULL,
@@ -98,12 +97,14 @@ CREATE TABLE product_images (
     product_id VARCHAR(255) NOT NULL REFERENCES products(id) ON DELETE CASCADE
 );
 
+-- 8. product_tags
 CREATE TABLE product_tags (
     product_id VARCHAR(255) NOT NULL REFERENCES products(id) ON DELETE CASCADE,
     tag VARCHAR(255) NOT NULL,
     PRIMARY KEY (product_id, tag)
 );
 
+-- 9. product_reports
 CREATE TABLE product_reports (
     id VARCHAR(255) PRIMARY KEY,
     product_id VARCHAR(255) NOT NULL REFERENCES products(id) ON DELETE CASCADE,
@@ -119,6 +120,7 @@ CREATE INDEX idx_product_reports_product_id ON product_reports(product_id);
 CREATE INDEX idx_product_reports_status ON product_reports(status);
 CREATE INDEX idx_product_reports_created_at ON product_reports(created_at);
 
+-- 10. product_reviews
 CREATE TABLE product_reviews (
     id VARCHAR(255) PRIMARY KEY,
     product_id VARCHAR(255) NOT NULL REFERENCES products(id) ON DELETE CASCADE,
@@ -126,19 +128,41 @@ CREATE TABLE product_reviews (
     user_name VARCHAR(255),
     rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
     comment TEXT,
+    verified_purchase BOOLEAN NOT NULL DEFAULT FALSE,
+    abuse_report_count INT NOT NULL DEFAULT 0,
+    seller_response TEXT,
+    seller_response_at TIMESTAMP,
+    seller_id VARCHAR(255),
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL
 );
 
 CREATE INDEX idx_product_reviews_product_id ON product_reviews(product_id);
 CREATE INDEX idx_product_reviews_user_id ON product_reviews(user_id);
+CREATE INDEX idx_product_reviews_user_created_at ON product_reviews(user_id, created_at);
 
--- inventory
+-- 11. product_review_reports
+CREATE TABLE product_review_reports (
+    id VARCHAR(255) PRIMARY KEY,
+    review_id VARCHAR(255) NOT NULL REFERENCES product_reviews(id) ON DELETE CASCADE,
+    reporter_user_id VARCHAR(255) NOT NULL,
+    reason VARCHAR(50) NOT NULL,
+    description TEXT,
+    status VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL
+);
+
+CREATE INDEX idx_product_review_reports_review_id ON product_review_reports(review_id);
+CREATE INDEX idx_product_review_reports_reporter ON product_review_reports(reporter_user_id);
+
+-- 12. inventory
 CREATE TABLE inventory (
     id VARCHAR(255) PRIMARY KEY,
     warehouse_id VARCHAR(255)
 );
 
+-- 13. inventory_items
 CREATE TABLE inventory_items (
     inventory_id VARCHAR(255) REFERENCES inventory(id) ON DELETE CASCADE,
     product_id VARCHAR(255) NOT NULL,
@@ -147,11 +171,12 @@ CREATE TABLE inventory_items (
     PRIMARY KEY (inventory_id, product_id)
 );
 
--- cart
+-- 14. carts
 CREATE TABLE carts (
     id VARCHAR(255) PRIMARY KEY
 );
 
+-- 15. cart_items
 CREATE TABLE cart_items (
     cart_id VARCHAR(255) REFERENCES carts(id) ON DELETE CASCADE,
     product_id VARCHAR(255) NOT NULL,
@@ -162,26 +187,43 @@ CREATE TABLE cart_items (
     PRIMARY KEY (cart_id, product_id, variant_sku)
 );
 
--- order
+-- 16. orders
 CREATE TABLE orders (
     id VARCHAR(255) PRIMARY KEY,
     user_id VARCHAR(255),
     status VARCHAR(50),
     currency VARCHAR(10),
     total_amount VARCHAR(50),
+    tracking_number VARCHAR(255),
+    tracking_carrier VARCHAR(100),
+    shipped_at TIMESTAMP,
+    delivered_at TIMESTAMP,
+    return_status VARCHAR(50) NOT NULL DEFAULT 'NONE',
+    return_reason TEXT,
+    return_note TEXT,
+    return_requested_at TIMESTAMP,
+    return_resolved_at TIMESTAMP,
+    refund_amount VARCHAR(50),
     created_at TIMESTAMP,
     updated_at TIMESTAMP
 );
 
+-- 17. order_items
 CREATE TABLE order_items (
     id VARCHAR(255) PRIMARY KEY,
     product_id VARCHAR(255),
     flash_sale_id VARCHAR(255),
     quantity INT NOT NULL,
     price VARCHAR(50),
-    order_id VARCHAR(255) REFERENCES orders(id) ON DELETE CASCADE
+    order_id VARCHAR(255) REFERENCES orders(id) ON DELETE CASCADE,
+    variant_sku VARCHAR(255),
+    seller_id VARCHAR(255)
 );
 
+CREATE INDEX idx_order_items_variant_sku ON order_items(variant_sku);
+CREATE INDEX idx_order_items_seller_id ON order_items(seller_id);
+
+-- 18. order_outbox
 CREATE TABLE order_outbox (
     id VARCHAR(255) PRIMARY KEY,
     aggregate_id VARCHAR(255),
@@ -192,14 +234,52 @@ CREATE TABLE order_outbox (
     updated_at TIMESTAMP
 );
 
--- promotion
+-- 19. promotions
 CREATE TABLE promotions (
     id VARCHAR(255) PRIMARY KEY,
     code VARCHAR(255) NOT NULL UNIQUE,
     name VARCHAR(255)
 );
 
--- logistics
+-- 20. coupons
+CREATE TABLE coupons (
+    id VARCHAR(255) PRIMARY KEY,
+    code VARCHAR(255) NOT NULL UNIQUE,
+    seller_id VARCHAR(255),
+    discount_type VARCHAR(50) NOT NULL,
+    discount_value NUMERIC(19, 2) NOT NULL,
+    min_order_amount NUMERIC(19, 2),
+    min_order_currency VARCHAR(10),
+    max_discount_amount NUMERIC(19, 2),
+    max_discount_currency VARCHAR(10),
+    usage_limit INT NOT NULL DEFAULT 0,
+    used_count INT NOT NULL DEFAULT 0,
+    start_at TIMESTAMP,
+    end_at TIMESTAMP,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL
+);
+
+-- 21. coupon_products
+CREATE TABLE coupon_products (
+    coupon_id VARCHAR(255) NOT NULL REFERENCES coupons(id) ON DELETE CASCADE,
+    product_id VARCHAR(255) NOT NULL,
+    PRIMARY KEY (coupon_id, product_id)
+);
+
+-- 22. promotion_usages
+CREATE TABLE promotion_usages (
+    id VARCHAR(255) PRIMARY KEY,
+    promotion_code VARCHAR(255) NOT NULL,
+    user_id VARCHAR(255) NOT NULL,
+    used_at TIMESTAMP NOT NULL
+);
+
+CREATE INDEX idx_promotion_usages_code ON promotion_usages(promotion_code);
+CREATE INDEX idx_promotion_usages_user ON promotion_usages(user_id);
+CREATE INDEX idx_promotion_usages_used_at ON promotion_usages(used_at);
+
+-- 23. shipping_rates
 CREATE TABLE shipping_rates (
     id VARCHAR(255) PRIMARY KEY,
     method_id VARCHAR(255),
@@ -208,18 +288,20 @@ CREATE TABLE shipping_rates (
     currency VARCHAR(10)
 );
 
--- chat
+-- 24. chat_conversation
 CREATE TABLE chat_conversation (
     id VARCHAR(255) PRIMARY KEY,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
+-- 25. chat_conversation_participants
 CREATE TABLE chat_conversation_participants (
     conversation_id VARCHAR(255) NOT NULL REFERENCES chat_conversation(id) ON DELETE CASCADE,
     participant_id VARCHAR(255) NOT NULL,
     PRIMARY KEY (conversation_id, participant_id)
 );
 
+-- 26. chat_message
 CREATE TABLE chat_message (
     id VARCHAR(255) PRIMARY KEY,
     conversation_id VARCHAR(255) NOT NULL REFERENCES chat_conversation(id) ON DELETE CASCADE,
@@ -232,7 +314,7 @@ CREATE TABLE chat_message (
 
 CREATE INDEX idx_chat_message_conversation_sent_at ON chat_message(conversation_id, sent_at);
 
--- flash sale
+-- 27. flash_sales
 CREATE TABLE flash_sales (
     id UUID PRIMARY KEY,
     product_id VARCHAR(255) NOT NULL,
@@ -252,3 +334,144 @@ CREATE TABLE flash_sales (
 CREATE INDEX idx_flash_sales_product_id ON flash_sales(product_id);
 CREATE INDEX idx_flash_sales_status ON flash_sales(status);
 CREATE INDEX idx_flash_sales_time ON flash_sales(start_time, end_time);
+
+-- 28. payment_transactions
+CREATE TABLE payment_transactions (
+    reference VARCHAR(100) PRIMARY KEY,
+    order_id VARCHAR(100) NOT NULL,
+    gateway VARCHAR(50) NOT NULL,
+    amount NUMERIC(19,2) NOT NULL,
+    currency VARCHAR(10) NOT NULL,
+    status VARCHAR(20) NOT NULL,
+    transaction_no VARCHAR(100),
+    raw_payload TEXT,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL
+);
+
+CREATE INDEX idx_payment_transactions_order ON payment_transactions(order_id);
+
+-- 29. notifications
+CREATE TABLE notifications (
+    id VARCHAR(100) PRIMARY KEY,
+    user_id VARCHAR(100) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    body TEXT NOT NULL,
+    channel VARCHAR(20) NOT NULL,
+    status VARCHAR(20) NOT NULL,
+    created_at TIMESTAMP NOT NULL,
+    read_at TIMESTAMP
+);
+
+CREATE INDEX idx_notifications_user ON notifications(user_id);
+
+-- 30. daily_sales_reports
+CREATE TABLE daily_sales_reports (
+    report_date DATE PRIMARY KEY,
+    total_revenue NUMERIC(19, 2) NOT NULL,
+    total_orders INTEGER NOT NULL,
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+-- 31. otp_tokens
+CREATE TABLE otp_tokens (
+    id VARCHAR(255) PRIMARY KEY,
+    email VARCHAR(255) NOT NULL,
+    user_id VARCHAR(255),
+    code_hash VARCHAR(255) NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    used BOOLEAN NOT NULL DEFAULT FALSE,
+    attempts INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL
+);
+
+-- 32. refresh_tokens
+CREATE TABLE refresh_tokens (
+    id VARCHAR(255) PRIMARY KEY,
+    user_id VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    device_id VARCHAR(255),
+    token_hash VARCHAR(255) NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    revoked BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL
+);
+
+CREATE INDEX idx_refresh_tokens_hash ON refresh_tokens(token_hash);
+CREATE INDEX idx_refresh_tokens_user ON refresh_tokens(user_id);
+
+
+-- Seed Data (resolved from V12 & V13)
+INSERT INTO users (id, email, password, display_name, avatar_url, auth_provider, provider_user_id, shop_description, shop_banner_url, created_at, updated_at)
+VALUES
+    ('00000000-0000-0000-0000-000000000101', 'buyer@example.local', 'QnV5ZXJAMTIz', 'Smoke Buyer', NULL, 'LOCAL', NULL, NULL, NULL, NOW(), NOW()),
+    ('00000000-0000-0000-0000-000000000102', 'seller@example.local', 'U2VsbGVyQDEyMw==', 'Smoke Seller', NULL, 'LOCAL', NULL, 'Dev smoke seller for local marketplace testing.', NULL, NOW(), NOW())
+ON CONFLICT (email) DO NOTHING;
+
+INSERT INTO user_roles (user_id, role)
+VALUES
+    ('00000000-0000-0000-0000-000000000101', 'CUSTOMER'),
+    ('00000000-0000-0000-0000-000000000102', 'CUSTOMER'),
+    ('00000000-0000-0000-0000-000000000102', 'SELLER')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO user_addresses (id, user_id, label, is_default, full_name, phone_number, line1, line2, city, state, postal_code, country)
+VALUES (
+    '00000000-0000-0000-0000-00000000a101',
+    '00000000-0000-0000-0000-000000000101',
+    'Home',
+    TRUE,
+    'Smoke Buyer',
+    '+84900000001',
+    '1 Dev Street',
+    'Smoke District',
+    'Ho Chi Minh City',
+    'Ho Chi Minh',
+    '700000',
+    'VN'
+)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO seller_applications (id, user_id, store_name, contact_email, phone, category, description, status, accepted_terms, avatar_url, cover_url, created_at, updated_at)
+VALUES (
+    '00000000-0000-0000-0000-00000000b102',
+    '00000000-0000-0000-0000-000000000102',
+    'Smoke Seller Store',
+    'seller@example.local',
+    '+84900000002',
+    'electronics',
+    'Approved local smoke seller application.',
+    'APPROVED',
+    TRUE,
+    NULL,
+    NULL,
+    NOW(),
+    NOW()
+)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO coupons (id, code, seller_id, discount_type, discount_value, min_order_amount, min_order_currency, max_discount_amount, max_discount_currency, usage_limit, used_count, start_at, end_at, created_at, updated_at)
+VALUES (
+    'coupon-smoke-welcome',
+    'SMOKE10',
+    '00000000-0000-0000-0000-000000000102',
+    'PERCENTAGE',
+    10.00,
+    100000.00,
+    'VND',
+    500000.00,
+    'VND',
+    100,
+    0,
+    NOW() - INTERVAL '1 day',
+    NOW() + INTERVAL '365 days',
+    NOW(),
+    NOW()
+)
+ON CONFLICT (code) DO NOTHING;
+
+INSERT INTO inventory (id, warehouse_id)
+VALUES 
+    ('inv-smoke-main', 'warehouse-smoke'),
+    ('DEFAULT_INVENTORY', 'warehouse-smoke')
+ON CONFLICT (id) DO NOTHING;
