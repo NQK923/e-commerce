@@ -40,14 +40,16 @@ Run from the repository root:
 
 ```powershell
 .\gradlew.bat :identity:identity-adapter:test --console=plain
+.\gradlew.bat :identity:identity-application:test --console=plain
 .\gradlew.bat :order:order-adapter:test --console=plain
 .\gradlew.bat :order:order-application:test --console=plain
 .\gradlew.bat :order:order-infrastructure:test --console=plain
 .\gradlew.bat :notification:notification-application:test --console=plain
+.\gradlew.bat :promotion:promotion-application:test --console=plain
 .\gradlew.bat :report:report-infrastructure:test --console=plain
 ```
 
-These cover the current high-risk regression areas: dev CORS origins, dev-safe OAuth callback gating, VNPay ownership and callback verification, notification ownership, and daily sales report aggregation.
+These cover the current high-risk regression areas: dev CORS origins, dev-safe OAuth callback gating, seller application review, VNPay ownership and callback verification, notification ownership, admin flash sale creation validation/cache warm-up, and daily sales report aggregation.
 
 ## Local Runtime Smoke Prerequisites
 
