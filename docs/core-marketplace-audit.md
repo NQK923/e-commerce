@@ -59,8 +59,8 @@ This checklist tracks the finite "production-ready core marketplace" goal for Bu
 - [~] Supabase config is build-safe when env vars are missing, but upload flows need local smoke with real or dev-safe bucket config.
 - [~] Kafka, Redis, MongoDB, SMTP, OAuth, and VNPay have placeholder/default config in places; Docker Compose now provides local Kafka, Redis, MongoDB, Postgres, and Mailpit. Backend health smoke is `UP`; Elasticsearch search behavior, WebSocket delivery, and full integration flows still need validation.
 - [~] Browser UI polish: desktop and 390px smoke did not show blocking layout overflow, but seller/admin pages still mix English and Vietnamese labels and chat widget can show a connection-error state when WebSocket is unavailable.
-- [~] Document exact local smoke-test env values and commands once seed workflow is complete. Current smoke used local Postgres, MongoDB, Redis, Kafka/Zookeeper, Mailpit, `MANAGEMENT_HEALTH_ELASTICSEARCH_ENABLED=false`, and opt-in admin seed env values.
-- [ ] Add CI-friendly command set for backend build, frontend lint/build, and smoke tests.
+- [x] Document exact local smoke-test env values and commands once seed workflow is complete. `docs/verification.md` records Docker Compose services, non-Docker backend env values, seed accounts, health checks, backend smoke commands, and frontend route smoke targets.
+- [x] Add CI-friendly command set for backend build, frontend lint/build, and smoke tests. `scripts/verify-ci.ps1` runs Docker Compose config validation, backend build/tests, frontend lint, and frontend build; `docs/verification.md` records targeted regression and runtime smoke command sets.
 
 ## 2026-06-12 Runtime Smoke Evidence
 
@@ -119,3 +119,4 @@ Automated regression test evidence added on 2026-06-15:
 - `.\gradlew.bat :report:report-infrastructure:test --console=plain` passed, covering daily report aggregation from real `orders` rows, date-boundary filtering, exclusion of `PENDING`, `CANCELLED`, and `RETURNED` statuses, zero-result behavior, and daily snapshot upsert wiring.
 - `.\gradlew.bat :order:order-application:test --console=plain` passed, covering VNPay callback success transitioning a pending order to paid, transaction success update, inventory confirmation, failed gateway callbacks, payment amount mismatch rejection, idempotent duplicate callbacks, and raw callback parameter forwarding to the gateway verifier.
 - `.\gradlew.bat :order:order-infrastructure:test --console=plain` passed, covering VNPAY signed success callback parsing, invalid signature rejection, signed gateway failure parsing, amount conversion, transaction reference mapping, and raw payload capture.
+- `.\scripts\verify-ci.ps1` passed, covering the new CI script's Docker Compose config validation, backend Gradle build/tests, frontend lint, and frontend production build command set.

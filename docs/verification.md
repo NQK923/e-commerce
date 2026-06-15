@@ -1,0 +1,175 @@
+# Verification Command Set
+
+Use this page as the repeatable command set for local CI-style checks and runtime smoke testing.
+
+## CI-Friendly Gates
+
+Run from the repository root on Windows PowerShell:
+
+```powershell
+.\scripts\verify-ci.ps1
+```
+
+What it runs:
+
+```powershell
+docker compose config --quiet
+.\gradlew.bat build --console=plain
+cd e-commerce-frontend
+npm run lint
+npm run build
+```
+
+Fresh CI agents should install frontend dependencies from the lockfile:
+
+```powershell
+.\scripts\verify-ci.ps1 -InstallFrontendDependencies
+```
+
+Useful narrow variants:
+
+```powershell
+.\scripts\verify-ci.ps1 -SkipFrontend
+.\scripts\verify-ci.ps1 -SkipBackend
+.\scripts\verify-ci.ps1 -SkipDockerConfig
+```
+
+## Targeted Backend Regression Gates
+
+Run from the repository root:
+
+```powershell
+.\gradlew.bat :identity:identity-adapter:test --console=plain
+.\gradlew.bat :order:order-adapter:test --console=plain
+.\gradlew.bat :order:order-application:test --console=plain
+.\gradlew.bat :order:order-infrastructure:test --console=plain
+.\gradlew.bat :notification:notification-application:test --console=plain
+.\gradlew.bat :report:report-infrastructure:test --console=plain
+```
+
+These cover the current high-risk regression areas: dev CORS origins, VNPay ownership and callback verification, notification ownership, and daily sales report aggregation.
+
+## Local Runtime Smoke Prerequisites
+
+Run the local backing services and app from the repository root:
+
+```powershell
+docker compose up -d postgres redis zookeeper kafka mongo mailpit
+```
+
+Then start the backend with dev-safe local defaults. The Docker Compose `app` service already defines these defaults:
+
+```powershell
+docker compose up -d app
+```
+
+For a non-Docker backend run, use equivalent environment values before `:bootstrap:bootRun`:
+
+```powershell
+$env:DB_URL="jdbc:postgresql://localhost:5432/ecommerce"
+$env:DB_USERNAME="postgres"
+$env:DB_PASSWORD="postgres"
+$env:SPRING_REDIS_HOST="localhost"
+$env:SPRING_REDIS_PORT="6379"
+$env:SPRING_KAFKA_BOOTSTRAP_SERVERS="localhost:9092"
+$env:MONGO_URI="mongodb://localhost:27017/ecommerce"
+$env:MONGO_DATABASE="ecommerce"
+$env:MAIL_HOST="localhost"
+$env:MAIL_PORT="1025"
+$env:MAIL_SMTP_AUTH="false"
+$env:MAIL_SMTP_STARTTLS_ENABLE="false"
+$env:MANAGEMENT_HEALTH_ELASTICSEARCH_ENABLED="false"
+$env:IDENTITY_SEED_ADMIN_ENABLED="true"
+$env:IDENTITY_SEED_ADMIN_EMAIL="admin@example.local"
+$env:IDENTITY_SEED_ADMIN_PASSWORD="LocalAdmin123!"
+.\gradlew.bat :bootstrap:bootRun
+```
+
+Start the frontend in a second terminal:
+
+```powershell
+cd e-commerce-frontend
+npm run dev
+```
+
+## Runtime Smoke Accounts
+
+Flyway dev seed migrations create these local smoke users:
+
+| Role | Email | Password |
+| --- | --- | --- |
+| Buyer | `buyer@example.local` | `Buyer@123` |
+| Seller | `seller@example.local` | `Seller@123` |
+| Admin | `admin@example.local` | `LocalAdmin123!` |
+
+Do not use these as production credentials.
+
+## Runtime Smoke Commands
+
+Health:
+
+```powershell
+Invoke-RestMethod http://localhost:8080/actuator/health
+```
+
+Buyer login:
+
+```powershell
+$buyer = Invoke-RestMethod http://localhost:8080/api/auth/login `
+  -Method POST `
+  -ContentType "application/json" `
+  -Body '{"email":"buyer@example.local","password":"Buyer@123"}'
+$buyerHeaders = @{ Authorization = "Bearer $($buyer.accessToken)" }
+Invoke-RestMethod http://localhost:8080/api/auth/me -Headers $buyerHeaders
+```
+
+Seller and admin login:
+
+```powershell
+$seller = Invoke-RestMethod http://localhost:8080/api/auth/login `
+  -Method POST `
+  -ContentType "application/json" `
+  -Body '{"email":"seller@example.local","password":"Seller@123"}'
+$sellerHeaders = @{ Authorization = "Bearer $($seller.accessToken)" }
+
+$admin = Invoke-RestMethod http://localhost:8080/api/auth/login `
+  -Method POST `
+  -ContentType "application/json" `
+  -Body '{"email":"admin@example.local","password":"LocalAdmin123!"}'
+$adminHeaders = @{ Authorization = "Bearer $($admin.accessToken)" }
+```
+
+Core read-path checks:
+
+```powershell
+Invoke-RestMethod "http://localhost:8080/api/products?page=0&size=10"
+Invoke-RestMethod "http://localhost:8080/api/products?search=smoke&page=0&size=10"
+Invoke-RestMethod "http://localhost:8080/api/coupons" -Headers $buyerHeaders
+Invoke-RestMethod "http://localhost:8080/api/flash-sales"
+Invoke-RestMethod "http://localhost:8080/api/orders?page=0&size=10" -Headers $buyerHeaders
+Invoke-RestMethod "http://localhost:8080/api/orders?sellerId=00000000-0000-0000-0000-000000000102&page=0&size=10" -Headers $sellerHeaders
+Invoke-RestMethod "http://localhost:8080/api/users/all?page=0&size=10" -Headers $adminHeaders
+Invoke-RestMethod "http://localhost:8080/api/reports/daily?date=$((Get-Date).ToString('yyyy-MM-dd'))" -Headers $adminHeaders
+```
+
+Frontend route smoke:
+
+```text
+http://localhost:3000/login
+http://localhost:3000/products
+http://localhost:3000/cart
+http://localhost:3000/seller/dashboard
+http://localhost:3000/seller/products
+http://localhost:3000/seller/orders
+http://localhost:3000/admin
+http://localhost:3000/admin/users
+http://localhost:3000/admin/products
+http://localhost:3000/admin/orders
+http://localhost:3000/admin/reports
+```
+
+Stop local services when finished:
+
+```powershell
+docker compose stop
+```
