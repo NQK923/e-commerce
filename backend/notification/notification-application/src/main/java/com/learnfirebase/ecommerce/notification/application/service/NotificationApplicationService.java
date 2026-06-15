@@ -17,6 +17,7 @@ import com.learnfirebase.ecommerce.notification.application.port.out.Notificatio
 import com.learnfirebase.ecommerce.notification.application.port.out.EmailGateway;
 import com.learnfirebase.ecommerce.notification.application.port.out.NotificationTemplateRepository;
 import com.learnfirebase.ecommerce.notification.application.port.out.PushGateway;
+import com.learnfirebase.ecommerce.notification.application.port.out.RealtimeNotificationGateway;
 import com.learnfirebase.ecommerce.notification.domain.model.NotificationChannel;
 import com.learnfirebase.ecommerce.notification.domain.model.NotificationTemplate;
 import com.learnfirebase.ecommerce.notification.domain.model.NotificationStatus;
@@ -29,6 +30,7 @@ public class NotificationApplicationService implements SendNotificationUseCase, 
     private final EmailGateway emailGateway;
     private final PushGateway pushGateway;
     private final NotificationRepository notificationRepository;
+    private final RealtimeNotificationGateway realtimeNotificationGateway;
 
     @Override
     public NotificationResultDto execute(SendNotificationCommand command) {
@@ -58,7 +60,9 @@ public class NotificationApplicationService implements SendNotificationUseCase, 
             .status(NotificationStatus.UNREAD)
             .createdAt(java.time.Instant.now())
             .build();
-        return notificationRepository.save(dto);
+        NotificationDto saved = notificationRepository.save(dto);
+        realtimeNotificationGateway.deliver(saved);
+        return saved;
     }
 
     public java.util.List<NotificationDto> list(String userId, int limit) {

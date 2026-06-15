@@ -9,6 +9,7 @@ import com.learnfirebase.ecommerce.notification.application.port.out.EmailGatewa
 import com.learnfirebase.ecommerce.notification.application.port.out.NotificationRepository;
 import com.learnfirebase.ecommerce.notification.application.port.out.NotificationTemplateRepository;
 import com.learnfirebase.ecommerce.notification.application.port.out.PushGateway;
+import com.learnfirebase.ecommerce.notification.application.port.out.RealtimeNotificationGateway;
 import com.learnfirebase.ecommerce.notification.application.service.NotificationApplicationService;
 import com.learnfirebase.ecommerce.notification.infrastructure.persistence.NotificationEntity;
 import com.learnfirebase.ecommerce.notification.infrastructure.persistence.NotificationJpaRepository;
@@ -22,8 +23,15 @@ public class NotificationModuleConfig {
         NotificationTemplateRepository templateRepository,
         EmailGateway emailGateway,
         PushGateway pushGateway,
-        NotificationRepository notificationRepository
+        NotificationRepository notificationRepository,
+        RealtimeNotificationGateway realtimeNotificationGateway
     ) {
-        return new NotificationApplicationService(templateRepository, emailGateway, pushGateway, notificationRepository);
+        return new NotificationApplicationService(
+            templateRepository,
+            emailGateway,
+            pushGateway,
+            notificationRepository,
+            realtimeNotificationGateway
+        );
     }
 }

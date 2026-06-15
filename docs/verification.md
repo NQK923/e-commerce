@@ -210,7 +210,7 @@ Repeatable local STOMP smoke:
 .\scripts\smoke-websocket.ps1
 ```
 
-This logs in the seeded buyer and seller, connects both clients to `/ws/chat` with JWT-backed STOMP `CONNECT`, subscribes to `/user/queue/chat/messages`, `/user/queue/chat/ack`, and `/user/queue/notifications`, sends a seller-to-buyer chat message through `/app/chat.send`, and verifies both the seller ack and buyer delivery frames. It requires the backend and local backing services to be running.
+This logs in the seeded buyer and seller, connects both clients to `/ws/chat` with JWT-backed STOMP `CONNECT`, subscribes to `/user/queue/chat/messages`, `/user/queue/chat/ack`, and `/user/queue/notifications`, sends a seller-to-buyer chat message through `/app/chat.send`, verifies both the seller ack and buyer delivery frames, records a buyer notification through `/api/notifications/record`, and verifies the buyer notification delivery frame. It requires the backend and local backing services to be running.
 
 Stop local services when finished:
 

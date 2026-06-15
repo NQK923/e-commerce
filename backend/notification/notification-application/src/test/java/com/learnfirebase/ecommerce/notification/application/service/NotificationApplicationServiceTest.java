@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.any;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -14,12 +15,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.learnfirebase.ecommerce.common.domain.AccessDeniedDomainException;
+import com.learnfirebase.ecommerce.notification.application.command.RecordNotificationCommand;
 import com.learnfirebase.ecommerce.notification.application.command.MarkNotificationReadCommand;
 import com.learnfirebase.ecommerce.notification.application.dto.NotificationDto;
 import com.learnfirebase.ecommerce.notification.application.port.out.EmailGateway;
 import com.learnfirebase.ecommerce.notification.application.port.out.NotificationRepository;
 import com.learnfirebase.ecommerce.notification.application.port.out.NotificationTemplateRepository;
 import com.learnfirebase.ecommerce.notification.application.port.out.PushGateway;
+import com.learnfirebase.ecommerce.notification.application.port.out.RealtimeNotificationGateway;
 import com.learnfirebase.ecommerce.notification.domain.model.NotificationChannel;
 import com.learnfirebase.ecommerce.notification.domain.model.NotificationStatus;
 
@@ -36,6 +39,27 @@ class NotificationApplicationServiceTest {
 
     @Mock
     private NotificationRepository notificationRepository;
+
+    @Mock
+    private RealtimeNotificationGateway realtimeNotificationGateway;
+
+    @Test
+    void recordPersistsAndDeliversRealtimeNotification() {
+        NotificationApplicationService service = service();
+        NotificationDto saved = notification("owner-1");
+        when(notificationRepository.save(any(NotificationDto.class))).thenReturn(saved);
+
+        NotificationDto result = service.record(RecordNotificationCommand.builder()
+            .userId("owner-1")
+            .title("Title")
+            .body("Body")
+            .channel(NotificationChannel.PUSH)
+            .build());
+
+        org.assertj.core.api.Assertions.assertThat(result).isSameAs(saved);
+        verify(notificationRepository).save(any(NotificationDto.class));
+        verify(realtimeNotificationGateway).deliver(saved);
+    }
 
     @Test
     void markReadRejectsNonOwner() {
@@ -65,7 +89,13 @@ class NotificationApplicationServiceTest {
     }
 
     private NotificationApplicationService service() {
-        return new NotificationApplicationService(templateRepository, emailGateway, pushGateway, notificationRepository);
+        return new NotificationApplicationService(
+            templateRepository,
+            emailGateway,
+            pushGateway,
+            notificationRepository,
+            realtimeNotificationGateway
+        );
     }
 
     private NotificationDto notification(String userId) {
