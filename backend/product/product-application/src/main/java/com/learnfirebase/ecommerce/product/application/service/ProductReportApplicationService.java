@@ -9,6 +9,7 @@ import com.learnfirebase.ecommerce.product.application.command.CreateProductRepo
 import com.learnfirebase.ecommerce.product.application.dto.ProductReportDto;
 import com.learnfirebase.ecommerce.product.application.port.in.ManageProductReportUseCase;
 import com.learnfirebase.ecommerce.product.application.port.out.ProductReportRepository;
+import com.learnfirebase.ecommerce.product.domain.exception.ProductDomainException;
 import com.learnfirebase.ecommerce.product.domain.model.ProductId;
 import com.learnfirebase.ecommerce.product.domain.model.ProductReport;
 import com.learnfirebase.ecommerce.product.domain.model.ProductReportId;
@@ -47,7 +48,7 @@ public class ProductReportApplicationService implements ManageProductReportUseCa
     @Override
     public void resolveReport(String reportId) {
         ProductReport report = reportRepository.findById(new ProductReportId(reportId))
-                .orElseThrow(() -> new RuntimeException("Report not found"));
+                .orElseThrow(() -> new ProductDomainException("Report not found"));
         report.resolve();
         reportRepository.save(report);
     }
@@ -55,7 +56,7 @@ public class ProductReportApplicationService implements ManageProductReportUseCa
     @Override
     public void rejectReport(String reportId) {
         ProductReport report = reportRepository.findById(new ProductReportId(reportId))
-                .orElseThrow(() -> new RuntimeException("Report not found"));
+                .orElseThrow(() -> new ProductDomainException("Report not found"));
         report.reject();
         reportRepository.save(report);
     }
