@@ -40,9 +40,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         if ("google".equalsIgnoreCase(registrationId)) {
             return AuthProvider.GOOGLE;
         }
-        if ("facebook".equalsIgnoreCase(registrationId)) {
-            return AuthProvider.FACEBOOK;
-        }
+
         return AuthProvider.LOCAL;
     }
 
@@ -50,9 +48,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         if (provider == AuthProvider.GOOGLE) {
             return attributes.getOrDefault("sub", defaultValue).toString();
         }
-        if (provider == AuthProvider.FACEBOOK) {
-            return attributes.getOrDefault("id", defaultValue).toString();
-        }
+
         return defaultValue;
     }
 }
