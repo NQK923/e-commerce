@@ -197,6 +197,8 @@ http://localhost:3000/admin/orders
 http://localhost:3000/admin/reports
 ```
 
+Realtime WebSocket smoke uses the backend STOMP endpoint at `/ws/chat` for both chat and user notification queues. The frontend derives this from `NEXT_PUBLIC_API_BASE_URL`, so non-local API base URLs should not require code changes.
+
 Stop local services when finished:
 
 ```powershell
