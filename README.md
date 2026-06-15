@@ -95,6 +95,15 @@ npm run start
 
 > **Lưu ý**: Cần thêm đúng URL của Supabase & public token vào file `.env` của Frontend (vd: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`).
 
+### Verification / CI gates
+Run the repeatable local CI command set from the repository root:
+
+```powershell
+.\scripts\verify-ci.ps1
+```
+
+Fresh agents can add `-InstallFrontendDependencies` to run `npm ci` before frontend lint/build. See `docs/verification.md` for targeted backend tests, runtime smoke prerequisites, seeded smoke accounts, and manual Buyer/Seller/Admin smoke commands.
+
 ## 5. Cấu hình Môi trường (.env & settings)
 - **Backend**: Cần có các tham số như DB truy cập (`DB_URL`, `DB_USERNAME`), cấu hình kết nối Redis/Kafka/Mongo, Secret keys OAuth2, Google/Facebook/VNPay API keys.
 - **Frontend**: Khai báo base API URL (`NEXT_PUBLIC_API_BASE_URL`), config Supabase Buckets ảnh tải lên (vd: `NEXT_PUBLIC_SUPABASE_PRODUCT_BUCKET`).
