@@ -55,6 +55,10 @@ try {
             Invoke-Step "Frontend production build" {
                 npm run build
             }
+
+            Invoke-Step "Frontend e2e tests" {
+                npx playwright test
+            }
         } finally {
             Pop-Location
         }

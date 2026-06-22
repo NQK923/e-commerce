@@ -5,7 +5,7 @@
 - **Kiến trúc**: Modular Monolith + Clean Architecture (DDD) giúp tách biệt rõ ràng giữa domain, ứng dụng, adapter và infrastructure; dễ dàng mở rộng và chuyển đổi thành microservices khi cần.
 - **Trải nghiệm**:
   - Khách mua hàng: Duyệt sản phẩm, giỏ hàng, thanh toán, chat với người bán, theo dõi đơn hàng.
-  - Người bán: Đăng ký, quản lý sản phẩm (thêm/sửa/xóa, bulk import), khuyến mãi (flash sale, coupon), quản lý vận hành bán hàng.
+  - Người bán: Đăng ký, quản lý sản phẩm (thêm/sửa/xóa), khuyến mãi (flash sale, coupon), quản lý vận hành bán hàng.
 
 ## 2. Kiến trúc Tổng quan
 Dự án được xây dựng dựa trên **Multi-module Gradle Kotlin DSL** (Java 17, Spring Boot 3.5.8). Mỗi "bounded context" được chia thành các module tương ứng:
@@ -22,9 +22,9 @@ Dự án được xây dựng dựa trên **Multi-module Gradle Kotlin DSL** (Ja
 | --- | --- | --- |
 | **common** | Value Object, Identifier, pagination, utils... | Chứa các JPA base, bảo vệ tầng domain/app khỏi phụ thuộc framework. |
 | **identity** | Đăng ký/Đăng nhập, OTP, Refresh token, Profile & Địa chỉ, Duyệt seller. | REST API `/api/auth`, `/api/users`, OAuth2 Google/Facebook, Redis/Mail (OTP). |
-| **product** | CRUD sản phẩm, SKU, Hình ảnh, Review/Report, Bulk import, Search. | REST API `/api/products`, Elasticsearch, Redis cache. |
+| **product** | CRUD sản phẩm, SKU, Hình ảnh, Review/Report, Search. | REST API `/api/products`, Elasticsearch, Redis cache. |
 | **promotion** | Flash Sale, Coupon, Đồng bộ tồn kho khi khuyến mãi. | REST API `/api/flash-sales`, `/api/admin/flash-sales`, `/api/coupons`, Redis (cho tồn kho flash sale). |
-| **cart** | Giỏ hàng cho cả người dùng ẩn danh (Guest) & đã đăng nhập. | REST API `/api/cart`, Đồng bộ localStorage & API. |
+| **cart** | Giỏ hàng cho cả người dùng ẩn danh (Guest) & đã đăng nhập. | REST API `/api/carts`, Đồng bộ localStorage & API. |
 | **order** | Quy trình đặt hàng, Thanh toán VNPay, Outbox pattern xử lý sự kiện. | REST API `/api/orders`, `/api/orders/{id}/payment/vnpay`, Outbox & Kafka events. |
 | **inventory** | Quản lý tồn kho, Hold/Reserve hàng cho Order, Flash sale. | REST API `/api/inventory`, Redis & Spring Data JPA. |
 | **logistics** | Tiện ích liên quan tới phí vận chuyển, tracking. | REST API `/api/logistics`. |
@@ -35,7 +35,7 @@ Dự án được xây dựng dựa trên **Multi-module Gradle Kotlin DSL** (Ja
 ## 3. Công nghệ Tiêu biểu
 ### Backend
 - **Core**: Java 17, Spring Boot 3.5.8, Spring Security 6, Spring Data JPA, Lombok.
-- **Database**: PostgreSQL (Migrations qua Flyway: `V1...V9`).
+- **Database**: PostgreSQL (Migrations qua Flyway: `V1` và các bản tiếp theo).
 - **NoSQL & Broker**: 
   - Redis: Dùng cho session, rate limit, OTP, caching, xử lý stock chớp nhoáng (flash sale).
   - MongoDB: Lưu trữ dữ liệu chat.
@@ -55,14 +55,15 @@ Dự án được xây dựng dựa trên **Multi-module Gradle Kotlin DSL** (Ja
 ## 4. Setup & Chạy dự án (Development Mode)
 
 ### Môi trường yều cầu (Dependencies):
-Để ứng dụng hoạt động đầy đủ, bạn cần cài đặt / chạy thông qua các dịch vụ Database và Message Broker:
-- PostgreSQL
-- Kafka & Zookeeper
-- Redis
-- Elasticsearch
-- MongoDB
+Để ứng dụng hoạt động đầy đủ, bạn cần cài đặt / cấu hình các dịch vụ Database và Message Broker:
+- PostgreSQL (Đã chuyển lên Supabase Cloud)
+- MongoDB (Đã chuyển lên MongoDB Atlas Cloud)
+- Kafka & Zookeeper (Local qua Docker Compose)
+- Redis (Local qua Docker Compose)
+- Mailpit (Local qua Docker Compose)
+- Elasticsearch (Đã tắt ở chế độ local, dùng DB fallback)
 
-Dự án có sẵn `docker-compose.yml` định nghĩa sẵn Kafka và Redis. Các dịch vụ khác tùy chỉnh qua `.env` của backend.
+Dự án có sẵn `docker-compose.yml` định nghĩa sẵn Kafka, Zookeeper, Redis và Mailpit. Các dịch vụ Cloud (Postgres, MongoDB) được cấu hình qua biến môi trường trong `.env` của backend.
 
 ### Chạy Backend
 Tạo file `.env` ở root dựa theo template của dự án, rồi dùng Gradle để chạy/dipli:
@@ -116,9 +117,9 @@ Fresh agents can add `-InstallFrontendDependencies` to run `npm ci` before front
 
 ## 7. Bề mặt API (Tóm tắt Chức Năng Chính)
 - **Xác Thực / Auth**: `/api/auth/register`, `/api/auth/login`, `/api/auth/otp/request`, `/api/auth/me`
-- **Sản Phẩm (`Product`)**: `/api/products` (danh sách / search), `/api/bulk/products`, `/api/product-reviews`
+- **Sản Phẩm (`Product`)**: `/api/products` (danh sách / search), `/api/product-reviews`
 - **Khuyến Mãi (`Promotion`)**: `/api/flash-sales`, `/api/admin/flash-sales`, `/api/coupons`
-- **Giỏ Hàng (`Cart`)**: `/api/cart`
+- **Giỏ Hàng (`Cart`)**: `/api/carts`
 - **Đơn Hàng & Thanh Toán (`Order/Payment`)**: `/api/orders`, `/api/orders/{id}/payment/vnpay`, `/api/payments/vnpay/return`
 - **Kho Hàng (`Inventory`)**: `/api/inventory/reserve` và `/api/inventory/release`
 - **Thông báo (`Notification`)**: `/api/notifications/` và theo dõi qua Websocket `/user/queue/notifications`

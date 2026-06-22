@@ -18,6 +18,7 @@ docker compose config --quiet
 cd e-commerce-frontend
 npm run lint
 npm run build
+npx playwright test
 ```
 
 Fresh CI agents should install frontend dependencies from the lockfile:
@@ -58,18 +59,27 @@ These cover the current high-risk regression areas: dev CORS origins, dev-safe O
 Run the local backing services and app from the repository root:
 
 ```powershell
-docker compose up -d postgres redis zookeeper kafka mongo mailpit
+docker compose up -d redis zookeeper kafka mailpit
 ```
 
-Then start the backend with dev-safe local defaults. The Docker Compose `app` service already defines these defaults:
+*Note: PostgreSQL and MongoDB can be run locally via Docker, or hosted on Supabase and MongoDB Atlas respectively. Make sure your `.env` contains the correct URIs. If you need local instances:*
 
 ```powershell
-docker compose up -d app
+docker run -d --name postgres -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=ecommerce -p 5432:5432 postgres:15
+docker run -d --name mongo -p 27017:27017 mongo:6
 ```
 
-For a non-Docker backend run, use equivalent environment values before `:bootstrap:bootRun`:
+If you encounter Flyway checksum errors due to old baseline migrations, you can clear your local database before starting:
+```powershell
+docker exec -it postgres psql -U postgres -d ecommerce -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+```
+
+Then start the backend with dev-safe local defaults.
+
+For a non-Docker backend run, use equivalent environment values before `:bootstrap:bootRun` (Note: `JWT_SECRET` is required):
 
 ```powershell
+$env:JWT_SECRET="YourSuperSecretKeyForJwtAuthenticationMustBe32BytesOrMore!"
 $env:DB_URL="jdbc:postgresql://localhost:5432/ecommerce"
 $env:DB_USERNAME="postgres"
 $env:DB_PASSWORD="postgres"
@@ -116,7 +126,7 @@ With that flag, the login page's Google/Facebook buttons route through `/oauth2/
 
 ## Runtime Smoke Accounts
 
-Flyway dev seed migrations create these local smoke users:
+If not already seeded, you can run `backend/bootstrap/src/main/resources/db/seed/dev_seeds.sql` against your local database to create these local smoke users:
 
 | Role | Email | Password |
 | --- | --- | --- |
@@ -125,6 +135,8 @@ Flyway dev seed migrations create these local smoke users:
 | Admin | `admin@example.local` | `LocalAdmin123!` |
 
 Do not use these as production credentials.
+
+*Note: The `dev_seeds.sql` script pre-seeds a smoke product (`prod-smoke-1`) and an active flash sale (`00000000-0000-0000-0000-000000000f51`) so you do not need to create them manually for basic smoke testing.*
 
 ## Runtime Smoke Commands
 

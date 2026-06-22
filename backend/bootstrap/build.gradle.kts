@@ -43,12 +43,22 @@ dependencies {
     implementation(project(":chat:chat-infrastructure"))
 
     implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("io.micrometer:micrometer-registry-prometheus")
+    implementation("io.micrometer:micrometer-tracing-bridge-brave")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.flywaydb:flyway-core")
     implementation("org.flywaydb:flyway-database-postgresql")
     runtimeOnly("org.postgresql:postgresql")
+
+    testImplementation(project(":cart:cart-application"))
+    testImplementation(project(":chat:chat-application"))
+    testImplementation(project(":identity:identity-application"))
+    testImplementation(project(":identity:identity-domain"))
+    testImplementation("org.springframework.boot:spring-boot-starter-security")
+    testImplementation("org.springframework.boot:spring-boot-starter-oauth2-client")
 }
 
 val env = Properties()
