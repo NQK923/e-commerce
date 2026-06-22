@@ -309,30 +309,35 @@ function CheckoutContent() {
           <div className="my-2 h-px bg-zinc-100" />
           <Input
             label={t.checkout.full_name}
+            name="fullName"
             required
             value={address.fullName}
             onChange={(e) => setAddress((prev) => ({ ...prev, fullName: e.target.value }))}
           />
           <Input
             label={t.checkout.address_1}
+            name="addressLine1"
             required
             value={address.line1}
             onChange={(e) => setAddress((prev) => ({ ...prev, line1: e.target.value }))}
           />
           <Input
             label={t.checkout.address_2}
+            name="addressLine2"
             value={address.line2}
             onChange={(e) => setAddress((prev) => ({ ...prev, line2: e.target.value }))}
           />
           <div className="grid gap-4 sm:grid-cols-2">
             <Input
               label={t.checkout.city}
+              name="city"
               required
               value={address.city}
               onChange={(e) => setAddress((prev) => ({ ...prev, city: e.target.value }))}
             />
             <Input
               label={t.checkout.state}
+              name="state"
               value={address.state}
               onChange={(e) => setAddress((prev) => ({ ...prev, state: e.target.value }))}
             />
@@ -340,12 +345,14 @@ function CheckoutContent() {
           <div className="grid gap-4 sm:grid-cols-2">
             <Input
               label={t.checkout.postal_code}
+              name="postalCode"
               required
               value={address.postalCode}
               onChange={(e) => setAddress((prev) => ({ ...prev, postalCode: e.target.value }))}
             />
             <Input
               label={t.checkout.country}
+              name="country"
               required
               value={address.country}
               onChange={(e) => setAddress((prev) => ({ ...prev, country: e.target.value }))}
