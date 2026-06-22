@@ -26,8 +26,17 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-    @Value("${frontend.origins:${frontend.origin:http://localhost:3000},http://127.0.0.1:3000}")
-    private String frontendOrigins;
+    @Value("${cors.allowed-origins:${frontend.origins:${frontend.origin:http://localhost:3000},http://127.0.0.1:3000}}")
+    private String allowedOrigins;
+
+    @Value("${cors.allowed-methods:GET,POST,PUT,PATCH,DELETE,OPTIONS}")
+    private String allowedMethods;
+
+    @Value("${cors.allowed-headers:Authorization,Content-Type,Accept,X-Requested-With,Cache-Control}")
+    private String allowedHeaders;
+
+    @Value("${cors.allow-credentials:true}")
+    private boolean allowCredentials;
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -67,6 +76,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/products/*").hasAnyRole("SELLER", "ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/products/*/reviews", "/api/products/*/reviews/*/report").authenticated()
                 .requestMatchers(HttpMethod.PUT, "/api/products/*/reviews/*").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/api/products/*").hasAnyRole("SELLER", "ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/products/*/reviews/*").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/reports").authenticated()
                 .requestMatchers("/api/auth/me", "/api/auth/logout", "/api/users/me/**", "/api/carts/**",
@@ -89,15 +99,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.stream(frontendOrigins.split(","))
-            .map(String::trim)
-            .filter(origin -> !origin.isBlank())
-            .distinct()
-            .toList());
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
-        configuration.setAllowCredentials(true);
-
+        List<String> origins = Arrays.asList(allowedOrigins.split(","));
+        configuration.setAllowedOrigins(origins);
+        configuration.setAllowedMethods(Arrays.asList(allowedMethods.split(",")));
+        configuration.setAllowedHeaders(Arrays.asList(allowedHeaders.split(",")));
+        configuration.setAllowCredentials(allowCredentials);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;

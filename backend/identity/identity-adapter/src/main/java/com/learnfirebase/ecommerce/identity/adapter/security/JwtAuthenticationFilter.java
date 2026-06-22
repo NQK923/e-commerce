@@ -1,9 +1,7 @@
 package com.learnfirebase.ecommerce.identity.adapter.security;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 
 import jakarta.servlet.FilterChain;
@@ -19,6 +17,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.lang.NonNull;
 
+import com.learnfirebase.ecommerce.identity.application.port.out.TokenProvider;
 import com.learnfirebase.ecommerce.identity.application.port.out.UserRepository;
 import com.learnfirebase.ecommerce.identity.domain.model.UserId;
 
@@ -28,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final UserRepository userRepository;
+    private final TokenProvider tokenProvider;
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
@@ -39,13 +39,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (authorization != null && authorization.startsWith("Bearer ")) {
             String token = authorization.substring(7);
             try {
-                // Token format: Base64(userId:email:type)
-                // e.g., Base64("123-456:user@example.com:access")
-                String decoded = new String(Base64.getDecoder().decode(token), StandardCharsets.UTF_8);
-                String[] parts = decoded.split(":");
+                String userId = tokenProvider.validateAndGetUserId(token);
 
-                if (parts.length >= 2) {
-                    String userId = parts[0];
+                if (userId != null) {
                     List<SimpleGrantedAuthority> authorities = new ArrayList<>();
                     try {
                         authorities.addAll(userRepository.findById(new UserId(userId))

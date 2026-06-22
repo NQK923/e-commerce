@@ -104,6 +104,18 @@ class AuthControllerOAuth2CallbackTest {
         assertThat(commandCaptor.getValue().getEmail()).isEqualTo("local.google@example.local");
     }
 
+    @Test
+    void devOAuth2CallbackRejectsIfEmailIsBlank() {
+        ReflectionTestUtils.setField(controller, "devOAuth2CallbackEnabled", true);
+        AuthController.OAuthCallbackRequest request = request();
+        request.setEmail("");
+
+        var response = controller.completeOAuth2Callback(request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        verify(oAuth2LoginUseCase, never()).execute(org.mockito.ArgumentMatchers.any());
+    }
+
     private AuthController.OAuthCallbackRequest request() {
         AuthController.OAuthCallbackRequest request = new AuthController.OAuthCallbackRequest();
         request.setProvider("google");

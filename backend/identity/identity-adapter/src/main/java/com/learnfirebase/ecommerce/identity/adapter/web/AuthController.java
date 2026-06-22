@@ -1,7 +1,5 @@
 package com.learnfirebase.ecommerce.identity.adapter.web;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 import java.util.Set;
 
 import org.springframework.http.HttpStatus;
@@ -9,7 +7,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -122,13 +119,15 @@ public class AuthController {
         }
     }
 
+
+
     @GetMapping("/me")
-    public ResponseEntity<AuthUserResponse> me(@RequestHeader(name = "Authorization", required = false) String authorization) {
-        String email = extractEmailFromAccessToken(authorization);
-        if (email == null) {
+    public ResponseEntity<AuthUserResponse> me(org.springframework.security.core.Authentication authentication) {
+        if (authentication == null || authentication.getPrincipal() == null) {
             return ResponseEntity.status(401).build();
         }
-        UserDto user = userQueryUseCase.getByEmail(email);
+        String userId = authentication.getPrincipal().toString();
+        UserDto user = userQueryUseCase.getById(userId);
         return ResponseEntity.ok(toUserResponse(user));
     }
 
@@ -175,15 +174,22 @@ public class AuthController {
                     .build());
             }
 
+            if (request.getEmail() == null || request.getEmail().isBlank()) {
+                return ResponseEntity.badRequest().body(ErrorResponse.builder()
+                    .code("OAUTH_EMAIL_REQUIRED")
+                    .message("Email is required from OAuth provider")
+                    .build());
+            }
+
             AuthTokenDto tokens = oAuth2LoginUseCase.execute(OAuth2LoginCommand.builder()
                 .provider(provider)
                 .providerUserId(providerUserId)
                 .email(request.getEmail())
                 .name(request.getName())
                 .build());
-            UserDto user = request.getEmail() != null && !request.getEmail().isBlank()
-                ? userQueryUseCase.getByEmail(request.getEmail())
-                : userQueryUseCase.getById(extractUserIdFromAccessToken(tokens.getAccessToken()));
+            
+            UserDto user = userQueryUseCase.getByEmail(request.getEmail());
+            
             return ResponseEntity.ok(toResponse(user, tokens));
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(ErrorResponse.builder()
@@ -212,6 +218,7 @@ public class AuthController {
     }
 
     private AuthUserResponse toUserResponse(UserDto user) {
+        if (user == null) return null;
         return AuthUserResponse.builder()
             .id(user.getId())
             .email(user.getEmail())
@@ -220,36 +227,6 @@ public class AuthController {
             .provider(user.getProvider() != null ? user.getProvider().name() : null)
             .roles(user.getRoles())
             .build();
-    }
-
-    private String extractEmailFromAccessToken(String authorization) {
-        if (authorization == null || !authorization.startsWith("Bearer ")) {
-            return null;
-        }
-        try {
-            String token = authorization.substring(7);
-            String decoded = new String(Base64.getDecoder().decode(token), StandardCharsets.UTF_8);
-            String[] parts = decoded.split(":");
-            if (parts.length >= 2) {
-                return parts[1];
-            }
-        } catch (IllegalArgumentException ignored) {
-            // invalid token
-        }
-        return null;
-    }
-
-    private String extractUserIdFromAccessToken(String token) {
-        try {
-            String decoded = new String(Base64.getDecoder().decode(token), StandardCharsets.UTF_8);
-            String[] parts = decoded.split(":");
-            if (parts.length >= 1) {
-                return parts[0];
-            }
-        } catch (IllegalArgumentException ignored) {
-            // invalid token
-        }
-        throw new IdentityDomainException("OAuth token did not contain a user id");
     }
 
     private String firstNonBlank(String... values) {

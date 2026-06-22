@@ -1,26 +1,36 @@
 package com.learnfirebase.ecommerce.chat.infrastructure.security;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
+import javax.crypto.SecretKey;
+import io.jsonwebtoken.Jwts;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
 public class JwtTokenProvider {
 
-    /**
-     * Identity module issues simple Base64 tokens: userId:email:access.
-     * Decode and extract userId; reject malformed tokens.
-     */
+    private final SecretKey key;
+
+    public JwtTokenProvider(@Value("${jwt.secret}") String secret) {
+        this.key = io.jsonwebtoken.security.Keys.hmacShaKeyFor(secret.getBytes());
+    }
+
     public String validateAndGetUserId(String token) {
         try {
-            String decoded = new String(Base64.getDecoder().decode(token), StandardCharsets.UTF_8);
-            String[] parts = decoded.split(":");
-            if (parts.length < 1 || parts[0].isBlank()) {
-                throw new IllegalArgumentException("Token missing user id");
+            var claims = Jwts.parser()
+                    .verifyWith(key)
+                    .requireIssuer("ecommerce-auth")
+                    .requireAudience("ecommerce-app")
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+            
+            if (!"access".equals(claims.get("type"))) {
+                throw new IllegalArgumentException("Token is not an access token");
             }
-            return parts[0];
-        } catch (IllegalArgumentException ex) {
-            throw new IllegalArgumentException("Invalid token", ex);
+            
+            return claims.getSubject();
+        } catch (Exception ex) {
+            throw new IllegalArgumentException("Invalid JWT token", ex);
         }
     }
 }

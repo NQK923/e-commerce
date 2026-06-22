@@ -20,11 +20,13 @@ spring:
     open-in-view: false
   flyway:
     enabled: ${FLYWAY_ENABLED:true}
+    baseline-on-migrate: true
+    baseline-version: 1
     connect-retries: ${FLYWAY_CONNECT_RETRIES:5}
     connect-retries-interval: ${FLYWAY_CONNECT_RETRIES_INTERVAL:PT5S}
     locations:
       - classpath:db/migration
-    validate-on-migrate: false
+    validate-on-migrate: ${FLYWAY_VALIDATE_ON_MIGRATE:true}
   kafka:
     bootstrap-servers: localhost:9092
     producer:
@@ -58,6 +60,7 @@ spring:
     port: ${MAIL_PORT:1025}
     username: ${MAIL_USERNAME:}
     password: ${MAIL_PASSWORD:}
+    from: ${MAIL_FROM:no-reply@example.com}
     properties:
       mail:
         smtp:
@@ -66,15 +69,32 @@ spring:
             enable: ${MAIL_SMTP_STARTTLS_ENABLE:false}
 
 management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus,info,metrics
+  tracing:
+    sampling:
+      probability: 1.0
   health:
     elasticsearch:
       enabled: ${MANAGEMENT_HEALTH_ELASTICSEARCH_ENABLED:false}
+    db:
+      enabled: true
+    redis:
+      enabled: true
+    mongo:
+      enabled: true
 
 frontend:
   origin: ${FRONTEND_ORIGIN:http://localhost:3000}
   origins: ${FRONTEND_ORIGINS:${FRONTEND_ORIGIN:http://localhost:3000},http://127.0.0.1:3000}
-  mail:
-    from: ${MAIL_FROM:no-reply@example.com}
+
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:${FRONTEND_ORIGINS:http://localhost:3000,http://127.0.0.1:3000}}
+  allowed-methods: ${CORS_ALLOWED_METHODS:GET,POST,PUT,PATCH,DELETE,OPTIONS}
+  allowed-headers: ${CORS_ALLOWED_HEADERS:Authorization,Content-Type,Accept,X-Requested-With,Cache-Control}
+  allow-credentials: ${CORS_ALLOW_CREDENTIALS:true}
 
 identity:
   seed:
@@ -98,3 +118,7 @@ search:
     username: ${SEARCH_ELASTIC_USERNAME:}
     password: ${SEARCH_ELASTIC_PASSWORD:}
     index: ${SEARCH_ELASTIC_INDEX:products}
+
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"

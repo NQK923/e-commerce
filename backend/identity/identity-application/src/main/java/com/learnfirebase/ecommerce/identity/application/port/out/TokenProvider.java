@@ -4,4 +4,6 @@ public interface TokenProvider {
     String generateAccessToken(String userId, String email);
 
     String generateRefreshToken(String userId, String email, String deviceId);
+
+    String validateAndGetUserId(String token);
 }

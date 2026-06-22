@@ -1,8 +1,5 @@
 package com.learnfirebase.ecommerce.identity.adapter.web;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,7 +7,6 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -68,12 +64,12 @@ public class IdentityController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<UserDto> me(@RequestHeader(name = "Authorization", required = false) String authorization) {
-        String email = extractEmailFromAccessToken(authorization);
-        if (email == null) {
+    public ResponseEntity<UserDto> me(org.springframework.security.core.Authentication authentication) {
+        if (authentication == null || authentication.getPrincipal() == null) {
             return ResponseEntity.status(401).build();
         }
-        return ResponseEntity.ok(userQueryUseCase.getByEmail(email));
+        String userId = authentication.getPrincipal().toString();
+        return ResponseEntity.ok(userQueryUseCase.getById(userId));
     }
 
     @GetMapping("/all")
@@ -82,13 +78,13 @@ public class IdentityController {
     }
 
     @PatchMapping("/me")
-    public ResponseEntity<UserDto> updateProfile(@RequestHeader(name = "Authorization", required = false) String authorization,
+    public ResponseEntity<UserDto> updateProfile(org.springframework.security.core.Authentication authentication,
         @RequestBody UpdateProfileRequest request) {
-        String email = extractEmailFromAccessToken(authorization);
-        if (email == null) {
+        if (authentication == null || authentication.getPrincipal() == null) {
             return ResponseEntity.status(401).build();
         }
-        UserDto user = userQueryUseCase.getByEmail(email);
+        String userId = authentication.getPrincipal().toString();
+        UserDto user = userQueryUseCase.getById(userId);
         UpdateProfileCommand command = UpdateProfileCommand.builder()
             .userId(user.getId())
             .email(user.getEmail())
@@ -101,13 +97,12 @@ public class IdentityController {
 
     @PostMapping("/me/addresses")
     public ResponseEntity<UserAddressDto> addAddress(
-            @RequestHeader(name = "Authorization", required = false) String authorization,
+            org.springframework.security.core.Authentication authentication,
             @RequestBody AddAddressRequest request) {
-        String email = extractEmailFromAccessToken(authorization);
-        if (email == null) {
+        if (authentication == null || authentication.getPrincipal() == null) {
             return ResponseEntity.status(401).build();
         }
-        UserDto user = userQueryUseCase.getByEmail(email);
+        String userId = authentication.getPrincipal().toString();
         
         AddAddressCommand command = AddAddressCommand.builder()
                 .label(request.getLabel())
@@ -124,43 +119,25 @@ public class IdentityController {
                         .build())
                 .build();
                 
-        return ResponseEntity.ok(manageUserAddressUseCase.addAddress(user.getId(), command));
+        return ResponseEntity.ok(manageUserAddressUseCase.addAddress(userId, command));
     }
 
     @DeleteMapping("/me/addresses/{addressId}")
     public ResponseEntity<Void> deleteAddress(
-            @RequestHeader(name = "Authorization", required = false) String authorization,
+            org.springframework.security.core.Authentication authentication,
             @PathVariable("addressId") String addressId) {
-        String email = extractEmailFromAccessToken(authorization);
-        if (email == null) {
+        if (authentication == null || authentication.getPrincipal() == null) {
             return ResponseEntity.status(401).build();
         }
-        UserDto user = userQueryUseCase.getByEmail(email);
+        String userId = authentication.getPrincipal().toString();
         
-        manageUserAddressUseCase.deleteAddress(user.getId(), addressId);
+        manageUserAddressUseCase.deleteAddress(userId, addressId);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<UserDto> getUserById(@PathVariable("id") String id) {
         return ResponseEntity.ok(userQueryUseCase.getById(id));
-    }
-
-    private String extractEmailFromAccessToken(String authorization) {
-        if (authorization == null || !authorization.startsWith("Bearer ")) {
-            return null;
-        }
-        try {
-            String token = authorization.substring(7);
-            String decoded = new String(Base64.getDecoder().decode(token), StandardCharsets.UTF_8);
-            String[] parts = decoded.split(":");
-            if (parts.length >= 2) {
-                return parts[1];
-            }
-        } catch (IllegalArgumentException ignored) {
-            // invalid token
-        }
-        return null;
     }
 
     @Data
