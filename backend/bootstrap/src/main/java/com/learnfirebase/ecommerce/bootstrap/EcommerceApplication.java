@@ -3,12 +3,14 @@ package com.learnfirebase.ecommerce.bootstrap;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.List;
 
+@Slf4j
 @SpringBootApplication(
     scanBasePackages = "com.learnfirebase.ecommerce"
 )
@@ -32,7 +34,7 @@ public class EcommerceApplication {
         }
 
         if (envFile.exists()) {
-            System.out.println("[ENV LOADER] Found .env file at: " + envFile.getAbsolutePath());
+            log.info("[ENV LOADER] Found .env file at: {}", envFile.getAbsolutePath());
             try {
                 List<String> lines = Files.readAllLines(envFile.toPath());
                 int loadedCount = 0;
@@ -56,12 +58,12 @@ public class EcommerceApplication {
                         }
                     }
                 }
-                System.out.println("[ENV LOADER] Successfully loaded " + loadedCount + " variables into System Properties.");
+                log.info("[ENV LOADER] Successfully loaded {} variables into System Properties.", loadedCount);
             } catch (IOException e) {
-                System.err.println("[ENV LOADER] Error reading .env file: " + e.getMessage());
+                log.error("[ENV LOADER] Error reading .env file: {}", e.getMessage());
             }
         } else {
-            System.err.println("[ENV LOADER] WARNING: .env file NOT found in any search paths! Using default spring/docker properties.");
+            log.warn("[ENV LOADER] WARNING: .env file NOT found in any search paths! Using default spring/docker properties.");
         }
     }
 }
