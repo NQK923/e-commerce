@@ -72,10 +72,4 @@ public class ProductModuleConfig {
                 purchaseVerificationPort,
                 productRepository);
     }
-
-    @Bean
-    public com.learnfirebase.ecommerce.product.application.service.BulkProductService bulkProductService(
-            ManageProductUseCase manageProductUseCase) {
-        return new com.learnfirebase.ecommerce.product.application.service.BulkProductService(manageProductUseCase);
-    }
 }

@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.learnfirebase.ecommerce.promotion.application.command.CreateCouponCommand;
 import com.learnfirebase.ecommerce.promotion.application.service.SellerPromotionApplicationService;
@@ -26,6 +27,7 @@ public class SellerPromotionController {
     private final SellerPromotionApplicationService sellerPromotionService;
 
     @PostMapping("/coupons")
+    @Transactional
     public ResponseEntity<Coupon> createCoupon(@RequestBody CreateCouponCommand command, Principal principal) {
         if (principal == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);

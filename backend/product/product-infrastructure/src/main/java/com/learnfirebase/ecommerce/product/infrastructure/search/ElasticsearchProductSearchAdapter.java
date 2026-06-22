@@ -65,6 +65,18 @@ public class ElasticsearchProductSearchAdapter implements ProductSearchIndexPort
     }
 
     @Override
+    public void deleteIndex(String productId) {
+        if (productId == null) return;
+        try {
+            Request request = new Request("DELETE", "/" + properties.getIndex() + "/_doc/" + productId);
+            request.addParameter("refresh", "wait_for");
+            restClient.performRequest(request);
+        } catch (Exception e) {
+            log.warn("Failed to delete product index {}: {}", productId, e.getMessage());
+        }
+    }
+
+    @Override
     public ProductSearchResult search(ProductSearchQuery query, PageRequest pageRequest) {
         int size = pageRequest.getSize() > 0 ? pageRequest.getSize() : (query.getSize() != null ? query.getSize() : 10);
         int from = Math.max(pageRequest.getPage(), 0) * size;

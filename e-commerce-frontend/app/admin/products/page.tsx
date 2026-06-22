@@ -29,10 +29,15 @@ function ProductsContent() {
   }, []);
 
   const handleDelete = async (productId: string) => {
-      if (confirm("Are you sure you want to delete this product?")) {
-          // Simulate API call or add real delete endpoint if available
-          setProducts(products.filter(p => p.id !== productId));
-          addToast("Product deleted", "success");
+      if (confirm("Bạn có chắc chắn muốn xóa sản phẩm này?")) {
+          try {
+              await productApi.delete(productId);
+              setProducts((prev) => prev.filter((p) => p.id !== productId));
+              addToast("Xóa sản phẩm thành công", "success");
+          } catch (error) {
+              console.error("Failed to delete product", error);
+              addToast("Xóa sản phẩm thất bại", "error");
+          }
       }
   };
 

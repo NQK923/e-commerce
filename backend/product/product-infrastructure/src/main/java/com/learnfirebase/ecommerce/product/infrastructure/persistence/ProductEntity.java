@@ -18,8 +18,13 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
+
 @Entity
 @Table(name = "products")
+@SQLDelete(sql = "UPDATE products SET deleted_at = NOW() WHERE id = ?")
+@SQLRestriction("deleted_at IS NULL")
 @Data
 @Builder
 @NoArgsConstructor
@@ -39,6 +44,8 @@ public class ProductEntity {
     private String sellerId;
     private Instant createdAt;
     private Instant updatedAt;
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
 
     @ElementCollection
     @CollectionTable(name = "product_tags", joinColumns = @JoinColumn(name = "product_id"))

@@ -190,6 +190,10 @@ export const productApi = {
         })),
       },
     }).then(mapProduct),
+  delete: (id: string) =>
+    apiRequest<void>(`/api/products/${id}`, {
+      method: "DELETE",
+    }),
   
   fetchReviews: (productId: string, page = 0, size = 10) =>
     apiRequest<BackendPageResponse<Review>>(`/api/products/${productId}/reviews?page=${page}&size=${size}`).then(

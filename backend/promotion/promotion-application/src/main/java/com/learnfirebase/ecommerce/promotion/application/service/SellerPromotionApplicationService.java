@@ -13,15 +13,10 @@ import com.learnfirebase.ecommerce.promotion.domain.model.CouponId;
 
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-@Service
 @RequiredArgsConstructor
 public class SellerPromotionApplicationService {
     private final CouponRepository couponRepository;
 
-    @Transactional
     public Coupon createCoupon(CreateCouponCommand command) {
         if (couponRepository.findByCode(command.getCode()).isPresent()) {
             throw new PromotionDomainException("Coupon code already exists");

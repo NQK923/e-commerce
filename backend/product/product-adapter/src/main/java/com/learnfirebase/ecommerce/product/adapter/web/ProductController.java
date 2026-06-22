@@ -12,10 +12,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.DeleteMapping;
 
 import com.learnfirebase.ecommerce.common.application.pagination.PageRequest;
 import com.learnfirebase.ecommerce.common.application.pagination.PageResponse;
 import com.learnfirebase.ecommerce.product.application.command.UpsertProductCommand;
+import com.learnfirebase.ecommerce.product.application.command.DeleteProductCommand;
 import com.learnfirebase.ecommerce.product.application.dto.ProductDto;
 import com.learnfirebase.ecommerce.product.application.dto.ProductSearchQuery;
 import com.learnfirebase.ecommerce.product.application.port.in.ManageProductUseCase;
@@ -177,6 +179,20 @@ public class ProductController {
 
         UpsertProductCommand merged = builder.build();
         return ResponseEntity.ok(manageProductUseCase.execute(merged));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable("id") String id, org.springframework.security.core.Authentication authentication) {
+        boolean isAdmin = authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        
+        DeleteProductCommand command = DeleteProductCommand.builder()
+            .id(id)
+            .sellerId(authentication != null ? authentication.getName() : null)
+            .isAdmin(isAdmin)
+            .build();
+        manageProductUseCase.delete(command);
+        return ResponseEntity.noContent().build();
     }
 
     private ProductDto enrichWithInventory(ProductDto product) {

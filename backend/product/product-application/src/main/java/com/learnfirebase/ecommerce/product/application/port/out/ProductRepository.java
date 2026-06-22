@@ -12,6 +12,8 @@ public interface ProductRepository {
     Product save(Product product);
 
     Optional<Product> findById(ProductId id);
+    
+    void delete(ProductId id);
 
     PageResponse<Product> findAll(PageRequest pageRequest);
     

@@ -46,6 +46,17 @@ public class ProductRepositoryImpl implements ProductRepository {
     }
 
     @Override
+    @Transactional
+    public void delete(ProductId id) {
+        try {
+            productJpaRepository.deleteById(Objects.requireNonNull(id.getValue()));
+            productJpaRepository.flush();
+        } catch (org.springframework.dao.DataIntegrityViolationException ex) {
+            throw new com.learnfirebase.ecommerce.product.domain.exception.ProductDomainException("Cannot delete product because it is referenced by other records (e.g., in orders or carts).");
+        }
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public PageResponse<Product> findAll(PageRequest pageRequest) {
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest

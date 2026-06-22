@@ -16,6 +16,7 @@ import java.util.Optional;
 import com.learnfirebase.ecommerce.common.domain.DomainEvent;
 import com.learnfirebase.ecommerce.common.domain.valueobject.Money;
 import com.learnfirebase.ecommerce.product.application.command.UpsertProductCommand;
+import com.learnfirebase.ecommerce.product.application.command.DeleteProductCommand;
 import com.learnfirebase.ecommerce.product.application.dto.ProductDto;
 import com.learnfirebase.ecommerce.product.application.port.out.ProductEventPublisher;
 import com.learnfirebase.ecommerce.product.application.port.out.ProductRepository;
@@ -23,6 +24,8 @@ import com.learnfirebase.ecommerce.product.application.port.out.ProductSearchInd
 import com.learnfirebase.ecommerce.product.application.port.out.ProductSearchPort;
 import com.learnfirebase.ecommerce.product.domain.event.ProductCreatedEvent;
 import com.learnfirebase.ecommerce.product.domain.exception.ProductDomainException;
+import com.learnfirebase.ecommerce.common.domain.AccessDeniedDomainException;
+import com.learnfirebase.ecommerce.common.domain.ResourceNotFoundDomainException;
 import com.learnfirebase.ecommerce.product.domain.model.Category;
 import com.learnfirebase.ecommerce.product.domain.model.Product;
 import com.learnfirebase.ecommerce.product.domain.model.ProductId;
@@ -96,7 +99,7 @@ class ProductApplicationServiceTest {
         when(productRepository.findById(new ProductId("product-1"))).thenReturn(Optional.of(existing));
 
         assertThatThrownBy(() -> service.execute(createCommand("product-1", "seller-2")))
-            .isInstanceOf(ProductDomainException.class)
+            .isInstanceOf(AccessDeniedDomainException.class)
             .hasMessage("You are not authorized to update this product");
 
         verify(productRepository, never()).save(any());
@@ -151,6 +154,65 @@ class ProductApplicationServiceTest {
 
         verify(productRepository, never()).save(any());
         verify(productEventPublisher, never()).publish(any());
+    }
+
+    @Test
+    void deleteProductSuccessfullyAsOwner() {
+        Product existing = product("product-1", "seller-1");
+        when(productRepository.findById(new ProductId("product-1"))).thenReturn(Optional.of(existing));
+
+        service.delete(DeleteProductCommand.builder().id("product-1").sellerId("seller-1").isAdmin(false).build());
+
+        verify(productRepository).delete(new ProductId("product-1"));
+        verify(productSearchIndexPort).deleteIndex("product-1");
+    }
+
+    @Test
+    void deleteProductSuccessfullyAsAdmin() {
+        Product existing = product("product-1", "seller-1");
+        when(productRepository.findById(new ProductId("product-1"))).thenReturn(Optional.of(existing));
+
+        service.delete(DeleteProductCommand.builder().id("product-1").sellerId("seller-2").isAdmin(true).build());
+
+        verify(productRepository).delete(new ProductId("product-1"));
+        verify(productSearchIndexPort).deleteIndex("product-1");
+    }
+
+    @Test
+    void deleteProductThrowsAccessDeniedForNonOwner() {
+        Product existing = product("product-1", "seller-1");
+        when(productRepository.findById(new ProductId("product-1"))).thenReturn(Optional.of(existing));
+
+        assertThatThrownBy(() -> service.delete(DeleteProductCommand.builder().id("product-1").sellerId("seller-2").isAdmin(false).build()))
+            .isInstanceOf(AccessDeniedDomainException.class)
+            .hasMessage("You are not authorized to delete this product");
+
+        verify(productRepository, never()).delete(any());
+        verify(productSearchIndexPort, never()).deleteIndex(any());
+    }
+
+    @Test
+    void deleteProductThrowsResourceNotFoundForMissingProduct() {
+        when(productRepository.findById(new ProductId("product-1"))).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.delete(DeleteProductCommand.builder().id("product-1").sellerId("seller-1").isAdmin(false).build()))
+            .isInstanceOf(ResourceNotFoundDomainException.class)
+            .hasMessage("Product not found: product-1");
+
+        verify(productRepository, never()).delete(any());
+        verify(productSearchIndexPort, never()).deleteIndex(any());
+    }
+
+    @Test
+    void deleteProductToleratesSearchIndexUnindexingFailure() {
+        Product existing = product("product-1", "seller-1");
+        when(productRepository.findById(new ProductId("product-1"))).thenReturn(Optional.of(existing));
+        doThrow(new RuntimeException("search index down")).when(productSearchIndexPort).deleteIndex("product-1");
+
+        service.delete(DeleteProductCommand.builder().id("product-1").sellerId("seller-1").isAdmin(false).build());
+
+        verify(productRepository).delete(new ProductId("product-1"));
+        verify(productSearchIndexPort).deleteIndex("product-1");
     }
 
     private UpsertProductCommand createCommand(String productId, String sellerId) {

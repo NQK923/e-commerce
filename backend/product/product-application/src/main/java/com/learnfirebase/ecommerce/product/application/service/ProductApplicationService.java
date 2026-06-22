@@ -11,6 +11,7 @@ import com.learnfirebase.ecommerce.common.application.pagination.PageRequest;
 import com.learnfirebase.ecommerce.common.application.pagination.PageResponse;
 import com.learnfirebase.ecommerce.common.domain.valueobject.Money;
 import com.learnfirebase.ecommerce.product.application.command.UpsertProductCommand;
+import com.learnfirebase.ecommerce.product.application.command.DeleteProductCommand;
 import com.learnfirebase.ecommerce.product.application.dto.ProductDto;
 import com.learnfirebase.ecommerce.product.application.dto.ProductSearchQuery;
 import com.learnfirebase.ecommerce.product.application.dto.ProductSearchResult;
@@ -27,12 +28,16 @@ import com.learnfirebase.ecommerce.product.domain.exception.ProductDomainExcepti
 import com.learnfirebase.ecommerce.product.domain.model.Category;
 import com.learnfirebase.ecommerce.product.domain.model.Product;
 import com.learnfirebase.ecommerce.product.domain.model.ProductId;
+import com.learnfirebase.ecommerce.common.domain.AccessDeniedDomainException;
+import com.learnfirebase.ecommerce.common.domain.ResourceNotFoundDomainException;
 import com.learnfirebase.ecommerce.product.domain.model.ProductImage;
 import com.learnfirebase.ecommerce.product.domain.model.ProductImageId;
 import com.learnfirebase.ecommerce.product.domain.model.ProductVariant;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RequiredArgsConstructor
 public class ProductApplicationService implements ManageProductUseCase, QueryProductUseCase {
     private final ProductRepository productRepository;
@@ -47,7 +52,7 @@ public class ProductApplicationService implements ManageProductUseCase, QueryPro
                 try {
                     productRepository.incrementSoldCount(new ProductId(item.getProductId()), item.getQuantity());
                 } catch (Exception e) {
-                    System.err.println("Failed to increment sold count for product " + item.getProductId() + ": " + e.getMessage());
+                    log.warn("Failed to increment sold count for product {}: {}", item.getProductId(), e.getMessage());
                 }
             }
         }
@@ -67,7 +72,7 @@ public class ProductApplicationService implements ManageProductUseCase, QueryPro
                     .build();
             }
         } catch (Exception e) {
-            System.err.println("Search backend failed, falling back to DB search: " + e.getMessage());
+            log.warn("Search backend failed, falling back to DB search: {}", e.getMessage());
         }
 
         PageResponse<Product> page = productRepository.search(query, pageRequest);
@@ -96,7 +101,7 @@ public class ProductApplicationService implements ManageProductUseCase, QueryPro
                     .build();
             }
         } catch (Exception e) {
-            System.err.println("Search backend failed, fallback to DB: " + e.getMessage());
+            log.warn("Search backend failed, fallback to DB: {}", e.getMessage());
         }
         var page = productRepository.search(query, pageRequest);
         return ProductSearchWithFacetsDto.builder()
@@ -112,13 +117,13 @@ public class ProductApplicationService implements ManageProductUseCase, QueryPro
 
     @Override
     public ProductDto execute(UpsertProductCommand command) {
-        System.out.println("DEBUG: Starting execute for product: " + command.getName());
+        log.debug("Starting execute for product: {}", command.getName());
         try {
             ProductId productId = new ProductId(command.getId() != null ? command.getId() : UUID.randomUUID().toString());
             Product existingProduct = productRepository.findById(productId).orElse(null);
 
             if (existingProduct != null && !existingProduct.getSellerId().equals(command.getSellerId())) {
-                throw new ProductDomainException("You are not authorized to update this product");
+                throw new AccessDeniedDomainException("You are not authorized to update this product");
             }
 
             String priceStr = command.getPrice();
@@ -170,19 +175,19 @@ public class ProductApplicationService implements ManageProductUseCase, QueryPro
                 .updatedAt(Instant.now())
                 .build();
 
-            System.out.println("DEBUG: Saving product to repository");
+            log.debug("Saving product to repository");
             Product saved = productRepository.save(product);
-            System.out.println("DEBUG: Product saved. Indexing...");
+            log.debug("Product saved. Indexing...");
             
             try {
                 productSearchIndexPort.index(saved);
             } catch (Exception e) {
-                System.err.println("DEBUG: Search indexing failed: " + e.getMessage());
+                log.error("Search indexing failed: {}", e.getMessage());
                 // Non-critical?
             }
 
             if (existingProduct == null) {
-                System.out.println("DEBUG: Publishing event (New Product)");
+                log.debug("Publishing event (New Product)");
                 productEventPublisher.publish(ProductCreatedEvent.builder()
                     .productId(saved.getId().getValue())
                     .initialStock(command.getQuantity())
@@ -194,15 +199,37 @@ public class ProductApplicationService implements ManageProductUseCase, QueryPro
                         .collect(Collectors.toList()) : java.util.Collections.emptyList())
                     .build());
             } else {
-                System.out.println("DEBUG: Skipping event publication for Product Update to prevent inventory duplication.");
+                log.debug("Skipping event publication for Product Update to prevent inventory duplication.");
             }
             
-            System.out.println("DEBUG: Event published (if new). Returning DTO");
+            log.debug("Event published (if new). Returning DTO");
             return toDto(saved);
         } catch (Exception e) {
-            System.err.println("DEBUG: Error in execute: " + e.getMessage());
-            e.printStackTrace();
+            log.error("Error in execute: {}", e.getMessage(), e);
             throw e;
+        }
+    }
+
+    @Override
+    public void delete(DeleteProductCommand command) {
+        ProductId productId = new ProductId(command.getId());
+        Product existingProduct = productRepository.findById(productId)
+            .orElseThrow(() -> new ResourceNotFoundDomainException("Product not found: " + command.getId()));
+            
+        if (!command.isAdmin()) {
+            if (command.getSellerId() == null || !existingProduct.getSellerId().equals(command.getSellerId())) {
+                throw new AccessDeniedDomainException("You are not authorized to delete this product");
+            }
+        }
+        
+        productRepository.delete(productId);
+        
+        try {
+            if (productSearchIndexPort != null) {
+                productSearchIndexPort.deleteIndex(command.getId());
+            }
+        } catch (Exception e) {
+            log.error("Search un-indexing failed: {}", e.getMessage());
         }
     }
 
@@ -222,7 +249,7 @@ public class ProductApplicationService implements ManageProductUseCase, QueryPro
     public ProductDto getProduct(String id) {
         ProductId productId = new ProductId(id);
         Product product = productRepository.findById(productId)
-            .orElseThrow(() -> new ProductDomainException("Product not found: " + id));
+            .orElseThrow(() -> new ResourceNotFoundDomainException("Product not found: " + id));
         return toDto(product);
     }
 

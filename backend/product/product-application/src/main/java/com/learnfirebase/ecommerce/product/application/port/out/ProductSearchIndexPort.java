@@ -4,4 +4,5 @@ import com.learnfirebase.ecommerce.product.domain.model.Product;
 
 public interface ProductSearchIndexPort {
     void index(Product product);
+    void deleteIndex(String productId);
 }

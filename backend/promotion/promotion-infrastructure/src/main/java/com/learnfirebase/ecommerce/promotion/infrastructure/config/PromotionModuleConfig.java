@@ -26,4 +26,10 @@ public class PromotionModuleConfig {
             com.learnfirebase.ecommerce.promotion.application.port.out.FlashSaleCachePort flashSaleCachePort) {
         return new com.learnfirebase.ecommerce.promotion.application.service.FlashSaleApplicationService(flashSaleRepository, flashSaleCachePort);
     }
+
+    @Bean
+    public com.learnfirebase.ecommerce.promotion.application.service.SellerPromotionApplicationService sellerPromotionApplicationService(
+            com.learnfirebase.ecommerce.promotion.application.port.out.CouponRepository couponRepository) {
+        return new com.learnfirebase.ecommerce.promotion.application.service.SellerPromotionApplicationService(couponRepository);
+    }
 }
