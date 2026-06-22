@@ -27,7 +27,7 @@ public class JpaOrderEntity {
     private String userId;
     private String status;
     private String currency;
-    private String totalAmount;
+    private java.math.BigDecimal totalAmount;
     private String trackingNumber;
     private String trackingCarrier;
     private Instant shippedAt;
@@ -37,7 +37,7 @@ public class JpaOrderEntity {
     private String returnNote;
     private Instant returnRequestedAt;
     private Instant returnResolvedAt;
-    private String refundAmount;
+    private java.math.BigDecimal refundAmount;
     private Instant createdAt;
     private Instant updatedAt;
 

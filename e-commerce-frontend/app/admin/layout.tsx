@@ -17,7 +17,8 @@ import {
   ShieldCheck,
   BarChart3,
   Flag,
-  Zap
+  Zap,
+  Cpu
 } from 'lucide-react';
 import { Button } from '@/src/components/ui/button';
 import { useAuth } from '@/src/store/auth-store';
@@ -42,6 +43,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { label: 'Người bán', icon: Store, href: '/admin/sellers' },
     { label: 'Thống kê', icon: BarChart3, href: '/admin/statistics' },
     { label: 'Báo cáo', icon: Flag, href: '/admin/reports' },
+    { label: 'Hệ thống', icon: Cpu, href: '/admin/system' },
     { label: 'Cài đặt', icon: Settings, href: '/admin/settings' },
   ];
 

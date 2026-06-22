@@ -1,4 +1,4 @@
-﻿plugins {
+plugins {
     `java-library`
 }
 
@@ -11,5 +11,6 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.security:spring-security-core")
     implementation("org.springframework.kafka:spring-kafka")
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")
 }
 

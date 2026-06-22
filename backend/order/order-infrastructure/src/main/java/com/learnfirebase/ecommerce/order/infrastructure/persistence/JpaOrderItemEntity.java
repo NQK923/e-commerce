@@ -27,7 +27,7 @@ public class JpaOrderItemEntity {
     @jakarta.persistence.Column(name = "seller_id")
     private String sellerId;
     private int quantity;
-    private String price;
+    private java.math.BigDecimal price;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id")

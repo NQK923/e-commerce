@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -33,51 +33,31 @@ public class ChatRestController {
     private final MarkConversationReadUseCase markConversationReadUseCase;
 
     @GetMapping("/conversations")
-    public List<ConversationSummaryDto> listConversations(Principal principal,
-                                                          @RequestHeader(value = "Authorization", required = false) String authorization) {
-        String userId = requireUser(principal, authorization);
+    public List<ConversationSummaryDto> listConversations(Principal principal) {
+        String userId = requireUser(principal);
         return getConversationsUseCase.listForUser(userId);
     }
 
     @GetMapping("/conversations/{conversationId}/messages")
     public List<ChatMessageDto> listMessages(@PathVariable("conversationId") String conversationId,
-                                             @RequestParam(defaultValue = "50") @Min(1) @Max(200) int limit) {
-        return getMessagesUseCase.listMessages(conversationId, limit);
+                                             @RequestParam(defaultValue = "50") @Min(1) @Max(200) int limit,
+                                             Principal principal) {
+        String userId = requireUser(principal);
+        return getMessagesUseCase.listMessages(conversationId, userId, limit);
     }
 
     @PostMapping("/conversations/{conversationId}/read")
     public ResponseEntity<Void> markRead(@PathVariable("conversationId") String conversationId,
-                                         Principal principal,
-                                         @RequestHeader(value = "Authorization", required = false) String authorization) {
-        String userId = requireUser(principal, authorization);
+                                         Principal principal) {
+        String userId = requireUser(principal);
         markConversationReadUseCase.markRead(conversationId, userId);
         return ResponseEntity.noContent().build();
     }
 
-    private String requireUser(Principal principal, String authorization) {
-        if (principal != null && principal.getName() != null && !principal.getName().isBlank()) {
-            return principal.getName();
-        }
-        String userId = parseUserIdFromAuthorization(authorization);
-        if (userId == null || userId.isBlank()) {
+    private String requireUser(Principal principal) {
+        if (principal == null || principal.getName() == null || principal.getName().isBlank()) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
         }
-        return userId;
-    }
-
-    private String parseUserIdFromAuthorization(String authorizationHeader) {
-        if (authorizationHeader == null || authorizationHeader.isBlank()) {
-            return null;
-        }
-        String token = authorizationHeader.startsWith("Bearer ")
-                ? authorizationHeader.substring("Bearer ".length())
-                : authorizationHeader;
-        try {
-            String decoded = new String(java.util.Base64.getDecoder().decode(token), java.nio.charset.StandardCharsets.UTF_8);
-            String[] parts = decoded.split(":");
-            return parts.length > 0 ? parts[0] : null;
-        } catch (IllegalArgumentException ex) {
-            return null;
-        }
+        return principal.getName();
     }
 }

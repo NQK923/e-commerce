@@ -13,6 +13,8 @@ import com.learnfirebase.ecommerce.chat.domain.repository.ConversationRepository
 import com.learnfirebase.ecommerce.chat.domain.repository.MessageRepository;
 import java.util.Comparator;
 import java.util.List;
+import com.learnfirebase.ecommerce.common.domain.AccessDeniedDomainException;
+import com.learnfirebase.ecommerce.common.domain.ResourceNotFoundDomainException;
 
 public class ChatQueryService implements GetConversationsUseCase, GetMessagesUseCase, MarkConversationReadUseCase {
 
@@ -58,9 +60,17 @@ public class ChatQueryService implements GetConversationsUseCase, GetMessagesUse
     }
 
     @Override
-    public List<ChatMessageDto> listMessages(String conversationId, int limit) {
+    public List<ChatMessageDto> listMessages(String conversationId, String userId, int limit) {
+        var convId = com.learnfirebase.ecommerce.chat.domain.model.ConversationId.of(conversationId);
+        var conversation = conversationRepository.findById(convId)
+                .orElseThrow(() -> new ResourceNotFoundDomainException("Conversation not found: " + conversationId));
+
+        if (!conversation.includes(ParticipantId.of(userId))) {
+            throw new AccessDeniedDomainException("User " + userId + " is not a participant in conversation " + conversationId);
+        }
+
         return messageRepository.findRecentByConversation(
-                        com.learnfirebase.ecommerce.chat.domain.model.ConversationId.of(conversationId),
+                        convId,
                         Math.max(limit, 1))
                 .stream()
                 .sorted(Comparator.comparing(Message::getSentAt))

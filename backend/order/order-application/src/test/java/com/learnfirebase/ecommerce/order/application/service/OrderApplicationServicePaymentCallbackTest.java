@@ -21,7 +21,6 @@ import com.learnfirebase.ecommerce.order.application.model.PaymentStatus;
 import com.learnfirebase.ecommerce.order.application.port.out.InventoryReservationPort;
 import com.learnfirebase.ecommerce.order.application.port.out.LoadFlashSalePort;
 import com.learnfirebase.ecommerce.order.application.port.out.LoadProductPort;
-import com.learnfirebase.ecommerce.order.application.port.out.OrderEventPublisher;
 import com.learnfirebase.ecommerce.order.application.port.out.OrderOutboxPort;
 import com.learnfirebase.ecommerce.order.application.port.out.OrderRepository;
 import com.learnfirebase.ecommerce.order.application.port.out.PaymentGatewayPort;
@@ -53,8 +52,6 @@ class OrderApplicationServicePaymentCallbackTest {
     @Mock
     private OrderOutboxPort orderOutboxPort;
     @Mock
-    private OrderEventPublisher eventPublisher;
-    @Mock
     private PaymentGatewayPort paymentGatewayPort;
     @Mock
     private PaymentTransactionPort paymentTransactionPort;
@@ -69,7 +66,6 @@ class OrderApplicationServicePaymentCallbackTest {
             loadFlashSalePort,
             inventoryReservationPort,
             orderOutboxPort,
-            eventPublisher,
             paymentGatewayPort,
             paymentTransactionPort
         );
@@ -90,7 +86,6 @@ class OrderApplicationServicePaymentCallbackTest {
         verify(paymentTransactionPort).updateStatus("order-1", PaymentStatus.SUCCESS, "txn-1", "{\"ok\":true}");
         verify(inventoryReservationPort).confirm("order-1");
         verify(orderOutboxPort).saveEvent(any());
-        verify(eventPublisher).publish(any());
     }
 
     @Test

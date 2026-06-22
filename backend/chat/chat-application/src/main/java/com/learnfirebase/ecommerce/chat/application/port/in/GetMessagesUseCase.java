@@ -4,5 +4,5 @@ import com.learnfirebase.ecommerce.chat.application.dto.ChatMessageDto;
 import java.util.List;
 
 public interface GetMessagesUseCase {
-    List<ChatMessageDto> listMessages(String conversationId, int limit);
+    List<ChatMessageDto> listMessages(String conversationId, String userId, int limit);
 }

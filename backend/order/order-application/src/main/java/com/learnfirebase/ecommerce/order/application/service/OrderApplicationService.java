@@ -39,7 +39,6 @@ import com.learnfirebase.ecommerce.order.application.port.in.ApproveReturnUseCas
 import com.learnfirebase.ecommerce.order.application.port.in.RejectReturnUseCase;
 import com.learnfirebase.ecommerce.order.application.port.out.InventoryReservationPort;
 import com.learnfirebase.ecommerce.order.application.port.out.LoadProductPort;
-import com.learnfirebase.ecommerce.order.application.port.out.OrderEventPublisher;
 import com.learnfirebase.ecommerce.order.application.port.out.OrderOutboxPort;
 import com.learnfirebase.ecommerce.order.application.port.out.OrderRepository;
 import com.learnfirebase.ecommerce.order.application.port.out.PaymentGatewayPort;
@@ -65,7 +64,6 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
     private final com.learnfirebase.ecommerce.order.application.port.out.LoadFlashSalePort loadFlashSalePort;
     private final InventoryReservationPort inventoryReservationPort;
     private final OrderOutboxPort orderOutboxPort;
-    private final OrderEventPublisher eventPublisher;
     private final PaymentGatewayPort paymentGatewayPort;
     private final PaymentTransactionPort paymentTransactionPort;
     private final OrderDomainService domainService = new OrderDomainService();
@@ -151,7 +149,7 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
 
         order.getDomainEvents().forEach(event -> {
             orderOutboxPort.saveEvent(event);
-            eventPublisher.publish(event);
+
         });
 
         return toDto(saved);
@@ -173,7 +171,7 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
         inventoryReservationPort.confirm(order.getId().getValue());
         order.getDomainEvents().forEach(event -> {
             orderOutboxPort.saveEvent(event);
-            eventPublisher.publish(event);
+
         });
         return toDto(saved);
     }
@@ -198,7 +196,7 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
 
         order.getDomainEvents().forEach(event -> {
             orderOutboxPort.saveEvent(event);
-            eventPublisher.publish(event);
+
         });
         return toDto(saved);
     }
@@ -334,7 +332,7 @@ public class OrderApplicationService implements CreateOrderUseCase, PayOrderUseC
 
         saved.getDomainEvents().forEach(event -> {
             orderOutboxPort.saveEvent(event);
-            eventPublisher.publish(event);
+
         });
 
         return toDto(saved);

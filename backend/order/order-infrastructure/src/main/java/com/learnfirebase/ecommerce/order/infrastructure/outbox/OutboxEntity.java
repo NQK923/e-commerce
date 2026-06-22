@@ -32,4 +32,13 @@ public class OutboxEntity {
     private OutboxStatus status;
     private Instant createdAt;
     private Instant updatedAt;
+    
+    @Builder.Default
+    private int attemptCount = 0;
+    
+    @Column(name = "last_error", columnDefinition = "TEXT")
+    private String lastError;
+    
+    private Instant nextRetryAt;
+    private Instant deadLetterAt;
 }

@@ -8,11 +8,12 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 import com.learnfirebase.ecommerce.order.application.port.out.InventoryReservationPort;
 import com.learnfirebase.ecommerce.order.application.port.out.LoadProductPort;
-import com.learnfirebase.ecommerce.order.application.port.out.OrderEventPublisher;
 import com.learnfirebase.ecommerce.order.application.port.out.OrderOutboxPort;
 import com.learnfirebase.ecommerce.order.application.port.out.OrderRepository;
 import com.learnfirebase.ecommerce.order.application.port.out.PaymentGatewayPort;
 import com.learnfirebase.ecommerce.order.application.port.out.PaymentTransactionPort;
+import com.learnfirebase.ecommerce.order.application.port.out.AdminOutboxPort;
+import com.learnfirebase.ecommerce.order.application.service.AdminOutboxService;
 import com.learnfirebase.ecommerce.order.application.service.OrderApplicationService;
 import com.learnfirebase.ecommerce.order.infrastructure.outbox.OutboxEntity;
 import com.learnfirebase.ecommerce.order.infrastructure.outbox.OutboxRepository;
@@ -34,10 +35,14 @@ public class OrderModuleConfig {
         com.learnfirebase.ecommerce.order.application.port.out.LoadFlashSalePort loadFlashSalePort,
         InventoryReservationPort inventoryReservationPort,
         OrderOutboxPort orderOutboxPort,
-        OrderEventPublisher orderEventPublisher,
         PaymentGatewayPort paymentGatewayPort,
         PaymentTransactionPort paymentTransactionPort
     ) {
-        return new OrderApplicationService(orderRepository, loadProductPort, loadFlashSalePort, inventoryReservationPort, orderOutboxPort, orderEventPublisher, paymentGatewayPort, paymentTransactionPort);
+        return new OrderApplicationService(orderRepository, loadProductPort, loadFlashSalePort, inventoryReservationPort, orderOutboxPort, paymentGatewayPort, paymentTransactionPort);
+    }
+
+    @Bean
+    public AdminOutboxService adminOutboxService(AdminOutboxPort adminOutboxPort) {
+        return new AdminOutboxService(adminOutboxPort);
     }
 }

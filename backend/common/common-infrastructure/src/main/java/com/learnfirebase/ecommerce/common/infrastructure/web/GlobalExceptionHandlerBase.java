@@ -15,6 +15,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.learnfirebase.ecommerce.common.domain.AccessDeniedDomainException;
 import com.learnfirebase.ecommerce.common.domain.DomainException;
+import com.learnfirebase.ecommerce.common.domain.ResourceNotFoundDomainException;
 import com.learnfirebase.ecommerce.common.infrastructure.logging.LoggingUtils;
 
 import jakarta.validation.ConstraintViolationException;
@@ -31,6 +32,11 @@ public class GlobalExceptionHandlerBase {
             log.warn("Domain access denied", ex);
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(ErrorResponse.of("FORBIDDEN", ex.getMessage(), null));
+        }
+        if (ex instanceof ResourceNotFoundDomainException) {
+            log.warn("Domain resource not found", ex);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ErrorResponse.of("NOT_FOUND", ex.getMessage(), null));
         }
         log.warn("Domain validation error", ex);
         return ResponseEntity.badRequest().body(ErrorResponse.of("DOMAIN_ERROR", ex.getMessage(), null));

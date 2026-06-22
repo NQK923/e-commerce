@@ -79,7 +79,7 @@ public class OrderRepositoryImpl implements OrderRepository {
                 .userId(order.getUserId().getValue())
                 .status(order.getStatus().name())
                 .currency(order.getTotalAmount().getCurrency())
-                .totalAmount(order.getTotalAmount().getAmount().toPlainString())
+                .totalAmount(order.getTotalAmount().getAmount())
                 .trackingNumber(order.getTrackingNumber())
                 .trackingCarrier(order.getTrackingCarrier())
                 .shippedAt(order.getShippedAt())
@@ -90,7 +90,7 @@ public class OrderRepositoryImpl implements OrderRepository {
                 .returnRequestedAt(order.getReturnRequestedAt())
                 .returnResolvedAt(order.getReturnResolvedAt())
                 .refundAmount(
-                        order.getRefundAmount() != null ? order.getRefundAmount().getAmount().toPlainString() : null)
+                        order.getRefundAmount() != null ? order.getRefundAmount().getAmount() : null)
                 .createdAt(order.getCreatedAt())
                 .updatedAt(order.getUpdatedAt())
                 .build();
@@ -101,7 +101,7 @@ public class OrderRepositoryImpl implements OrderRepository {
                 .flashSaleId(item.getFlashSaleId())
                 .sellerId(item.getSellerId())
                 .quantity(item.getQuantity())
-                .price(item.getPrice().getAmount().toPlainString())
+                .price(item.getPrice().getAmount())
                 .order(entity)
                 .build()).collect(Collectors.toList()));
         return entity;
@@ -119,11 +119,11 @@ public class OrderRepositoryImpl implements OrderRepository {
                                 .flashSaleId(item.getFlashSaleId())
                                 .sellerId(item.getSellerId())
                                 .quantity(item.getQuantity())
-                                .price(Money.builder().amount(new java.math.BigDecimal(item.getPrice()))
+                                .price(Money.builder().amount(item.getPrice())
                                         .currency(entity.getCurrency()).build())
                                 .build())
                         .collect(Collectors.toList()))
-                .totalAmount(Money.builder().amount(new java.math.BigDecimal(entity.getTotalAmount()))
+                .totalAmount(Money.builder().amount(entity.getTotalAmount())
                         .currency(entity.getCurrency()).build())
                 .trackingNumber(entity.getTrackingNumber())
                 .trackingCarrier(entity.getTrackingCarrier())
@@ -137,7 +137,7 @@ public class OrderRepositoryImpl implements OrderRepository {
                 .returnResolvedAt(entity.getReturnResolvedAt())
                 .refundAmount(
                         entity.getRefundAmount() != null
-                                ? Money.builder().amount(new java.math.BigDecimal(entity.getRefundAmount()))
+                                ? Money.builder().amount(entity.getRefundAmount())
                                         .currency(entity.getCurrency()).build()
                                 : null)
                 .createdAt(entity.getCreatedAt())

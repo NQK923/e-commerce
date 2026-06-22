@@ -18,6 +18,6 @@ public class CartItemEmbeddable {
     @Column(name = "variant_sku")
     private String variantSku;
     private int quantity;
-    private String price;
+    private java.math.BigDecimal price;
     private String currency;
 }
