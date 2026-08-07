@@ -8,7 +8,7 @@ import lombok.Value;
 @Value
 @Builder
 public class Email {
-    private static final Pattern PATTERN = Pattern.compile("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
+    private static final Pattern PATTERN = Pattern.compile("^[^@\\s]+@[^@\\s.]+\\.[^@\\s]+$");
 
     String value;
 
